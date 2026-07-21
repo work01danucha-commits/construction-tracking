@@ -1,7 +1,3 @@
-https://raw.githubusercontent.com/work01danucha-commits/construction-tracking/main/index.html
-→ https://raw.githubusercontent.com/work01danucha-commits/construction-tracking/main/index.html
-Content-Type: text/plain; charset=utf-8
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -510,12 +506,13 @@ const PKGS = {
 };
 const KEY="constructProcureTracker_v1";
 
-/* ===== แก้บัค "วันเพี้ยน" (2026-07-21) =====
+let editId = null;
+
+/* ===== แก้บัค "วันเพี้ยน" (21 ก.ค. 2026) =====
  * อาการ: Agenda โชว์วันเป็น 2026-07-20T17:00:00.000Z และงานหายจากตารางปฏิทิน
- * เหตุ: Google Sheet เก็บช่องวันที่เป็น Date → Apps Script ส่งกลับเป็น ISO เต็ม (UTC)
+ * เหตุ: Google Sheet เก็บช่องวันที่เป็น Date -> Apps Script ส่งกลับเป็น ISO เต็ม (UTC)
  *       ปฏิทินเทียบคีย์ด้วย 'YYYY-MM-DD' จึงหาไม่เจอ และวันคลาดไป 1 วัน
  * แก้: บีบทุกช่องวันที่ให้เป็น 'YYYY-MM-DD' (เวลาไทย) ทั้งตอนโหลดและตอนดึงจากชีท
- * (หมายเหตุ: บล็อกนี้ต้องอยู่ก่อน "let data = load()" ด้านล่าง เพราะ load() เรียกใช้ DATE_FIELDS/toYMD ทันที)
  */
 const DATE_FIELDS=['followup','appdate','start','end'];
 function ymdParts(y,m,d){return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')}
@@ -523,9 +520,9 @@ function toYMD(v){
   if(v==null||v==='')return '';
   if(v instanceof Date)return ymdParts(v.getFullYear(),v.getMonth()+1,v.getDate());
   const s=String(v).trim();
-  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;              // ถูกอยู่แล้ว
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
   const m=s.match(/^(\d{4})-(\d{2})-(\d{2})T/);
-  if(m){                                                   // ISO เต็ม → เลื่อนเป็นเวลาไทย (+7) แล้วเอาเฉพาะวัน
+  if(m){
     const d=new Date(s);
     if(isNaN(d))return m[1]+'-'+m[2]+'-'+m[3];
     const th=new Date(d.getTime()+7*3600000);
@@ -541,7 +538,6 @@ function load(){try{return normAll(JSON.parse(localStorage.getItem(KEY))||[])}ca
 function save(){localStorage.setItem(KEY,JSON.stringify(data));autoWriteFile();syncDiff()}
 
 let data = load();
-let editId = null;
 
 /* ===== ซิงก์กับชีทกลาง (Google Sheet) =====
  * ปรัชญา: เซฟลงเครื่องก่อนเสมอ แล้วค่อยส่งขึ้นชีท (local-first)
@@ -1098,4 +1094,438 @@ function renderBigCal(){
       const cls=d.status>=10?'ci-done':(ds<today?'ci-over':(ds===today?'ci-today':'ci-future'));
       return `<div class="cal-item ${cls}" draggable="true" ondragstart="dragStartCard(event,'${d.id}')" ondragend="dragEndCard(event)" title="${esc(d.project)} – ${esc(d.pkg)} (ลากเพื่อเปลี่ยนวัน)" onclick="openForm('${d.id}')"><span class="ci-proj">📁 ${esc(d.project)}</span>${esc(d.pkg)}</div>`;
     }).join('');
-    html+=`<div class="cal-cell ${other?'other':''} ${isToday?'today':''}" ondragover="cellDragOver(event)" ondragleave="cellDragLeave(event)" ondrop="dropOnDate(event,'${ds}')"><div class="cal-date">${dt.getDa
+    html+=`<div class="cal-cell ${other?'other':''} ${isToday?'today':''}" ondragover="cellDragOver(event)" ondragleave="cellDragLeave(event)" ondrop="dropOnDate(event,'${ds}')"><div class="cal-date">${dt.getDate()}</div>${items}</div>`;
+  }
+  html+=`</div><div class="hint" style="margin-top:8px">แสดงหัวข้องานที่ตั้ง 🔔 วันตามงาน (มีชื่อโครงการกำกับ) • แตะรายการเพื่อแก้ไข</div>`;
+  el.innerHTML=html;
+}
+function renderTotals(){
+  const base=filtered();
+  const sumBoq=base.reduce((a,d)=>a+(Number(d.boq)||0),0);
+  const sumReal=base.reduce((a,d)=>a+(Number(d.price)||0),0);
+  const scope=fProject.value||'ทุกโครงการ';
+  const diff=sumBoq-sumReal;
+  const fmt=n=>n?n.toLocaleString():'0';
+  document.getElementById('totalBox').innerHTML=`
+    <div class="hd">💰 สรุปยอด — ${esc(scope)}</div>
+    <div class="row"><span class="k">รวม BOQ</span><span class="boq">${fmt(sumBoq)}</span></div>
+    <div class="row"><span class="k">รวมราคาจริง</span><span class="real">${fmt(sumReal)}</span></div>
+    ${sumReal?`<div class="row"><span class="k">ส่วนต่าง</span><span class="diff ${diff>=0?'pos':'neg'}">${diff>=0?'ประหยัด ':'เกิน '}${fmt(Math.abs(diff))}</span></div>`:''}`;
+}
+function renderKPIs(){
+  const base=fProject.value?data.filter(d=>d.project===fProject.value):data;
+  const total=base.length;
+  const selected=base.filter(d=>d.status>=7).length;
+  const pending=base.filter(d=>d.status===6).length;
+  const comparing=base.filter(d=>d.status>=3&&d.status<=5).length;
+  const notStarted=base.filter(d=>d.status<=1).length;
+  const pct=total?Math.round(base.reduce((a,d)=>a+(+d.status)/10,0)/total*100):0;
+  const pctOf=n=>total?Math.round(n/total*100)+'% ของทั้งหมด':'—';
+  const kpi=(ic,bg,fg,n,l,sl)=>`<div class="kpi"><div class="kpi-ic" style="background:${bg};color:${fg}">${ic}</div>
+    <div class="kpi-txt"><div class="n">${n}</div><div class="l">${l}</div><div class="sl">${sl}</div></div></div>`;
+  document.getElementById('kpis').innerHTML=
+    kpi('🏢','#dbeafe','#2563eb',total,'หัวข้องาน ทั้งหมด',fProject.value?esc(fProject.value):(new Set(data.map(d=>d.project))).size+' โครงการ')+
+    kpi('✅','#dcfce7','#16a34a',selected,'เลือกแล้ว',pctOf(selected))+
+    kpi('⏳','#ffedd5','#ea580c',pending,'รออนุมัติ',pctOf(pending))+
+    kpi('⚖️','#ede9fe','#7c3aed',comparing,'เปรียบเทียบราคา',pctOf(comparing))+
+    kpi('⏱️','#fee2e2','#dc2626',notStarted,'ยังไม่เริ่ม',pctOf(notStarted));
+  document.getElementById('kpiProgress').innerHTML=
+    `<div class="kpi kpi-wide"><div class="kpi-wide-top"><span>ความคืบหน้าการคัดเลือกโดยรวม</span><b>${pct}%</b></div><div class="bar"><i style="width:${pct}%"></i></div></div>`;
+  renderBell();
+}
+function renderBell(){
+  const badge=document.getElementById('bellBadge');if(!badge)return;
+  const n=data.filter(isDue).length+data.filter(isSoon).length;
+  badge.style.display=n?'flex':'none';
+  badge.textContent=n>99?'99+':n;
+}
+
+function setStatus(id,v){const d=data.find(x=>x.id===id);if(d){d.status=+v;touch(d);save();render()}}
+function stepStatus(id){const d=data.find(x=>x.id===id);if(d&&d.status<10){d.status++;touch(d);save();render()}}
+function setField(id,k,v){const d=data.find(x=>x.id===id);if(d){d[k]=(k==='price'?v:v.trim());touch(d);save();render()}}
+function pickWinnerCard(id,name){const d=data.find(x=>x.id===id);if(d){d.winner=(d.winner===name)?'':name;touch(d);save();render()}}
+function setNum(id,k,v){const d=data.find(x=>x.id===id);if(d){const n=String(v).replace(/[^\d.]/g,'');d[k]=n===''?'':Number(n);touch(d);save();render()}}
+function delById(id){const d=data.find(x=>x.id===id);if(d&&confirm('ลบหัวข้องาน "'+d.pkg+'" ?')){pushUndo('ก่อนลบหัวข้องาน "'+d.pkg+'"');data=data.filter(x=>x.id!==id);save();render()}}
+function splitItem(id){
+  const i=data.findIndex(x=>x.id===id);if(i<0)return;const d=data[i];
+  if(!confirm('แยก "'+d.pkg+'" ออกเป็น 2 หัวข้อ:\n• '+d.pkg+' – วัสดุ\n• '+d.pkg+' – ค่าแรง\n(ราคา BOQ จะย้ายไปฝั่งวัสดุ ปรับได้ทีหลัง)'))return;
+  const mat={...d,id:uid(),pkg:d.pkg+' – วัสดุ',detail:(d.detail?d.detail+' • ':'')+'ส่วนวัสดุ/ซัพพลาย'};
+  const lab={...d,id:uid(),pkg:d.pkg+' – ค่าแรง',boq:'',price:'',winner:'',detail:(d.detail?d.detail+' • ':'')+'ส่วนค่าแรง/ผู้รับเหมาติดตั้ง'};
+  data.splice(i,1,mat,lab);save();render();
+}
+function migrateBoq(){
+  const n=data.filter(d=>(d.boq===undefined||d.boq==='')&&d.price!==''&&d.price!=null).length;
+  if(!n){alert('ไม่มีรายการที่ต้องย้าย (ราคา BOQ มีอยู่แล้ว)');return}
+  if(confirm('ย้ายเลขราคาเดิม '+n+' รายการ ไปเป็น "ราคา BOQ" และเว้นช่องราคาจริงให้ว่าง?\n(ใช้กับข้อมูลที่นำเข้าก่อนอัปเดตนี้)')){
+    pushUndo('ก่อนย้ายราคาเดิม→BOQ');
+    data.forEach(d=>{if((d.boq===undefined||d.boq==='')&&d.price!==''&&d.price!=null){d.boq=d.price;d.price=''}});
+    save();render();alert('ย้ายแล้ว '+n+' รายการ');
+  }
+}
+function removeDuplicates(){
+  const seen=new Map();
+  const dupGroups=[];
+  data.forEach(d=>{
+    const key=JSON.stringify(Object.keys(d).filter(k=>k!=='id').sort().map(k=>[k,d[k]]));
+    if(!seen.has(key))seen.set(key,[]);
+    seen.get(key).push(d);
+  });
+  let dupCount=0;
+  seen.forEach(arr=>{if(arr.length>1){dupGroups.push(arr);dupCount+=arr.length-1}});
+  if(!dupCount){alert('ไม่พบรายการที่ซ้ำกัน');return}
+  if(confirm('พบรายการซ้ำ '+dupCount+' รายการ (จาก '+dupGroups.length+' กลุ่ม)\nจะเก็บไว้กลุ่มละ 1 รายการ และลบตัวซ้ำที่เหลือ ยืนยัน?')){
+    pushUndo('ก่อนลบรายการซ้ำ (เหมือนกันเป๊ะ)');
+    const idsToRemove=new Set();
+    dupGroups.forEach(arr=>{arr.slice(1).forEach(d=>idsToRemove.add(d.id))});
+    data=data.filter(d=>!idsToRemove.has(d.id));
+    save();render();alert('ลบรายการซ้ำแล้ว '+dupCount+' รายการ');
+  }
+}
+function decodeIdTime(id){
+  if(!id||id.length<5)return 0;
+  const ts=id.slice(0,-4);
+  const n=parseInt(ts,36);
+  if(isNaN(n)||n<1577836800000)return 0; // ก่อนปี 2020 = id รูปแบบเก่า/ไม่รู้เวลาที่แน่ชัด
+  return n;
+}
+/* ===== แสดงเวลาแก้ไข/เพิ่มล่าสุดในการ์ด (Option A) + เรียงตามแก้ไขล่าสุด (Option C) ===== */
+function touch(d){d.upd=Date.now()}
+const MONTHS_TH_SHORT=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function relTime(ms){
+  if(!ms)return '';
+  const diff=Date.now()-ms;
+  if(diff<0||diff<60000)return 'เมื่อสักครู่';
+  const min=Math.floor(diff/60000);
+  if(min<60)return min+' นาทีที่แล้ว';
+  const hr=Math.floor(min/60);
+  if(hr<24)return hr+' ชม.ที่แล้ว';
+  const day=Math.floor(hr/24);
+  if(day===1)return 'เมื่อวาน';
+  if(day<30)return day+' วันที่แล้ว';
+  const d=new Date(ms);
+  return d.getDate()+' '+MONTHS_TH_SHORT[d.getMonth()]+' '+(d.getFullYear()+543-2500);
+}
+function activityTime(d){return d.upd||decodeIdTime(d.id)||0}
+function activityLabel(d){
+  const t=activityTime(d);
+  if(!t)return '';
+  return (d.upd?'แก้ไข ':'เพิ่มเมื่อ ')+relTime(t);
+}
+function fieldDiffCount(a,b){
+  const keys=new Set([...Object.keys(a),...Object.keys(b)].filter(k=>k!=='id'));
+  let n=0;
+  keys.forEach(k=>{if((a[k]||'')!==(b[k]||''))n++});
+  return n;
+}
+function cleanupSimilar(){
+  const groups={};
+  data.forEach(d=>{
+    const key=d.project+'|||'+d.pkg;
+    (groups[key]=groups[key]||[]).push(d);
+  });
+  const dupGroups=Object.values(groups).filter(g=>g.length>1);
+  if(!dupGroups.length){alert('ไม่พบรายการที่โครงการ+หัวข้องานซ้ำกัน');return}
+  const toDelete=[];
+  const autoLines=[];
+  const manualLines=[];
+  dupGroups.forEach(g=>{
+    const withTime=g.map(d=>({d,t:decodeIdTime(d.id)}));
+    withTime.sort((a,b)=>b.t-a.t);
+    const keep=withTime[0];
+    const rest=withTime.slice(1);
+    const maxDiff=Math.max(...rest.map(x=>fieldDiffCount(keep.d,x.d)));
+    if(keep.t>0&&maxDiff<=2){
+      rest.forEach(x=>toDelete.push(x.d.id));
+      autoLines.push('• '+g[0].project+' / '+g[0].pkg+' — เก็บฉบับล่าสุด ลบ '+rest.length+' รายการเก่า (ต่างกัน '+maxDiff+' ช่อง)');
+    }else{
+      manualLines.push('• '+g[0].project+' / '+g[0].pkg+' — เนื้อหาต่างกันมาก ('+maxDiff+' ช่อง) ระบบไม่กล้าลบให้ ต้องตรวจเอง');
+    }
+  });
+  let msg='';
+  if(autoLines.length)msg+='✅ ลบอัตโนมัติได้ (เก็บฉบับล่าสุด):\n'+autoLines.join('\n')+'\n\n';
+  if(manualLines.length)msg+='⚠️ ต้องตรวจสอบเอง (เนื้อหาต่างกันมาก):\n'+manualLines.join('\n')+'\n\n';
+  if(!toDelete.length){alert(msg||'ไม่พบรายการที่ปลอดภัยจะลบอัตโนมัติ');return}
+  msg+='ยืนยันลบรายการเก่าที่ล้าสมัย ('+toDelete.length+' รายการ)?';
+  if(confirm(msg)){
+    pushUndo('ก่อนลบรายการซ้ำ (เก็บฉบับล่าสุด)');
+    data=data.filter(d=>!toDelete.includes(d.id));
+    save();render();
+    alert('ลบรายการซ้ำที่ล้าสมัยแล้ว '+toDelete.length+' รายการ'+(manualLines.length?'\n\nยังเหลือ '+manualLines.length+' กลุ่มที่ต้องตรวจเอง':''));
+  }
+}
+function projSimplify(s){return (s||'').replace(/[()\s.\/]/g,'')}
+function autoFixDuplicates(){
+  // ---- ขั้นที่ 1: หาโฟลเดอร์ (ชื่อโครงการ) ที่เป็นตัวเดียวกันแต่พิมพ์ต่างกัน ----
+  const names=[...new Set(data.map(d=>d.project))];
+  const renames=[];
+  names.forEach(a=>{
+    names.forEach(b=>{
+      if(a===b||a.length>=b.length)return; // a = ชื่อสั้น (ตัวหลัก), b = ชื่อยาว (ตัวแปรที่จะรวมเข้า)
+      const sa=projSimplify(a),sb=projSimplify(b);
+      if(!sa||sb.indexOf(sa)!==0)return; // ชื่อสั้นต้องเป็นคำขึ้นต้นของชื่อยาว
+      const pa=new Set(data.filter(d=>d.project===a).map(d=>d.pkg));
+      const pb=new Set(data.filter(d=>d.project===b).map(d=>d.pkg));
+      let ov=0;pa.forEach(p=>{if(pb.has(p))ov++});
+      if(ov>=2)renames.push({from:b,to:a}); // มีหัวข้องานทับกัน ≥2 = โครงการเดียวกันแน่
+    });
+  });
+  // ---- จำลองผลบนสำเนา แล้วหาหัวข้องานซ้ำแบบเก็บฉบับล่าสุด ----
+  const work=data.map(d=>({...d}));
+  renames.forEach(r=>{work.forEach(d=>{if(d.project===r.from)d.project=r.to})});
+  const groups={};
+  work.forEach(d=>{const k=d.project+'|||'+d.pkg;(groups[k]=groups[k]||[]).push(d)});
+  const toDelete=[],dupLines=[],manualLines=[];
+  Object.values(groups).forEach(g=>{
+    if(g.length<2)return;
+    const wt=g.map(d=>({d,t:decodeIdTime(d.id)}));
+    wt.sort((a,b)=>b.t-a.t);
+    const keep=wt[0],rest=wt.slice(1);
+    const maxDiff=Math.max(...rest.map(x=>fieldDiffCount(keep.d,x.d)));
+    if(keep.t>0&&maxDiff<=2){
+      rest.forEach(x=>toDelete.push(x.d.id));
+      dupLines.push('• '+g[0].project+' / '+g[0].pkg+' — ลบเก่า '+rest.length+' (ต่าง '+maxDiff+' ช่อง)');
+    }else{
+      manualLines.push('• '+g[0].project+' / '+g[0].pkg+' — ต่างกันมาก ('+maxDiff+' ช่อง) ตรวจเอง');
+    }
+  });
+  // ---- แสดงสรุปก่อนทำจริง ----
+  let msg='';
+  if(renames.length)msg+='📁 รวมโฟลเดอร์ซ้ำ:\n'+renames.map(r=>'• "'+r.from+'"\n   → "'+r.to+'"').join('\n')+'\n\n';
+  if(dupLines.length)msg+='🧹 ลบหัวข้องานเก่าที่ซ้ำ (เก็บฉบับล่าสุด):\n'+dupLines.join('\n')+'\n\n';
+  if(manualLines.length)msg+='⚠️ ต้องตรวจเอง (เนื้อหาต่างกันมาก ระบบไม่ลบให้):\n'+manualLines.join('\n')+'\n\n';
+  if(!renames.length&&!toDelete.length){alert(msg||'ไม่พบโฟลเดอร์/รายการซ้ำ ข้อมูลสะอาดแล้ว ✓');return}
+  msg+='ยืนยันดำเนินการ? (รวม '+renames.length+' โฟลเดอร์, ลบ '+toDelete.length+' รายการเก่า)';
+  if(!confirm(msg))return;
+  pushUndo('ก่อนล้างข้อมูลซ้ำ (รวมโฟลเดอร์+เก็บล่าสุด)');
+  // ---- ทำจริง: รวมชื่อโครงการ → ลบรายการเก่า → เติมที่ตั้งให้ครบ ----
+  renames.forEach(r=>{data.forEach(d=>{if(d.project===r.from)d.project=r.to})});
+  data=data.filter(d=>!toDelete.includes(d.id));
+  const locByProj={};
+  data.forEach(d=>{if(d.loc&&!locByProj[d.project])locByProj[d.project]=d.loc});
+  data.forEach(d=>{if(!d.loc&&locByProj[d.project])d.loc=locByProj[d.project]});
+  save();render();
+  alert('เสร็จแล้ว ✓\nรวมโฟลเดอร์ '+renames.length+' คู่, ลบรายการเก่า '+toDelete.length+' รายการ'+(manualLines.length?'\n\nยังเหลือ '+manualLines.length+' กลุ่มที่เนื้อหาต่างกันมาก ให้ตรวจเอง':''));
+}
+function delProject(){
+  const p=document.getElementById('fProject').value;
+  if(!p){alert('เลือกโครงการที่ช่องกรองด้านบนก่อน แล้วค่อยกดลบทั้งโครงการ');return}
+  const n=data.filter(d=>d.project===p).length;
+  if(confirm('ลบทั้งโครงการ "'+p+'"\nจะลบ '+n+' หัวข้องานทั้งหมด ยืนยัน?')){
+    pushUndo('ก่อนลบโครงการ "'+p+'"');
+    data=data.filter(d=>d.project!==p);document.getElementById('fProject').value='';save();render();
+    alert('ลบโครงการ "'+p+'" แล้ว ('+n+' รายการ)');
+  }
+}
+
+function renameProject(oldName){
+  const input=prompt('แก้ชื่อโครงการ:',oldName);
+  if(input==null)return;
+  const newName=input.trim();
+  if(!newName||newName===oldName)return;
+  const n=data.filter(d=>d.project===oldName).length;
+  const merge=data.some(d=>d.project===newName);
+  if(merge&&!confirm('มีโครงการชื่อ "'+newName+'" อยู่แล้ว\nจะรวม '+n+' หัวข้องานจาก "'+oldName+'" เข้ากับโครงการนี้ ยืนยัน?'))return;
+  data.forEach(d=>{if(d.project===oldName)d.project=newName});
+  save();
+  if(fProject.value===oldName)fProject.value=newName;
+  render();
+}
+function notifyDue(){
+  const items=data.filter(isDue);
+  if(!items.length)return;
+  if(!('Notification'in window))return;
+  const fire=()=>new Notification('🔔 ตามงานจัดซื้อจัดจ้าง',{body:items.length+' รายการเลยกำหนด/ครบวันนี้\n'+items.slice(0,4).map(d=>'• '+d.project+' – '+d.pkg).join('\n')});
+  if(Notification.permission==='granted')fire();
+  else if(Notification.permission!=='denied')Notification.requestPermission().then(p=>{if(p==='granted')fire()});
+}
+
+function openForm(id){
+  editId=id||null;
+  document.getElementById('mTitle').textContent=id?'แก้ไข หัวข้องาน':'เพิ่ม หัวข้องาน';
+  document.getElementById('mDel').style.display=id?'':'none';
+  const d=id?data.find(x=>x.id===id):{};
+  const g=(k,def='')=>d[k]!=null?d[k]:def;
+  m_project.value=g('project',fProject.value||'');
+  m_cat.value=g('cat','Structural');fillPkgList();
+  m_pkg.value=g('pkg');m_status.value=g('status',0);m_detail.value=g('detail');
+  const invArr=String(g('invited')||'').split(',').map(x=>x.trim());
+  const repSet=new Set(String(g('replied')||'').split(',').map(x=>x.trim()).filter(Boolean));
+  for(let k=1;k<=5;k++){const nm=invArr[k-1]||'';document.getElementById('m_inv'+k).value=nm;document.getElementById('m_rep'+k).checked=!!nm&&repSet.has(nm)}
+  m_boq.value=dispNum(g('boq'));m_price.value=dispNum(g('price'));
+  m_winner.value=g('winner');m_reason.value=g('reason');m_appdate.value=g('appdate');
+  m_po.value=g('po');m_start.value=g('start');m_end.value=g('end');
+  m_followup.value=g('followup');m_owner.value=g('owner');m_note.value=g('note');
+  refreshWinnerHighlight();
+  document.getElementById('modal').classList.add('open');
+}
+// กด 🏆 ที่แถว Supplier เพื่อเลือก/ยกเลิกเป็นผู้รับเหมาที่เลือก แทนการพิมพ์ชื่อซ้ำ
+function pickWinner(k){
+  const nm=document.getElementById('m_inv'+k).value.trim();
+  if(!nm){alert('กรอกชื่อเจ้าที่ '+k+' ก่อน');return}
+  m_winner.value=(m_winner.value.trim()===nm)?'':nm;
+  if(m_winner.value)document.getElementById('m_rep'+k).checked=true;
+  refreshWinnerHighlight();
+}
+function refreshWinnerHighlight(){
+  const w=m_winner.value.trim();
+  for(let k=1;k<=5;k++){
+    const nm=document.getElementById('m_inv'+k).value.trim();
+    document.getElementById('m_row'+k).classList.toggle('iswinner',!!nm&&nm===w);
+  }
+  document.getElementById('m_winnerLbl').textContent=w?('— เลือก: 🏆 '+w):'';
+}
+function closeForm(){document.getElementById('modal').classList.remove('open')}
+function saveForm(){
+  if(!m_project.value.trim()||!m_pkg.value.trim()){alert('กรุณากรอกโครงการ และ หัวข้องาน');return}
+  const invited=[1,2,3,4,5].map(k=>document.getElementById('m_inv'+k).value.trim()).filter(Boolean).join(', ');
+  const replied=[1,2,3,4,5].map(k=>{const nm=document.getElementById('m_inv'+k).value.trim();return (nm&&document.getElementById('m_rep'+k).checked)?nm:''}).filter(Boolean).join(', ');
+  const rec={id:editId||uid(),
+    project:m_project.value.trim(),cat:m_cat.value,pkg:m_pkg.value.trim(),
+    status:+m_status.value,detail:m_detail.value.trim(),invited:invited,
+    replied:replied,boq:m_boq.value.replace(/[^\d.]/g,''),price:m_price.value.replace(/[^\d.]/g,''),winner:m_winner.value.trim(),
+    reason:m_reason.value.trim(),appdate:m_appdate.value,po:m_po.value.trim(),
+    start:m_start.value,end:m_end.value,followup:m_followup.value,owner:m_owner.value.trim(),note:m_note.value.trim()};
+  touch(rec);
+  if(editId){data=data.map(x=>x.id===editId?rec:x)}else{data.push(rec)}
+  save();closeForm();render();
+}
+function delItem(){if(confirm('ลบรายการนี้?')){pushUndo('ก่อนลบรายการ');data=data.filter(x=>x.id!==editId);save();closeForm();render()}}
+
+function exportSheet(){
+  // ส่งออกเป็นชีท Excel (.xls) — จัดกลุ่มตามโครงการ, หัวตารางเน้นสี, ตัวเลขมีลูกน้ำ, มีรวมยอด
+  const fmt=n=>(n===''||n==null)?'':Number(n).toLocaleString('en-US');
+  const diffTxt=(boq,price)=>{
+    if(!boq||!price)return'';
+    const d=Number(boq)-Number(price);
+    return(d>=0?'ประหยัด ':'เกิน ')+fmt(Math.abs(d));
+  };
+  const bd='border:0.5pt solid #cccccc;padding:3px 6px';
+  const numFmt="mso-number-format:'#,##0';text-align:right;"+bd;
+  const td=(v,style)=>`<td style="${style||bd}">${esc(v)}</td>`;
+  const tdN=(v,style)=>`<td style="${style||numFmt}">${(v===''||v==null)?'':Number(v)}</td>`;
+  const head=['หัวข้องาน','สถานะ','ราคา BOQ','ราคาจริง','ส่วนต่าง','ผู้รับเหมา','วันตามงาน'];
+  const rows=filtered();
+  const byProj={};
+  rows.forEach(d=>{(byProj[d.project]=byProj[d.project]||[]).push(d)});
+  let body=`<tr><td colspan="7" style="font-size:15px;font-weight:bold;background:#1b2733;color:#ffffff;padding:6px">สรุปจัดซื้อจัดจ้าง — ${esc(fProject.value||'ทุกโครงการ')} (${todayStr()})</td></tr>`;
+  body+=`<tr><td colspan="7"></td></tr>`;
+  let gBoq=0,gReal=0;
+  Object.keys(byProj).sort((a,b)=>a.localeCompare(b,'th')).forEach(p=>{
+    const g=byProj[p].slice().sort((a,b)=>a.status-b.status||String(a.pkg).localeCompare(String(b.pkg),'th'));
+    body+=`<tr><td colspan="7" style="font-weight:bold;background:#dbeafe;color:#1e3a5f;padding:4px 6px">📁 ${esc(p)} (${g.length} หัวข้องาน)</td></tr>`;
+    body+=`<tr>`+head.map(h=>`<td style="background:#374151;color:#ffffff;font-weight:bold;${bd}">${esc(h)}</td>`).join('')+`</tr>`;
+    let pBoq=0,pReal=0;
+    g.forEach(d=>{
+      pBoq+=Number(d.boq)||0; pReal+=Number(d.price)||0;
+      body+=`<tr>`+td(d.pkg)+td((+d.status+1)+'. '+STATUSES[d.status])+tdN(d.boq)+tdN(d.price)+td(diffTxt(d.boq,d.price))+td(d.winner)+td(d.followup)+`</tr>`;
+    });
+    gBoq+=pBoq; gReal+=pReal;
+    const tb='font-weight:bold;background:#eef2ff;'+bd;
+    body+=`<tr>`+td('รวม '+p,tb)+td('',tb)+tdN(pBoq,'mso-number-format:\'#,##0\';text-align:right;'+tb)+tdN(pReal,'mso-number-format:\'#,##0\';text-align:right;'+tb)+td(diffTxt(pBoq,pReal),tb)+td('',tb)+td('',tb)+`</tr>`;
+    body+=`<tr><td colspan="7"></td></tr>`;
+  });
+  const gs='font-weight:bold;background:#22c55e;color:#04160b;'+bd;
+  body+=`<tr>`+td('รวมทั้งหมดทุกโครงการ',gs)+td('',gs)+tdN(gBoq,'mso-number-format:\'#,##0\';text-align:right;'+gs)+tdN(gReal,'mso-number-format:\'#,##0\';text-align:right;'+gs)+td(diffTxt(gBoq,gReal),gs)+td('',gs)+td('',gs)+`</tr>`;
+  const html=`<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8">`+
+    `<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>สรุป</x:Name>`+
+    `<x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->`+
+    `</head><body><table border="0" cellspacing="0" style="font-family:Tahoma,sans-serif;font-size:11px">${body}</table></body></html>`;
+  dl(new Blob(['﻿'+html],{type:'application/vnd.ms-excel'}),'สรุปจัดซื้อจัดจ้าง_'+todayStr()+'.xls');
+}
+function exportJSON(){
+  const d=new Date(),ymd=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  dl(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),'procurement_backup_'+ymd+'.json');
+  localStorage.setItem('lastBackup',ymd);
+}
+const GCAL_KEY="gcalWebAppUrl";
+async function syncGCal(){
+  let url=localStorage.getItem(GCAL_KEY)||"";
+  if(!url){
+    url=prompt("วางลิงก์ตัวกลางปฏิทิน:\n• Google: ลิงก์ Web App จาก Apps Script (…/exec)\n• Outlook: ลิงก์ HTTP trigger จาก Power Automate\nดูวิธีในไฟล์คู่มือ");
+    if(!url)return; url=url.trim();
+    if(!/^https:\/\//.test(url)){alert("ลิงก์ไม่ถูก ต้องขึ้นต้น https://");return}
+    localStorage.setItem(GCAL_KEY,url);
+  }
+  // ส่งทุก หัวข้องาน ที่มีวันตามงาน (งานเสร็จแล้ว = ลบ event)
+  const items=data.filter(d=>d.followup).map(d=>({
+    id:d.id, date:d.followup, done:d.status>=10,
+    title:'🔔 ตามงาน: '+d.project+' – '+d.pkg,
+    desc:'สถานะ: '+(+d.status+1)+'. '+STATUSES[d.status]+
+      (d.detail?'\nรายละเอียด: '+d.detail:'')+
+      (d.winner?'\nผู้รับเหมา: '+d.winner:'')+
+      (d.owner?'\nผู้รับผิดชอบ: '+d.owner:'')
+  }));
+  if(!items.length){alert('ยังไม่มี หัวข้องาน ที่ตั้ง "วันตามงาน" — เปิด ✏️ ใส่วันตามงานก่อนครับ');return}
+  try{
+    await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({items})});
+    alert('ส่งซิงก์แล้ว '+items.length+' รายการ ✓\nเปิดแอปปฏิทินบน iPhone เพื่อดู (อาจใช้เวลาสักครู่)\n\nหมายเหตุ: iPhone ต้องเพิ่มบัญชี Google และเปิดปฏิทินไว้');
+  }catch(e){alert('ส่งไม่สำเร็จ: '+e+'\nตรวจลิงก์ Web App อีกครั้ง')}
+}
+function resetGCal(){localStorage.removeItem(GCAL_KEY);alert('ล้างลิงก์ Google Calendar แล้ว ครั้งหน้ากดซิงก์จะถามลิงก์ใหม่')}
+
+function exportICS(){
+  const items=data.filter(d=>d.followup&&d.status<10);
+  if(!items.length){alert('ยังไม่มี หัวข้องาน ที่ตั้ง "วันตามงาน" — เปิด ✏️ แล้วใส่วันตามงานก่อนครับ');return}
+  const pad=n=>String(n).padStart(2,'0');
+  const stamp=new Date();const dtstamp=stamp.getUTCFullYear()+pad(stamp.getUTCMonth()+1)+pad(stamp.getUTCDate())+'T'+pad(stamp.getUTCHours())+pad(stamp.getUTCMinutes())+pad(stamp.getUTCSeconds())+'Z';
+  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//ProcurementTracker//TH','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
+  const nextDay=s=>{const dt=new Date(s+'T00:00:00');dt.setDate(dt.getDate()+1);return dt.getFullYear()+pad(dt.getMonth()+1)+pad(dt.getDate())};
+  items.forEach(d=>{
+    const ymd=d.followup.replace(/-/g,'');const ymd2=nextDay(d.followup);
+    const title=`🔔 ตามงาน: ${d.project} – ${d.pkg}`;
+    const desc=`สถานะ: ${(+d.status+1)}. ${STATUSES[d.status]}`+
+      (d.detail?`\\nรายละเอียด: ${d.detail}`:'')+
+      (d.winner?`\\nผู้รับเหมา: ${d.winner}`:'')+
+      (d.owner?`\\nผู้รับผิดชอบ: ${d.owner}`:'');
+    L.push('BEGIN:VEVENT',
+      'UID:'+d.id+'-fu@procurement',
+      'DTSTAMP:'+dtstamp,
+      'DTSTART;VALUE=DATE:'+ymd,
+      'DTEND;VALUE=DATE:'+ymd2,
+      'SUMMARY:'+title.replace(/,/g,'\\,'),
+      'DESCRIPTION:'+desc.replace(/,/g,'\\,'),
+      'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+title.replace(/,/g,'\\,'),'TRIGGER:PT9H','END:VALARM',
+      'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:เตือนล่วงหน้า 1 วัน','TRIGGER:-P1DT15H','END:VALARM',
+      'END:VEVENT');
+  });
+  L.push('END:VCALENDAR');
+  dl(new Blob([L.join('\r\n')],{type:'text/calendar'}),'ตามงานจัดซื้อจัดจ้าง.ics');
+}
+function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const arr=JSON.parse(r.result);if(!Array.isArray(arr))throw 0;
+    pushUndo('ก่อนนำเข้าไฟล์');
+    if(data.length){
+      const add=confirm('มีข้อมูลอยู่แล้ว '+data.length+' รายการ\n\nกด OK = เพิ่มต่อจากของเดิม (รวมกัน)\nกด Cancel = แทนที่ทั้งหมดด้วยไฟล์ใหม่');
+      if(add){const ids=new Set(data.map(d=>d.id));let n=0;arr.forEach(x=>{if(!x.id||ids.has(x.id))x.id=uid();data.push(x);n++});save();render();alert('เพิ่มแล้ว '+n+' รายการ (รวมเป็น '+data.length+')')}
+      else{data=arr;save();render();alert('แทนที่ด้วย '+arr.length+' รายการ')}
+    } else {data=arr;save();render();alert('นำเข้าสำเร็จ '+arr.length+' รายการ')}
+  }catch(x){alert('ไฟล์ไม่ถูกต้อง')}};r.readAsText(f);e.target.value=''}
+function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click()}
+
+function seedDemo(){
+  if(data.length&&!confirm('เพิ่มข้อมูลตัวอย่าง 2 โครงการ?'))return;
+  const demo=[
+    ['อาคาร A','Structural','เสาเข็ม',8,'ภูมิสยาม, เสาเข็มไทย','ภูมิสยาม, เสาเข็มไทย',1250000,'ภูมิสยาม','ราคาต่ำสุด+ผ่านเทคนิค','2026-06-20','PO-A-001','สมชาย'],
+    ['อาคาร A','Structural','โครงสร้างเหล็ก',5,'SYS, เหล็กสยาม, TATA','SYS, เหล็กสยาม',0,'','','','','วิภา'],
+    ['อาคาร A','MEP','ระบบไฟฟ้า',6,'ABB, ชไนเดอร์','ABB, ชไนเดอร์',0,'','','','','ประเสริฐ'],
+    ['อาคาร A','Architectural','หลังคา',2,'','',0,'','','','','สมชาย'],
+    ['อาคาร B','Structural','ฐานราก',9,'ซีแพค','ซีแพค',2100000,'ซีแพค','เจ้าเดียวที่ส่งทัน','2026-05-15','PO-B-003','ธนา'],
+    ['อาคาร B','MEP','ระบบปรับอากาศ',4,'Daikin, Trane, Carrier','Daikin, Trane',0,'','','','','ธนา'],
+    ['อาคาร B','External','ถนน',0,'','',0,'','','','','—'],
+  ].map(r=>({id:uid(),project:r[0],cat:r[1],pkg:r[2],status:r[3],invited:r[4],replied:r[5],
+    price:r[6]||'',winner:r[7],reason:r[8],appdate:r[9],po:r[10],owner:r[11],detail:'',replied2:'',start:'',end:'',note:''}));
+  data=data.concat(demo);save();render();
+}
+
+['fProject','fCat','fStatus','fSearch','fSort'].forEach(id=>document.getElementById(id).addEventListener('input',render));
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeForm()});
+document.getElementById('calModal').addEventListener('click',e=>{if(e.target.id==='calModal')e.currentTarget.classList.remove('open')});
+function updateBackupBar(){
+  const d=new Date(),ymd=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const last=localStorage.getItem('lastBackup');
+  document.getElementById('backupBar').style.display=(data.length&&last!==ymd)?'block':'none';
+}
+initSelects();render();notifyDue();updateBackupBar();initSaveFile();syncThemeBtn();initSync();
+</script>
+</body>
+</html>
