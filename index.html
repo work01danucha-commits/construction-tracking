@@ -509,14 +509,13 @@ const PKGS = {
     "ประปาภายนอก","สนามฟุตซอล","บ้านพัก","งานสาธารณูปโภค","ครุภัณฑ์"]
 };
 const KEY="constructProcureTracker_v1";
-let data = load();
-let editId = null;
 
 /* ===== แก้บัค "วันเพี้ยน" (2026-07-21) =====
  * อาการ: Agenda โชว์วันเป็น 2026-07-20T17:00:00.000Z และงานหายจากตารางปฏิทิน
  * เหตุ: Google Sheet เก็บช่องวันที่เป็น Date → Apps Script ส่งกลับเป็น ISO เต็ม (UTC)
  *       ปฏิทินเทียบคีย์ด้วย 'YYYY-MM-DD' จึงหาไม่เจอ และวันคลาดไป 1 วัน
  * แก้: บีบทุกช่องวันที่ให้เป็น 'YYYY-MM-DD' (เวลาไทย) ทั้งตอนโหลดและตอนดึงจากชีท
+ * (หมายเหตุ: บล็อกนี้ต้องอยู่ก่อน "let data = load()" ด้านล่าง เพราะ load() เรียกใช้ DATE_FIELDS/toYMD ทันที)
  */
 const DATE_FIELDS=['followup','appdate','start','end'];
 function ymdParts(y,m,d){return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')}
@@ -540,6 +539,9 @@ function normAll(a){return Array.isArray(a)?a.map(normRec):[]}
 
 function load(){try{return normAll(JSON.parse(localStorage.getItem(KEY))||[])}catch(e){return[]}}
 function save(){localStorage.setItem(KEY,JSON.stringify(data));autoWriteFile();syncDiff()}
+
+let data = load();
+let editId = null;
 
 /* ===== ซิงก์กับชีทกลาง (Google Sheet) =====
  * ปรัชญา: เซฟลงเครื่องก่อนเสมอ แล้วค่อยส่งขึ้นชีท (local-first)
