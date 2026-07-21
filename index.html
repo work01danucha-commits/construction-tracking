@@ -54,6 +54,29 @@
   [data-theme="dark"] .danger-btn{color:#fca5a5}
   .danger-text{color:#dc2626}
   [data-theme="dark"] .danger-text{color:#fca5a5}
+  /* โหมดมืด: หัวข้อกลุ่ม Agenda + ป้ายรายละเอียด ให้สว่างพอที่จะอ่านออก (21 ก.ค. 2026) */
+  [data-theme="dark"] #agenda .ag-over .ag-gh{color:#fca5a5}
+  [data-theme="dark"] #agenda .ag-today .ag-gh{color:#fdba74}
+  [data-theme="dark"] #agenda .ag-tmr .ag-gh{color:#fde047}
+  [data-theme="dark"] #agenda .ag-soon .ag-gh{color:#6ee7b7}
+  [data-theme="dark"] .pc-detail{color:#e6ecf5}
+  [data-theme="dark"] .pc-detail .lbl{color:#a9b8ce}
+  [data-theme="dark"] .pkgcard.cL-Architectural{border-left-color:#f87171}
+  /* หน้าใส่รหัสผ่าน */
+  #gate{position:fixed;inset:0;z-index:9999;background:var(--bg);display:none;
+    align-items:center;justify-content:center;padding:20px}
+  #gate.on{display:flex}
+  #gate .gbox{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:26px 22px;width:100%;max-width:340px;box-shadow:0 10px 40px rgba(0,0,0,.18);text-align:center}
+  #gate .gicon{font-size:34px;margin-bottom:6px}
+  #gate h3{margin:0 0 4px;font-size:17px;color:var(--txt)}
+  #gate .gsub{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5}
+  #gate input{width:100%;padding:11px 12px;font-size:16px;border-radius:10px;
+    border:1px solid var(--line);background:var(--card2);color:var(--txt);text-align:center;letter-spacing:2px}
+  #gate input:focus{border-color:var(--accent);outline:none}
+  #gate button{width:100%;margin-top:10px;padding:11px;font-size:15px;font-weight:700}
+  #gate .gerr{color:#dc2626;font-size:12px;margin-top:10px;min-height:16px;font-weight:600}
+  [data-theme="dark"] #gate .gerr{color:#fca5a5}
   .theme-toggle{position:relative;width:38px;height:38px;border-radius:11px;background:var(--card2);
     border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;padding:0}
   .theme-toggle:hover{background:#e6edf7}
@@ -149,7 +172,7 @@
   .pc-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
   .pc-proj{font-size:11px;color:var(--muted)}
   .pc-name{font-size:19px;font-weight:700;margin:3px 0;line-height:1.3;color:var(--txt)}
-  .pc-detail{font-size:14px;color:#1e293b;font-weight:600;line-height:1.5;margin:6px 0 10px;
+  .pc-detail{font-size:14px;color:var(--txt);font-weight:600;line-height:1.5;margin:6px 0 10px;
     padding:8px 10px;background:var(--card2);border-radius:8px;border-left:3px solid var(--accent);
     white-space:normal;word-break:break-word}
   .pc-detail .lbl{display:block;font-size:10px;color:var(--muted);font-weight:400;margin-bottom:2px}
@@ -405,16 +428,21 @@
   </div>
   <div id="menuPanel">
     <button class="btn-ok" onclick="pullFromSheet(false);closeMenu()">🔄 ดึงข้อมูลล่าสุดจากชีท</button>
-    <button onclick="migrateUp();closeMenu()">📤 ย้ายข้อมูลขึ้นชีท (ครั้งแรก)</button>
+    <!-- ซ่อน 21 ก.ค. 2026: ย้ายขึ้นชีทครั้งแรกทำไปแล้ว + แถบเตือนด้านบนจะขึ้นปุ่มให้เองถ้าจำเป็น [โค้ดฟังก์ชันยังอยู่ครบ เอาปุ่มกลับได้โดยลบเครื่องหมายคอมเมนต์รอบบรรทัดถัดไปออก]
+    <button onclick="migrateUp();closeMenu()">📤 ย้ายข้อมูลขึ้นชีท (ครั้งแรก)</button> -->
     <button onclick="undoLast();closeMenu()">↩️ Undo (ย้อนกลับล่าสุด)</button>
     <button onclick="exportSheet();closeMenu()">⬇️ ส่งออกชีท (Excel)</button>
     <button onclick="exportJSON();closeMenu()">⬇️ สำรอง (JSON)</button>
     <button onclick="document.getElementById('imp').click();closeMenu()">⬆️ นำเข้า</button>
     <input type="file" id="imp" accept=".json" style="display:none" onchange="importJSON(event)">
-    <button class="btn-ok" onclick="connectSaveFile();closeMenu()">💾 เซฟลงไฟล์อัตโนมัติ</button>
-    <button onclick="migrateBoq();closeMenu()">🔁 ย้ายราคาเดิม→BOQ</button>
-    <button onclick="removeDuplicates();closeMenu()">🧹 ลบรายการซ้ำ (เหมือนกันเป๊ะ)</button>
+    <!-- ซ่อน 21 ก.ค. 2026: ชีทกลาง + backup ทุกจันทร์ ทำหน้าที่นี้แทนแล้ว (ทำงานเฉพาะ Chrome บนคอม) [โค้ดฟังก์ชันยังอยู่ครบ เอาปุ่มกลับได้โดยลบเครื่องหมายคอมเมนต์รอบบรรทัดถัดไปออก]
+    <button class="btn-ok" onclick="connectSaveFile();closeMenu()">💾 เซฟลงไฟล์อัตโนมัติ</button> -->
+    <!-- ซ่อน 21 ก.ค. 2026: เครื่องมือแปลงข้อมูลเก่าครั้งเดียว ใช้ไปแล้ว [โค้ดฟังก์ชันยังอยู่ครบ เอาปุ่มกลับได้โดยลบเครื่องหมายคอมเมนต์รอบบรรทัดถัดไปออก]
+    <button onclick="migrateBoq();closeMenu()">🔁 ย้ายราคาเดิม→BOQ</button> -->
+    <!-- ซ่อน 21 ก.ค. 2026: ซ้ำซ้อนกับ "ล้างข้อมูลซ้ำ" ที่เก่งกว่า [โค้ดฟังก์ชันยังอยู่ครบ เอาปุ่มกลับได้โดยลบเครื่องหมายคอมเมนต์รอบบรรทัดถัดไปออก]
+    <button onclick="removeDuplicates();closeMenu()">🧹 ลบรายการซ้ำ (เหมือนกันเป๊ะ)</button> -->
     <button onclick="autoFixDuplicates();closeMenu()">🧹 ล้างข้อมูลซ้ำ (รวมโฟลเดอร์+เก็บล่าสุด)</button>
+    <button onclick="logout();closeMenu()">🔒 ออกจากระบบ</button>
     <button class="danger-btn" onclick="delProject();closeMenu()">🗑 ลบทั้งโครงการ</button>
   </div>
 
@@ -427,6 +455,17 @@
 </div>
 
 <!-- ปฏิทินใหญ่ (ขยาย) -->
+<div id="gate">
+  <div class="gbox">
+    <div class="gicon">🔒</div>
+    <h3>ฟอร์มติดตามการคัดเลือกผู้รับเหมา</h3>
+    <div class="gsub">กรอกรหัสผ่านเพื่อเข้าใช้งาน<br>เครื่องนี้จะจำไว้ ไม่ต้องกรอกซ้ำทุกครั้ง</div>
+    <input id="gateInput" type="password" placeholder="รหัสผ่าน" autocomplete="current-password"
+      onkeydown="if(event.key==='Enter')submitGate()">
+    <button class="btn-primary" onclick="submitGate()">เข้าใช้งาน</button>
+    <div class="gerr" id="gateErr"></div>
+  </div>
+</div>
 <div class="modal" id="calModal"><div class="sheet" style="max-width:900px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
     <h2 style="margin:0">📅 ปฏิทินงานตามงาน</h2>
@@ -556,15 +595,32 @@ function loadQ(){try{return JSON.parse(localStorage.getItem(SYNCQ_KEY)||'[]')}ca
 function saveQ(q){localStorage.setItem(SYNCQ_KEY,JSON.stringify(q))}
 function enqueue(op){const q=loadQ();q.push(op);saveQ(q)}
 
+/* ===== รหัสผ่าน (เพิ่ม 21 ก.ค. 2026) =====
+ * รหัสไม่ได้ฝังในไฟล์นี้ (ไฟล์บน GitHub เป็นสาธารณะ) — ผู้ใช้พิมพ์เอง
+ * เก็บไว้ในเครื่องผู้ใช้ ใช้ต่อได้เรื่อยๆ จนกว่าจะกด "ออกจากระบบ"
+ * ทุก request แนบรหัสไป ฝั่ง Apps Script เป็นคนตัดสินว่าถูกหรือผิด
+ */
+const SEC_KEY=KEY+'__sec';
+function getSecret(){try{return localStorage.getItem(SEC_KEY)||''}catch(e){return''}}
+function setSecret(v){try{localStorage.setItem(SEC_KEY,v)}catch(e){}}
+function clearSecret(){try{localStorage.removeItem(SEC_KEY)}catch(e){}}
+
+// เซิร์ฟเวอร์ปฏิเสธเพราะรหัสผิด/ยังไม่ใส่ → ขอรหัสใหม่
+function isAuthErr(msg){return String(msg||'').indexOf('unauthorized')>=0}
+function onAuthFail(){clearSecret();showGate('รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่')}
+
 async function apiWrite(payload){
-  const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+  const body=Object.assign({},payload,{secret:getSecret()});
+  const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
   const j=await res.json();
+  if(j&&j.needSecret){onAuthFail();throw new Error('unauthorized')}
   if(!j||!j.ok)throw new Error((j&&j.error)||'server error');
   return j.data;
 }
 async function apiList(){
-  const res=await fetch(API_URL+'?t='+Date.now(),{method:'GET'});
+  const res=await fetch(API_URL+'?t='+Date.now()+'&sec='+encodeURIComponent(getSecret()),{method:'GET'});
   const j=await res.json();
+  if(j&&j.needSecret){onAuthFail();throw new Error('unauthorized')}
   if(!j||!j.ok)throw new Error((j&&j.error)||'server error');
   return j.data;
 }
@@ -657,6 +713,47 @@ function renderSyncBar(){
     return;
   }
   el.style.display='none';
+}
+
+
+/* ===== หน้าใส่รหัสผ่าน ===== */
+function showGate(msg){
+  const g=document.getElementById('gate');if(!g)return;
+  g.classList.add('on');
+  const err=document.getElementById('gateErr');if(err)err.textContent=msg||'';
+  const inp=document.getElementById('gateInput');
+  if(inp){inp.value='';setTimeout(()=>inp.focus(),80)}
+}
+function hideGate(){const g=document.getElementById('gate');if(g)g.classList.remove('on')}
+
+async function submitGate(){
+  const inp=document.getElementById('gateInput'),err=document.getElementById('gateErr');
+  const v=(inp&&inp.value||'').trim();
+  if(!v){if(err)err.textContent='กรุณากรอกรหัสผ่าน';return}
+  if(err)err.textContent='กำลังตรวจสอบ...';
+  setSecret(v);
+  try{
+    await apiList();              // ยิงจริงไปถาม Apps Script ว่ารหัสนี้ผ่านไหม
+    hideGate();
+    if(err)err.textContent='';
+    pullFromSheet(true);
+  }catch(e){
+    if(isAuthErr(e.message)){clearSecret();showGate('รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่')}
+    else{hideGate();if(err)err.textContent=''}   // เน็ตมีปัญหา ไม่ใช่รหัสผิด — ให้ใช้งานต่อได้
+  }
+}
+
+function logout(){
+  if(!confirm('ออกจากระบบ?\nครั้งหน้าจะต้องกรอกรหัสผ่านใหม่\n(ข้อมูลบนชีทกลางไม่ได้ถูกลบ)'))return;
+  clearSecret();
+  location.reload();
+}
+
+// ตอนเปิดแอป: ถ้ายังไม่เคยกรอกรหัส ให้ลองเงียบๆ ก่อน — ถ้าเซิร์ฟเวอร์ยังไม่บังคับรหัสก็ผ่านเลย
+async function initGate(){
+  if(getSecret())return;                 // เคยกรอกแล้ว ใช้ต่อได้
+  try{ await apiList(); }                // ยังไม่ตั้งรหัสฝั่งเซิร์ฟเวอร์ → ผ่าน
+  catch(e){ if(isAuthErr(e.message))showGate(''); }
 }
 
 function initSync(){
@@ -1525,7 +1622,7 @@ function updateBackupBar(){
   const last=localStorage.getItem('lastBackup');
   document.getElementById('backupBar').style.display=(data.length&&last!==ymd)?'block':'none';
 }
-initSelects();render();notifyDue();updateBackupBar();initSaveFile();syncThemeBtn();initSync();
+initSelects();render();notifyDue();updateBackupBar();initSaveFile();syncThemeBtn();initSync();initGate();
 </script>
 </body>
 </html>
