@@ -296,6 +296,17 @@
   .field input,.field select,.field textarea{width:100%}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .modal-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  /* แนบไฟล์ */
+  .att-list{display:flex;flex-direction:column;gap:5px;margin-top:6px}
+  .att-item{display:flex;align-items:center;gap:8px;padding:6px 9px;background:var(--card2);border:1px solid var(--line);border-radius:9px;font-size:13px}
+  .att-item a{flex:1;color:var(--accent);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .att-item a:hover{text-decoration:underline}
+  .att-size{color:var(--muted);font-size:11.5px;flex:0 0 auto}
+  .att-del{flex:0 0 auto;width:26px;height:26px;padding:0;color:#dc2626;border:1px solid var(--tint-red2);background:var(--tint-red);border-radius:7px;cursor:pointer;font-size:13px}
+  .att-empty{color:var(--muted);font-size:12.5px;padding:3px 0}
+  .att-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .att-btns button{padding:7px 12px;font-size:13px}
+  .att-status{font-size:12px;color:var(--accent);margin-top:5px;min-height:15px}
   .empty{text-align:center;color:var(--muted);padding:30px}
   .menubtn{font-weight:700}
   /* โครงสร้าง 2 คอลัมน์: ซ้าย=ปฏิทิน+สรุปยอด (ตรึงเลื่อนตาม) / ขวา=รายการงาน */
@@ -531,6 +542,16 @@
       <div class="field"><label>ผู้รับผิดชอบ</label><input id="m_owner"></div>
     </div>
     <div class="field"><label>หมายเหตุ</label><input id="m_note"></div>
+    <div class="field"><label>📎 ไฟล์แนบ (สัญญา / ใบเสนอราคา / เอกสาร)</label>
+      <div class="att-list" id="m_attachList"></div>
+      <div class="att-btns">
+        <button type="button" onclick="document.getElementById('m_fileInput').click()">📎 แนบไฟล์</button>
+        <button type="button" onclick="document.getElementById('m_camInput').click()">📷 ถ่ายรูป</button>
+      </div>
+      <div class="att-status" id="m_attachStatus"></div>
+      <input type="file" id="m_fileInput" multiple style="display:none" onchange="onAttachPick(this)">
+      <input type="file" id="m_camInput" accept="image/*" capture="environment" style="display:none" onchange="onAttachPick(this)">
+    </div>
     <div class="modal-actions">
       <button class="btn-ok" onclick="saveForm()">💾 บันทึก</button>
       <button onclick="closeForm()">ยกเลิก</button>
@@ -1465,6 +1486,7 @@ function openForm(id){
   m_winner.value=g('winner');m_reason.value=g('reason');m_appdate.value=g('appdate');
   m_po.value=g('po');m_start.value=g('start');m_end.value=g('end');
   m_followup.value=g('followup');m_owner.value=g('owner');m_note.value=g('note');
+  formAttachments=(d.attachments&&Array.isArray(d.attachments))?d.attachments.slice():[];renderAttachList();
   refreshWinnerHighlight();
   document.getElementById('modal').classList.add('open');
 }
@@ -1485,6 +1507,55 @@ function refreshWinnerHighlight(){
   document.getElementById('m_winnerLbl').textContent=w?('— เลือก: 🏆 '+w):'';
 }
 function closeForm(){document.getElementById('modal').classList.remove('open')}
+
+/* ===== แนบไฟล์ (เก็บไฟล์จริงบน Google Drive ผ่าน Apps Script) ===== */
+let formAttachments=[];
+function fmtSize(n){n=Number(n)||0;if(n<1024)return n+' B';if(n<1048576)return (n/1024).toFixed(0)+' KB';return (n/1048576).toFixed(1)+' MB'}
+function renderAttachList(){
+  const box=document.getElementById('m_attachList');if(!box)return;
+  if(!formAttachments.length){box.innerHTML='<div class="att-empty">ยังไม่มีไฟล์แนบ</div>';return}
+  box.innerHTML=formAttachments.map((a,i)=>
+    '<div class="att-item"><a href="'+esc(a.url)+'" target="_blank" rel="noopener">📎 '+esc(a.name)+'</a>'+
+    '<span class="att-size">'+fmtSize(a.size)+'</span>'+
+    '<button type="button" class="att-del" title="เอาออก" onclick="removeAttach('+i+')">✕</button></div>').join('');
+}
+const MAX_ATTACH=10*1024*1024;
+function readB64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>{const s=String(r.result||'');const i=s.indexOf(',');res(i>=0?s.slice(i+1):s)};r.onerror=rej;r.readAsDataURL(file)})}
+async function onAttachPick(input){
+  const files=Array.from(input.files||[]);input.value='';
+  if(!files.length)return;
+  if(!navigator.onLine){alert('ตอนนี้ออฟไลน์ — แนบไฟล์ได้เฉพาะตอนออนไลน์');return}
+  for(const f of files){
+    if(f.size>MAX_ATTACH){alert('ไฟล์ "'+f.name+'" ใหญ่เกิน 10MB — ข้ามไฟล์นี้ (Apps Script รับไฟล์ใหญ่ไม่ไหว)');continue}
+    await uploadOne(f);
+  }
+}
+async function uploadOne(file){
+  const st=document.getElementById('m_attachStatus');
+  if(st)st.textContent='กำลังอัปโหลด '+file.name+' …';
+  try{
+    const b64=await readB64(file);
+    const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'uploadFile',secret:getSecret(),name:file.name,mime:file.type||'application/octet-stream',dataB64:b64})});
+    const j=await res.json();
+    if(j&&j.needSecret){onAuthFail();throw new Error('unauthorized')}
+    if(!j||!j.ok||!j.file)throw new Error((j&&j.error)||'อัปโหลดไม่สำเร็จ');
+    formAttachments.push({id:j.file.id,name:j.file.name,size:j.file.size,url:j.file.url});
+    renderAttachList();
+    if(st)st.textContent='';
+  }catch(e){
+    if(st)st.textContent='';
+    if(isAuthErr(e.message))showGate('รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่');
+    else alert('อัปโหลด "'+file.name+'" ไม่สำเร็จ: '+e.message);
+  }
+}
+async function removeAttach(i){
+  const a=formAttachments[i];if(!a)return;
+  if(!confirm('เอาไฟล์ "'+a.name+'" ออก?\nไฟล์จะถูกย้ายลงถังขยะ Drive (กู้คืนได้ 30 วัน)'))return;
+  if(a.id){try{await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({action:'deleteFile',secret:getSecret(),fileId:a.id})})}catch(e){}}
+  formAttachments.splice(i,1);renderAttachList();
+}
 function saveForm(){
   if(!m_project.value.trim()||!m_pkg.value.trim()){alert('กรุณากรอกโครงการ และ หัวข้องาน');return}
   const invited=[1,2,3,4,5].map(k=>document.getElementById('m_inv'+k).value.trim()).filter(Boolean).join(', ');
@@ -1494,7 +1565,7 @@ function saveForm(){
     status:+m_status.value,detail:m_detail.value.trim(),invited:invited,
     replied:replied,boq:m_boq.value.replace(/[^\d.]/g,''),price:m_price.value.replace(/[^\d.]/g,''),winner:m_winner.value.trim(),
     reason:m_reason.value.trim(),appdate:m_appdate.value,po:m_po.value.trim(),
-    start:m_start.value,end:m_end.value,followup:m_followup.value,owner:m_owner.value.trim(),note:m_note.value.trim()};
+    start:m_start.value,end:m_end.value,followup:m_followup.value,owner:m_owner.value.trim(),note:m_note.value.trim(),attachments:formAttachments.slice()};
   touch(rec);
   if(editId){data=data.map(x=>x.id===editId?rec:x)}else{data.push(rec)}
   save();closeForm();render();
