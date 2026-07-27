@@ -994,8 +994,9 @@ function editLocation(p){
   save();render();
 }
 function renderFolders(){
+  // เรียงชื่อโครงการ ก-ฮ คงที่ — ไม่สลับตำแหน่งเวลาแก้รายการ (ความด่วนดูจากป้ายสีแดงบนโฟลเดอร์แทน) 27 ก.ค. 2026
   const projs=[...new Set(data.map(d=>d.project).filter(Boolean))]
-    .sort((a,b)=>{const ua=projUrgency(a),ub=projUrgency(b);return ua!==ub?ua-ub:a.localeCompare(b,'th')});
+    .sort((a,b)=>a.localeCompare(b,'th'));
   const list=document.getElementById('list');
   const head=document.getElementById('folderHead');
   if(head)head.innerHTML=`<div class="fh-count">ทั้งหมด <b>${projs.length}</b> โครงการ</div>`;
