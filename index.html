@@ -332,6 +332,17 @@
   .hist-add textarea:focus{border-color:var(--accent);outline:none}
   .hist-add button{padding:7px 14px;font-size:14px;font-weight:700;align-self:flex-start}
   [data-theme="dark"] .hist-del:hover{color:#fca5a5}
+  .hist-imgbtns{display:flex;align-items:center;gap:8px;margin-top:6px}
+  .hist-imgbtns button{padding:6px 12px;font-size:13px}
+  .hist-imgrow{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .hist-thumb{position:relative;width:74px;height:74px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--card2);display:block}
+  .hist-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .hist-thumb.view{cursor:zoom-in}
+  .thumb-del{position:absolute;top:2px;right:2px;width:18px;height:18px;padding:0;border:none;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:11px;line-height:1;cursor:pointer}
+  .thumb-fallback{display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:11px;color:var(--accent);text-align:center;padding:4px}
+  .hist-thumb.img-fail img{display:none}
+  .hist-thumb.img-fail .thumb-fallback{display:flex}
+  .hist-thumb.img-fail{cursor:pointer}
   .usr{cursor:pointer}
   .empty{text-align:center;color:var(--muted);padding:30px}
   .menubtn{font-weight:700}
@@ -588,6 +599,12 @@
         <textarea id="m_histText" placeholder="เช่น โทรต่อรอง เจ้า A ลดได้ 5% นัดส่งใบเสนอราคาใหม่ศุกร์นี้" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey))addHist()"></textarea>
         <button type="button" class="btn-primary" onclick="addHist()">＋ เพิ่ม</button>
       </div>
+      <div class="hist-imgbtns">
+        <button type="button" onclick="document.getElementById('m_histImgInput').click()">📷 แนบรูป</button>
+        <span class="att-status" id="m_histImgStatus" style="margin:0"></span>
+      </div>
+      <div id="m_histPending"></div>
+      <input type="file" id="m_histImgInput" accept="image/*" multiple style="display:none" onchange="onHistImgPick(this)">
     </div>
     </div><!--form-right-->
     </div><!--form-cols-->
@@ -1529,7 +1546,7 @@ function openForm(id){
   m_po.value=g('po');m_start.value=g('start');m_end.value=g('end');
   m_followup.value=g('followup');m_owner.value=g('owner');m_note.value=g('note');
   formAttachments=(d.attachments&&Array.isArray(d.attachments))?d.attachments.slice():[];renderAttachList();
-  formHistory=(d.history&&Array.isArray(d.history))?d.history.slice():[];renderHistList();
+  formHistory=(d.history&&Array.isArray(d.history))?d.history.slice():[];pendingHistImgs=[];renderHistList();renderPendingImgs();
   refreshWinnerHighlight();
   document.getElementById('modal').classList.add('open');
 }
@@ -1598,21 +1615,55 @@ function renderHistList(){
     '<div class="hist-item"><div class="hist-meta">🕒 '+esc(fmtHistTime(h.t))
     +(h.by?' <span class="hist-by">โดย '+esc(h.by)+'</span>':'')
     +'<button type="button" class="hist-del" title="ลบบันทึกนี้" onclick="delHist('+i+')">🗑</button></div>'
-    +'<div class="hist-txt">'+esc(h.text)+'</div></div>').join('');
+    +(h.text?'<div class="hist-txt">'+esc(h.text)+'</div>':'')
+    +((h.imgs&&h.imgs.length)?'<div class="hist-imgrow">'+h.imgs.map(o=>
+        '<a class="hist-thumb view" href="'+esc(o.url||imgThumbUrl(o))+'" target="_blank" rel="noopener" title="'+esc(o.name||'เปิดรูป')+'">'
+        +'<img src="'+esc(imgThumbUrl(o))+'" alt="'+esc(o.name||'')+'" onerror="histImgErr(this)">'
+        +'<span class="thumb-fallback">🖼 เปิดรูป</span></a>').join('')+'</div>':'')
+    +'</div>').join('');
 }
 function addHist(){
   const ta=document.getElementById('m_histText');
   const text=(ta&&ta.value||'').trim();
-  if(!text){if(ta)ta.focus();return}
+  if(!text&&!pendingHistImgs.length){if(ta)ta.focus();return}
   const by=ensureUserName();
-  formHistory.push({t:Date.now(),by:by,text:text});
+  formHistory.push({t:Date.now(),by:by,text:text,imgs:pendingHistImgs.slice()});
   if(ta)ta.value='';
+  pendingHistImgs=[];renderPendingImgs();
   renderHistList();
 }
 function delHist(i){
   if(!formHistory[i])return;
   if(!confirm('ลบบันทึกนี้?'))return;
   formHistory.splice(i,1);renderHistList();
+}
+
+/* ===== แนบรูปในบันทึกติดตาม + แสดง thumbnail inline (30 ก.ค. 2026) ===== */
+let pendingHistImgs=[];
+function imgThumbUrl(o){
+  if(o&&o.id)return 'https://drive.google.com/thumbnail?id='+encodeURIComponent(o.id)+'&sz=w600';
+  return (o&&o.url)||'';
+}
+function histImgErr(img){const t=img.closest('.hist-thumb');if(t)t.classList.add('img-fail')}
+function renderPendingImgs(){
+  const box=document.getElementById('m_histPending');if(!box)return;
+  if(!pendingHistImgs.length){box.innerHTML='';return}
+  box.innerHTML='<div class="hist-imgrow">'+pendingHistImgs.map((o,i)=>
+    '<div class="hist-thumb"><img src="'+esc(imgThumbUrl(o))+'" alt="" onerror="histImgErr(this)">'
+    +'<span class="thumb-fallback">🖼</span>'
+    +'<button type="button" class="thumb-del" title="เอารูปออก" onclick="delPendingImg('+i+')">✕</button></div>').join('')+'</div>';
+}
+function delPendingImg(i){pendingHistImgs.splice(i,1);renderPendingImgs()}
+async function onHistImgPick(input){
+  const files=Array.from(input.files||[]);input.value='';
+  if(!files.length)return;
+  if(!navigator.onLine){alert('ตอนนี้ออฟไลน์ — แนบรูปได้เฉพาะตอนออนไลน์');return}
+  const st=document.getElementById('m_histImgStatus');
+  for(const f of files){
+    if(f.size>MAX_ATTACH){alert('รูป "'+f.name+'" ใหญ่เกิน 10MB — ข้ามรูปนี้');continue}
+    try{const file=await uploadDrive(f,st);pendingHistImgs.push({id:file.id,name:file.name,url:file.url});renderPendingImgs();}
+    catch(e){if(st)st.textContent='';if(isAuthErr(e.message))showGate('รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่');else alert('อัปรูป "'+f.name+'" ไม่สำเร็จ: '+e.message);}
+  }
 }
 
 let formAttachments=[];
@@ -1636,19 +1687,23 @@ async function onAttachPick(input){
     await uploadOne(f);
   }
 }
+async function uploadDrive(file,statusEl){
+  if(statusEl)statusEl.textContent='กำลังอัปโหลด '+file.name+' …';
+  const b64=await readB64(file);
+  const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({action:'uploadFile',secret:getSecret(),name:file.name,mime:file.type||'application/octet-stream',dataB64:b64})});
+  const j=await res.json();
+  if(j&&j.needSecret){onAuthFail();throw new Error('unauthorized')}
+  if(!j||!j.ok||!j.file)throw new Error((j&&j.error)||'อัปโหลดไม่สำเร็จ');
+  if(statusEl)statusEl.textContent='';
+  return j.file;
+}
 async function uploadOne(file){
   const st=document.getElementById('m_attachStatus');
-  if(st)st.textContent='กำลังอัปโหลด '+file.name+' …';
   try{
-    const b64=await readB64(file);
-    const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'uploadFile',secret:getSecret(),name:file.name,mime:file.type||'application/octet-stream',dataB64:b64})});
-    const j=await res.json();
-    if(j&&j.needSecret){onAuthFail();throw new Error('unauthorized')}
-    if(!j||!j.ok||!j.file)throw new Error((j&&j.error)||'อัปโหลดไม่สำเร็จ');
-    formAttachments.push({id:j.file.id,name:j.file.name,size:j.file.size,url:j.file.url});
+    const f=await uploadDrive(file,st);
+    formAttachments.push({id:f.id,name:f.name,size:f.size,url:f.url});
     renderAttachList();
-    if(st)st.textContent='';
   }catch(e){
     if(st)st.textContent='';
     if(isAuthErr(e.message))showGate('รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่');
