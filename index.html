@@ -596,11 +596,12 @@
     <div class="field"><label>📝 บันทึกติดตาม / ต่อรอง (เก็บวันเวลาอัตโนมัติ)</label>
       <div class="hist-list" id="m_histList"></div>
       <div class="hist-add">
-        <textarea id="m_histText" placeholder="เช่น โทรต่อรอง เจ้า A ลดได้ 5% นัดส่งใบเสนอราคาใหม่ศุกร์นี้" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey))addHist()"></textarea>
+        <textarea id="m_histText" placeholder="เช่น โทรต่อรอง เจ้า A ลดได้ 5% — วางรูปได้เลย (Ctrl+V)" onpaste="onHistPaste(event)" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey))addHist()"></textarea>
         <button type="button" class="btn-primary" onclick="addHist()">＋ เพิ่ม</button>
       </div>
       <div class="hist-imgbtns">
         <button type="button" onclick="document.getElementById('m_histImgInput').click()">📷 แนบรูป</button>
+        <span style="font-size:11.5px;color:var(--muted)">หรือวางรูปในช่องข้อความ (Ctrl+V)</span>
         <span class="att-status" id="m_histImgStatus" style="margin:0"></span>
       </div>
       <div id="m_histPending"></div>
@@ -1654,6 +1655,23 @@ function renderPendingImgs(){
     +'<button type="button" class="thumb-del" title="เอารูปออก" onclick="delPendingImg('+i+')">✕</button></div>').join('')+'</div>';
 }
 function delPendingImg(i){pendingHistImgs.splice(i,1);renderPendingImgs()}
+// วางรูปจาก clipboard (Ctrl+V) — เช่น ภาพหน้าจอ/รูปที่ก๊อปมา
+async function onHistPaste(e){
+  const items=(e.clipboardData&&e.clipboardData.items)||[];
+  const imgs=[];
+  for(const it of items){if(it.type&&it.type.indexOf('image')===0){const f=it.getAsFile();if(f)imgs.push(f);}}
+  if(!imgs.length)return;                 // ไม่มีรูปในคลิปบอร์ด = ปล่อยวางข้อความตามปกติ
+  e.preventDefault();
+  if(!navigator.onLine){alert('ตอนนี้ออฟไลน์ — แนบรูปได้เฉพาะตอนออนไลน์');return}
+  const st=document.getElementById('m_histImgStatus');
+  for(const f of imgs){
+    if(f.size>MAX_ATTACH){alert('รูปที่วางใหญ่เกิน 10MB — ข้าม');continue}
+    const name=f.name||('วางรูป-'+Date.now()+'.png');
+    try{const file=await uploadDrive(new File([f],name,{type:f.type||'image/png'}),st);
+      pendingHistImgs.push({id:file.id,name:file.name,url:file.url});renderPendingImgs();}
+    catch(err){if(st)st.textContent='';if(isAuthErr(err.message))showGate('รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่');else alert('อัปรูปที่วางไม่สำเร็จ: '+err.message);}
+  }
+}
 async function onHistImgPick(input){
   const files=Array.from(input.files||[]);input.value='';
   if(!files.length)return;
