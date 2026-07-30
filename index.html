@@ -332,7 +332,14 @@
   .hist-add textarea:focus{border-color:var(--accent);outline:none}
   .hist-add button{padding:7px 14px;font-size:14px;font-weight:700;align-self:flex-start}
   [data-theme="dark"] .hist-del:hover{color:#fca5a5}
-  .hist-imgbtns{display:flex;align-items:center;gap:8px;margin-top:6px}
+  /* ป๊อปอัพดูรูป (lightbox) */
+  #imgLightbox{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;padding:24px}
+  #imgLightbox.on{display:flex}
+  #imgLightbox img{max-width:92vw;max-height:84vh;border-radius:8px;box-shadow:0 12px 44px rgba(0,0,0,.55);object-fit:contain;background:#fff}
+  .lb-bar{position:absolute;top:14px;right:16px;display:flex;gap:10px;z-index:1}
+  .lb-bar a,.lb-bar button{background:rgba(255,255,255,.16);color:#fff;border:none;border-radius:8px;padding:8px 13px;font-size:14px;cursor:pointer;text-decoration:none;font-weight:700}
+  .lb-bar a:hover,.lb-bar button:hover{background:rgba(255,255,255,.3)}
+    .hist-imgbtns{display:flex;align-items:center;gap:8px;margin-top:6px}
   .hist-imgbtns button{padding:6px 12px;font-size:13px}
   .hist-imgrow{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
   .hist-thumb{position:relative;width:74px;height:74px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--card2);display:block}
@@ -526,6 +533,13 @@
     <button class="btn-primary" onclick="submitGate()">เข้าใช้งาน</button>
     <div class="gerr" id="gateErr"></div>
   </div>
+</div>
+<div id="imgLightbox" onclick="if(event.target===this)closeImgLightbox()">
+  <div class="lb-bar">
+    <a id="lbOpen" href="#" target="_blank" rel="noopener" title="เปิดใน Google Drive">↗ Drive</a>
+    <button type="button" onclick="closeImgLightbox()" title="ปิด">✕</button>
+  </div>
+  <img id="lbImg" alt="">
 </div>
 <div class="modal" id="calModal"><div class="sheet" style="max-width:900px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -1618,9 +1632,9 @@ function renderHistList(){
     +'<button type="button" class="hist-del" title="ลบบันทึกนี้" onclick="delHist('+i+')">🗑</button></div>'
     +(h.text?'<div class="hist-txt">'+esc(h.text)+'</div>':'')
     +((h.imgs&&h.imgs.length)?'<div class="hist-imgrow">'+h.imgs.map(o=>
-        '<a class="hist-thumb view" href="'+esc(o.url||imgThumbUrl(o))+'" target="_blank" rel="noopener" title="'+esc(o.name||'เปิดรูป')+'">'
+        '<div class="hist-thumb view" onclick="openImgLightbox(\''+esc(o.id||'')+'\',\''+esc((o.url||'').replace(/\x27/g,"%27"))+'\')" title="'+esc(o.name||'ดูรูป')+'">'
         +'<img src="'+esc(imgThumbUrl(o))+'" alt="'+esc(o.name||'')+'" onerror="histImgErr(this)">'
-        +'<span class="thumb-fallback">🖼 เปิดรูป</span></a>').join('')+'</div>':'')
+        +'<span class="thumb-fallback">🖼 เปิดรูป</span></div>').join('')+'</div>':'')
     +'</div>').join('');
 }
 function addHist(){
@@ -1650,11 +1664,28 @@ function renderPendingImgs(){
   const box=document.getElementById('m_histPending');if(!box)return;
   if(!pendingHistImgs.length){box.innerHTML='';return}
   box.innerHTML='<div class="hist-imgrow">'+pendingHistImgs.map((o,i)=>
-    '<div class="hist-thumb"><img src="'+esc(imgThumbUrl(o))+'" alt="" onerror="histImgErr(this)">'
+    '<div class="hist-thumb"><img src="'+esc(imgThumbUrl(o))+'" alt="" onerror="histImgErr(this)" style="cursor:zoom-in" onclick="openImgLightbox(\''+esc(o.id||'')+'\',\''+esc((o.url||'').replace(/\x27/g,"%27"))+'\')">'
     +'<span class="thumb-fallback">🖼</span>'
     +'<button type="button" class="thumb-del" title="เอารูปออก" onclick="delPendingImg('+i+')">✕</button></div>').join('')+'</div>';
 }
 function delPendingImg(i){pendingHistImgs.splice(i,1);renderPendingImgs()}
+// ป๊อปอัพดูรูปในหน้าเว็บ (ไม่เด้งแท็บใหม่)
+function openImgLightbox(id,url){
+  const lb=document.getElementById('imgLightbox');if(!lb)return;
+  const img=document.getElementById('lbImg');
+  const big=id?('https://drive.google.com/thumbnail?id='+encodeURIComponent(id)+'&sz=w1600'):(url||'');
+  img.onerror=function(){closeImgLightbox();if(url)window.open(url,'_blank','noopener')}; // โหลดไม่ได้ → เปิด Drive แทน
+  img.src=big;
+  const link=document.getElementById('lbOpen');if(link)link.href=url||big;
+  lb.classList.add('on');
+}
+function closeImgLightbox(){
+  const lb=document.getElementById('imgLightbox');if(!lb)return;
+  lb.classList.remove('on');
+  const img=document.getElementById('lbImg');if(img){img.onerror=null;img.src='';}
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeImgLightbox()});
+
 // วางรูปจาก clipboard (Ctrl+V) — เช่น ภาพหน้าจอ/รูปที่ก๊อปมา
 async function onHistPaste(e){
   const items=(e.clipboardData&&e.clipboardData.items)||[];
