@@ -192,6 +192,9 @@
   .pc-attbadge{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--tint-blue,#e0edff);color:var(--accent);white-space:nowrap;cursor:pointer;font-weight:700}
   .pc-attbadge:hover{filter:brightness(.95)}
   [data-theme="dark"] .pc-attbadge{background:#1e3a5f;color:#93c5fd}
+  .pc-histbadge{font-size:10px;padding:2px 7px;border-radius:20px;background:#dcfce7;color:#16a34a;white-space:nowrap;cursor:pointer;font-weight:700}
+  .pc-histbadge:hover{filter:brightness(.95)}
+  [data-theme="dark"] .pc-histbadge{background:#123a24;color:#86efac}
   .pc-catbadge{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--card2);color:var(--muted);white-space:nowrap}
   .splitbtn{font-size:11px;padding:2px 6px;border-radius:6px;background:var(--card2);border:1px solid var(--line);cursor:pointer;line-height:1}
   .draghandle{cursor:grab;font-size:14px;color:var(--muted);padding:2px 5px;border-radius:6px;user-select:none;line-height:1}
@@ -310,6 +313,21 @@
   .att-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
   .att-btns button{padding:7px 12px;font-size:13px}
   .att-status{font-size:12px;color:var(--accent);margin-top:5px;min-height:15px}
+  /* บันทึกติดตาม/ต่อรอง (ประวัติ) */
+  .hist-list{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+  .hist-item{background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:13px}
+  .hist-meta{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin-bottom:3px}
+  .hist-by{font-weight:700;color:var(--accent)}
+  .hist-txt{color:var(--txt);white-space:pre-wrap;word-break:break-word;line-height:1.4}
+  .hist-del{margin-left:auto;cursor:pointer;color:var(--muted);border:none;background:none;font-size:12px;padding:0 2px}
+  .hist-del:hover{color:#dc2626}
+  .hist-empty{color:var(--muted);font-size:12.5px;padding:3px 0}
+  .hist-add{display:flex;gap:6px;margin-top:8px}
+  .hist-add textarea{flex:1;padding:8px 10px;font-size:13px;border-radius:9px;border:1px solid var(--line);background:var(--card2);color:var(--txt);resize:vertical;min-height:38px;font-family:inherit}
+  .hist-add textarea:focus{border-color:var(--accent);outline:none}
+  .hist-add button{padding:7px 14px;font-size:14px;font-weight:700;align-self:flex-start}
+  [data-theme="dark"] .hist-del:hover{color:#fca5a5}
+  .usr{cursor:pointer}
   .empty{text-align:center;color:var(--muted);padding:30px}
   .menubtn{font-weight:700}
   /* โครงสร้าง 2 คอลัมน์: ซ้าย=ปฏิทิน+สรุปยอด (ตรึงเลื่อนตาม) / ขวา=รายการงาน */
@@ -403,9 +421,9 @@
       <div class="bell" id="bellBtn" onclick="showDueOnly()" title="งานที่ต้องตาม">
         🔔<span class="bell-badge" id="bellBadge" style="display:none">0</span>
       </div>
-      <div class="usr">
+      <div class="usr" onclick="changeUserName()" title="กดเพื่อตั้ง/เปลี่ยนชื่อผู้ใช้">
         <div class="usr-av">👷</div>
-        <div><div class="usr-name">Admin</div><div class="usr-role">ผู้ดูแลระบบ</div></div>
+        <div><div class="usr-name" id="usrName">ผู้ใช้</div><div class="usr-role">กดเพื่อตั้งชื่อ</div></div>
       </div>
       <button class="logout-btn" id="logoutBtn" onclick="logout()" title="ออกจากระบบ (ครั้งหน้าต้องกรอกรหัสใหม่)">🔒</button>
     </div>
@@ -554,6 +572,13 @@
       <div class="att-status" id="m_attachStatus"></div>
       <input type="file" id="m_fileInput" multiple style="display:none" onchange="onAttachPick(this)">
       <input type="file" id="m_camInput" accept="image/*" capture="environment" style="display:none" onchange="onAttachPick(this)">
+    </div>
+    <div class="field"><label>📝 บันทึกติดตาม / ต่อรอง (เก็บวันเวลาอัตโนมัติ)</label>
+      <div class="hist-list" id="m_histList"></div>
+      <div class="hist-add">
+        <textarea id="m_histText" placeholder="เช่น โทรต่อรอง เจ้า A ลดได้ 5% นัดส่งใบเสนอราคาใหม่ศุกร์นี้" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey))addHist()"></textarea>
+        <button type="button" class="btn-primary" onclick="addHist()">＋ เพิ่ม</button>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn-ok" onclick="saveForm()">💾 บันทึก</button>
@@ -1068,6 +1093,7 @@ function render(){
        <div style="display:flex;align-items:center;gap:5px;white-space:nowrap">
          <span class="draghandle" draggable="true" ondragstart="dragStartCard(event,'${d.id}')" ondragend="dragEndCard(event)" title="ลากไปวางบนปฏิทินเพื่อกำหนดวันตามงาน">⠿</span>
          ${(d.attachments&&d.attachments.length)?`<span class="pc-attbadge" title="มีไฟล์แนบ ${d.attachments.length} ไฟล์ (กดเพื่อดู)" onclick="openForm('${d.id}')">📎 ${d.attachments.length}</span>`:''}
+         ${(d.history&&d.history.length)?`<span class="pc-histbadge" title="มีบันทึกติดตาม ${d.history.length} รายการ (กดเพื่อดู)" onclick="openForm('${d.id}')">📝 ${d.history.length}</span>`:''}
          <span class="pc-catbadge cat-${d.cat}">${d.cat}</span>
          ${/ – (วัสดุ|ค่าแรง)$/.test(d.pkg)?'':`<button class="splitbtn" title="แยกเป็น วัสดุ + ค่าแรง" onclick="splitItem('${d.id}')">✂️</button>`}
        </div>
@@ -1492,6 +1518,7 @@ function openForm(id){
   m_po.value=g('po');m_start.value=g('start');m_end.value=g('end');
   m_followup.value=g('followup');m_owner.value=g('owner');m_note.value=g('note');
   formAttachments=(d.attachments&&Array.isArray(d.attachments))?d.attachments.slice():[];renderAttachList();
+  formHistory=(d.history&&Array.isArray(d.history))?d.history.slice():[];renderHistList();
   refreshWinnerHighlight();
   document.getElementById('modal').classList.add('open');
 }
@@ -1514,6 +1541,69 @@ function refreshWinnerHighlight(){
 function closeForm(){document.getElementById('modal').classList.remove('open')}
 
 /* ===== แนบไฟล์ (เก็บไฟล์จริงบน Google Drive ผ่าน Apps Script) ===== */
+/* ===== ชื่อผู้ใช้ในเครื่อง (ปูทางระบบแอคเคาท์อนาคต) 30 ก.ค. 2026 =====
+ * เก็บชื่อไว้ในเครื่อง ใช้ติดกับบันทึกประวัติว่าใครเขียน
+ * วันหน้าถ้าทำระบบแอคเคาท์จริง ชื่อนี้ต่อยอดเข้าได้เลย
+ */
+const UNAME_KEY=KEY+'__uname';
+function getUserName(){try{return localStorage.getItem(UNAME_KEY)||''}catch(e){return''}}
+function setUserName(v){try{localStorage.setItem(UNAME_KEY,v)}catch(e){}}
+function renderUserName(){
+  const el=document.getElementById('usrName');if(!el)return;
+  const n=getUserName();
+  el.textContent=n||'ตั้งชื่อผู้ใช้';
+  const role=el.parentElement&&el.parentElement.querySelector('.usr-role');
+  if(role)role.textContent=n?'กดเพื่อเปลี่ยนชื่อ':'กดเพื่อตั้งชื่อ';
+}
+function changeUserName(){
+  const cur=getUserName();
+  const v=prompt('ชื่อผู้ใช้ของคุณ (จะติดกับบันทึกติดตามว่าใครเขียน):',cur);
+  if(v==null)return;
+  setUserName(v.trim());renderUserName();
+}
+// ถ้ายังไม่มีชื่อ ให้ถามก่อนบันทึกประวัติครั้งแรก
+function ensureUserName(){
+  let n=getUserName();
+  if(!n){const v=prompt('ก่อนบันทึก กรุณาตั้งชื่อผู้ใช้ของคุณ (ติดกับบันทึกว่าใครเขียน):','');
+    if(v==null)return '';n=v.trim();setUserName(n);renderUserName();}
+  return n;
+}
+
+/* ===== บันทึกติดตาม/ต่อรอง (ประวัติต่อรายการ) =====
+ * เก็บใน field history = [{t:epoch, by:ชื่อ, text:...}] → ซิงก์ขึ้นชีทผ่าน extra_json อัตโนมัติ
+ */
+let formHistory=[];
+function fmtHistTime(t){
+  const d=new Date(t);if(isNaN(d))return '';
+  const th=new Date(d.getTime());
+  const p=n=>String(n).padStart(2,'0');
+  return p(th.getDate())+'/'+p(th.getMonth()+1)+'/'+(th.getFullYear()+543)+' '+p(th.getHours())+':'+p(th.getMinutes());
+}
+function renderHistList(){
+  const box=document.getElementById('m_histList');if(!box)return;
+  if(!formHistory.length){box.innerHTML='<div class="hist-empty">ยังไม่มีบันทึก</div>';return}
+  const sorted=formHistory.map((h,i)=>({h,i})).sort((a,b)=>(b.h.t||0)-(a.h.t||0));
+  box.innerHTML=sorted.map(({h,i})=>
+    '<div class="hist-item"><div class="hist-meta">🕒 '+esc(fmtHistTime(h.t))
+    +(h.by?' <span class="hist-by">โดย '+esc(h.by)+'</span>':'')
+    +'<button type="button" class="hist-del" title="ลบบันทึกนี้" onclick="delHist('+i+')">🗑</button></div>'
+    +'<div class="hist-txt">'+esc(h.text)+'</div></div>').join('');
+}
+function addHist(){
+  const ta=document.getElementById('m_histText');
+  const text=(ta&&ta.value||'').trim();
+  if(!text){if(ta)ta.focus();return}
+  const by=ensureUserName();
+  formHistory.push({t:Date.now(),by:by,text:text});
+  if(ta)ta.value='';
+  renderHistList();
+}
+function delHist(i){
+  if(!formHistory[i])return;
+  if(!confirm('ลบบันทึกนี้?'))return;
+  formHistory.splice(i,1);renderHistList();
+}
+
 let formAttachments=[];
 function fmtSize(n){n=Number(n)||0;if(n<1024)return n+' B';if(n<1048576)return (n/1024).toFixed(0)+' KB';return (n/1048576).toFixed(1)+' MB'}
 function renderAttachList(){
@@ -1570,7 +1660,7 @@ function saveForm(){
     status:+m_status.value,detail:m_detail.value.trim(),invited:invited,
     replied:replied,boq:m_boq.value.replace(/[^\d.]/g,''),price:m_price.value.replace(/[^\d.]/g,''),winner:m_winner.value.trim(),
     reason:m_reason.value.trim(),appdate:m_appdate.value,po:m_po.value.trim(),
-    start:m_start.value,end:m_end.value,followup:m_followup.value,owner:m_owner.value.trim(),note:m_note.value.trim(),attachments:formAttachments.slice()};
+    start:m_start.value,end:m_end.value,followup:m_followup.value,owner:m_owner.value.trim(),note:m_note.value.trim(),attachments:formAttachments.slice(),history:formHistory.slice()};
   touch(rec);
   if(editId){data=data.map(x=>x.id===editId?rec:x)}else{data.push(rec)}
   save();closeForm();render();
@@ -1711,7 +1801,7 @@ function updateBackupBar(){
   const last=localStorage.getItem('lastBackup');
   document.getElementById('backupBar').style.display=(data.length&&last!==ymd)?'block':'none';
 }
-initSelects();render();notifyDue();updateBackupBar();initSaveFile();syncThemeBtn();initSync();initGate();
+initSelects();render();notifyDue();updateBackupBar();initSaveFile();syncThemeBtn();initSync();initGate();renderUserName();
 </script>
 </body>
 </html>
