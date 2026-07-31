@@ -1009,11 +1009,17 @@ function daysTo(dateStr){
   return Math.round((d-t)/86400000);
 }
 // ยังไม่แล้วเสร็จ (status<10) และมีวันตามงาน
+// แสดงวันที่แบบ วัน/เดือน/ปี(พ.ศ.) — ใช้เฉพาะการแสดงผล (การเก็บข้อมูลยังเป็น YYYY-MM-DD)
+function fmtDate(v){
+  const s=toYMD(v);const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m)return s||'';
+  return m[3]+'/'+m[2]+'/'+(+m[1]+543);
+}
 function fuClass(d){const n=daysTo(d.followup);if(n==null||d.status>=10)return null;
-  if(n<0)return{c:'fu-over',t:'⚠️ เลยกำหนด '+(-n)+' วัน ('+d.followup+')'};
-  if(n===0)return{c:'fu-today',t:'🔔 ครบกำหนดวันนี้ ('+d.followup+')'};
-  if(n<=3)return{c:'fu-soon',t:'🔔 อีก '+n+' วัน ('+d.followup+')'};
-  return{c:'fu-later',t:'📅 ตามงาน '+toYMD(d.followup)+' (อีก '+n+' วัน)'}}
+  if(n<0)return{c:'fu-over',t:'⚠️ เลยกำหนด '+(-n)+' วัน ('+fmtDate(d.followup)+')'};
+  if(n===0)return{c:'fu-today',t:'🔔 ครบกำหนดวันนี้ ('+fmtDate(d.followup)+')'};
+  if(n<=3)return{c:'fu-soon',t:'🔔 อีก '+n+' วัน ('+fmtDate(d.followup)+')'};
+  return{c:'fu-later',t:'📅 ตามงาน '+fmtDate(d.followup)+' (อีก '+n+' วัน)'}}
 function isDue(d){const n=daysTo(d.followup);return n!=null&&n<=0&&d.status<10}
 function isSoon(d){const n=daysTo(d.followup);return n!=null&&n>0&&n<=3&&d.status<10}
 function filtered(){
@@ -1168,7 +1174,7 @@ function render(){
        <datalist id="wl_${d.id}">${(d.invited||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>`<option value="${esc(s)}">`).join('')}</datalist></div>
      ${d.invited?`<div class="pc-meta" style="margin-bottom:4px">เชิญ: ${(d.invited||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>`<span class="winchip ${s===d.winner?'sel':''}" onclick="pickWinnerCard('${d.id}','${s.replace(/'/g,"\\'")}')" title="กดเพื่อเลือกเป็นผู้รับเหมา">${s===d.winner?'🏆 ':''}${esc(s)}</span>`).join(' ')}</div>`:''}
      ${(d.appdate||d.po||d.owner)?`<div class="pc-meta">
-       ${d.appdate?`อนุมัติ: ${esc(d.appdate)} &nbsp;`:''}${d.po?`PO: ${esc(d.po)}`:''}
+       ${d.appdate?`อนุมัติ: ${esc(fmtDate(d.appdate))} &nbsp;`:''}${d.po?`PO: ${esc(d.po)}`:''}
        ${d.owner?`<br>ผู้รับผิดชอบ: ${esc(d.owner)}`:''}
      </div>`:''}
      ${activityLabel(d)?`<div class="pc-meta pc-time">🕒 ${esc(activityLabel(d))}</div>`:''}
@@ -1280,7 +1286,7 @@ function renderAgenda(){
     h+=`<div class="ag-group ${gr.cls}"><div class="ag-gh">${gr.icon} ${gr.label} <span class="ag-n">${list.length} งาน</span></div>`;
     list.forEach(d=>{
       const n=daysTo(d.followup);
-      const sub=gr.key==='over'?('เลย '+(-n)+' วัน'):(gr.key==='soon'?('อีก '+n+' วัน'):toYMD(d.followup));
+      const sub=gr.key==='over'?('เลย '+(-n)+' วัน'):(gr.key==='soon'?('อีก '+n+' วัน'):fmtDate(d.followup));
       h+=`<div class="ag-item" onclick="openForm('${d.id}')" title="${esc(d.project)} – ${esc(d.pkg)}"><span class="ag-pkg">${esc(d.pkg)}</span><span class="ag-day">${sub}</span></div>`;
     });
     h+=`</div>`;
@@ -1855,7 +1861,7 @@ function exportSheet(){
     let pBoq=0,pReal=0;
     g.forEach(d=>{
       pBoq+=Number(d.boq)||0; pReal+=Number(d.price)||0;
-      body+=`<tr>`+td(d.pkg)+td((+d.status+1)+'. '+STATUSES[d.status])+tdN(d.boq)+tdN(d.price)+td(diffTxt(d.boq,d.price))+td(d.winner)+td(d.followup)+`</tr>`;
+      body+=`<tr>`+td(d.pkg)+td((+d.status+1)+'. '+STATUSES[d.status])+tdN(d.boq)+tdN(d.price)+td(diffTxt(d.boq,d.price))+td(d.winner)+td(fmtDate(d.followup))+`</tr>`;
     });
     gBoq+=pBoq; gReal+=pReal;
     const tb='font-weight:bold;background:#eef2ff;'+bd;
