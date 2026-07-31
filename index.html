@@ -339,6 +339,9 @@
   .lb-bar{position:absolute;top:14px;right:16px;display:flex;gap:10px;z-index:1}
   .lb-bar a,.lb-bar button{background:rgba(255,255,255,.16);color:#fff;border:none;border-radius:8px;padding:8px 13px;font-size:14px;cursor:pointer;text-decoration:none;font-weight:700}
   .lb-bar a:hover,.lb-bar button:hover{background:rgba(255,255,255,.3)}
+  #lbFrame{width:92vw;height:84vh;border:none;border-radius:8px;background:#fff;box-shadow:0 12px 44px rgba(0,0,0,.55)}
+  .att-open{flex:1;color:var(--accent);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .att-open:hover{text-decoration:underline}
     .hist-imgbtns{display:flex;align-items:center;gap:8px;margin-top:6px}
   .hist-imgbtns button{padding:6px 12px;font-size:13px}
   .hist-imgrow{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
@@ -540,6 +543,7 @@
     <button type="button" onclick="closeImgLightbox()" title="ปิด">✕</button>
   </div>
   <img id="lbImg" alt="">
+  <iframe id="lbFrame" style="display:none" allow="autoplay"></iframe>
 </div>
 <div class="modal" id="calModal"><div class="sheet" style="max-width:900px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -1670,19 +1674,37 @@ function renderPendingImgs(){
 }
 function delPendingImg(i){pendingHistImgs.splice(i,1);renderPendingImgs()}
 // ป๊อปอัพดูรูปในหน้าเว็บ (ไม่เด้งแท็บใหม่)
-function openImgLightbox(id,url){
+function isImageName(n){return /\.(jpe?g|png|gif|webp|bmp|svg|heic)$/i.test(n||'')}
+function driveIdFrom(id,url){if(id)return id;const m=String(url||'').match(/\/d\/([^/]+)/);return m?m[1]:''}
+// เปิดดูไฟล์ในหน้าเว็บ: รูป→แสดงรูป, Excel/PDF/Word→ตัวแสดงของ Google Drive (iframe) ไม่เปิดแท็บใหม่
+function openFileViewer(id,url,name,forceImg){
   const lb=document.getElementById('imgLightbox');if(!lb)return;
-  const img=document.getElementById('lbImg');
-  const big=id?('https://drive.google.com/thumbnail?id='+encodeURIComponent(id)+'&sz=w1600'):(url||'');
-  img.onerror=function(){closeImgLightbox();if(url)window.open(url,'_blank','noopener')}; // โหลดไม่ได้ → เปิด Drive แทน
-  img.src=big;
-  const link=document.getElementById('lbOpen');if(link)link.href=url||big;
+  const img=document.getElementById('lbImg'),frame=document.getElementById('lbFrame');
+  const asImg=forceImg||isImageName(name);
+  const fid=driveIdFrom(id,url);
+  if(asImg){
+    frame.style.display='none';frame.src='';
+    img.style.display='';
+    const big=fid?('https://drive.google.com/thumbnail?id='+encodeURIComponent(fid)+'&sz=w1600'):(url||'');
+    img.onerror=function(){closeImgLightbox();if(url)window.open(url,'_blank','noopener')};
+    img.src=big;
+  }else if(fid){
+    img.style.display='none';img.src='';img.onerror=null;
+    frame.style.display='';
+    frame.src='https://drive.google.com/file/d/'+encodeURIComponent(fid)+'/preview';  // Excel→Sheets viewer, PDF/Word→viewer
+  }else{                                   // ไม่มี id ดูในหน้าไม่ได้ → เปิด Drive แทน
+    if(url)window.open(url,'_blank','noopener');return;
+  }
+  const link=document.getElementById('lbOpen');if(link)link.href=url||('https://drive.google.com/file/d/'+fid+'/view');
   lb.classList.add('on');
 }
+function openImgLightbox(id,url){openFileViewer(id,url,'',true)}       // รูปในบันทึก (บังคับโหมดรูป)
+function openAttachViewer(i){const a=formAttachments[i];if(a)openFileViewer(a.id,a.url,a.name,false)}
 function closeImgLightbox(){
   const lb=document.getElementById('imgLightbox');if(!lb)return;
   lb.classList.remove('on');
   const img=document.getElementById('lbImg');if(img){img.onerror=null;img.src='';}
+  const frame=document.getElementById('lbFrame');if(frame)frame.src='';
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeImgLightbox()});
 
@@ -1721,7 +1743,7 @@ function renderAttachList(){
   const box=document.getElementById('m_attachList');if(!box)return;
   if(!formAttachments.length){box.innerHTML='<div class="att-empty">ยังไม่มีไฟล์แนบ</div>';return}
   box.innerHTML=formAttachments.map((a,i)=>
-    '<div class="att-item"><a href="'+esc(a.url)+'" target="_blank" rel="noopener">📎 '+esc(a.name)+'</a>'+
+    '<div class="att-item"><span class="att-open" onclick="openAttachViewer('+i+')" title="กดดูในหน้าเว็บ">📎 '+esc(a.name)+'</span>'+
     '<span class="att-size">'+fmtSize(a.size)+'</span>'+
     '<button type="button" class="att-del" title="เอาออก" onclick="removeAttach('+i+')">✕</button></div>').join('');
 }
