@@ -539,6 +539,8 @@
 </div>
 <div id="imgLightbox" onclick="if(event.target===this)closeImgLightbox()">
   <div class="lb-bar">
+    <button type="button" id="lbReload" onclick="reloadViewer()" title="โหลดใหม่ (ดูของที่เพิ่งแก้)">🔄</button>
+    <a id="lbEdit" href="#" target="_blank" rel="noopener" title="แก้ไขใน Google (เปิดแท็บใหม่)" style="display:none">✏️ แก้ไข</a>
     <a id="lbOpen" href="#" target="_blank" rel="noopener" title="เปิดใน Google Drive">↗ Drive</a>
     <button type="button" onclick="closeImgLightbox()" title="ปิด">✕</button>
   </div>
@@ -1676,6 +1678,26 @@ function delPendingImg(i){pendingHistImgs.splice(i,1);renderPendingImgs()}
 // ป๊อปอัพดูรูปในหน้าเว็บ (ไม่เด้งแท็บใหม่)
 function isImageName(n){return /\.(jpe?g|png|gif|webp|bmp|svg|heic)$/i.test(n||'')}
 function driveIdFrom(id,url){if(id)return id;const m=String(url||'').match(/\/d\/([^/]+)/);return m?m[1]:''}
+// url สำหรับแก้ไขใน Google (เฉพาะ Office ที่แก้ได้) — คืน '' ถ้าแก้ในหน้าไม่ได้ (รูป/PDF)
+function editorUrl(id,name){
+  if(!id)return '';
+  const n=(name||'').toLowerCase();
+  if(/\.(xlsx?|csv|ods)$/.test(n))return 'https://docs.google.com/spreadsheets/d/'+id+'/edit';
+  if(/\.(docx?|odt|rtf)$/.test(n))return 'https://docs.google.com/document/d/'+id+'/edit';
+  if(/\.(pptx?|odp)$/.test(n))return 'https://docs.google.com/presentation/d/'+id+'/edit';
+  return '';
+}
+let __viewer=null;   // จำไฟล์ที่กำลังเปิด เพื่อปุ่มแก้ไข/โหลดใหม่
+function reloadViewer(){
+  if(!__viewer)return;
+  const v=__viewer;
+  const img=document.getElementById('lbImg'),frame=document.getElementById('lbFrame');
+  if(img&&img.style.display!=='none'&&img.src){
+    const base=img.src.split('&_r=')[0];img.src=base+'&_r='+Date.now();   // bust cache รูป
+  }else if(frame&&frame.style.display!=='none'){
+    const src=frame.src;frame.src='';setTimeout(()=>{frame.src=src},50);  // reload iframe
+  }
+}
 // เปิดดูไฟล์ในหน้าเว็บ: รูป→แสดงรูป, Excel/PDF/Word→ตัวแสดงของ Google Drive (iframe) ไม่เปิดแท็บใหม่
 function openFileViewer(id,url,name,forceImg){
   const lb=document.getElementById('imgLightbox');if(!lb)return;
@@ -1696,6 +1718,9 @@ function openFileViewer(id,url,name,forceImg){
     if(url)window.open(url,'_blank','noopener');return;
   }
   const link=document.getElementById('lbOpen');if(link)link.href=url||('https://drive.google.com/file/d/'+fid+'/view');
+  __viewer={id:fid,url:url,name:name,forceImg:!!forceImg};
+  const eu=editorUrl(fid,name), eb=document.getElementById('lbEdit');
+  if(eb){if(eu){eb.href=eu;eb.style.display='';}else{eb.style.display='none';}}
   lb.classList.add('on');
 }
 function openImgLightbox(id,url){openFileViewer(id,url,'',true)}       // รูปในบันทึก (บังคับโหมดรูป)
