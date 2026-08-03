@@ -583,13 +583,22 @@
     </div>
     <datalist id="pkgList"></datalist>
     <div class="field"><label>รายละเอียดงาน</label><input id="m_detail"></div>
-    <div class="field"><label>Supplier ที่เชิญเสนอราคา (สูงสุด 5 เจ้า) — ติ๊ก ✓ = ตอบกลับแล้ว, กด 🏆 = เลือกเจ้านี้เป็นผู้รับเหมา <span id="m_winnerLbl" style="color:#16a34a;font-weight:700"></span></label>
+    <div class="field"><label>🧱 Supplier / ผู้เสนอราคาวัสดุ (สูงสุด 5 เจ้า) — ติ๊ก ✓ = ตอบกลับแล้ว, กด 🏆 = เลือกเจ้านี้ <span id="m_winnerLbl" style="color:#16a34a;font-weight:700"></span></label>
       <div style="display:flex;flex-direction:column;gap:6px">
         <div class="suprow" id="m_row1"><input id="m_inv1" placeholder="เจ้าที่ 1"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_rep1"></label><button type="button" class="winbtn" onclick="pickWinner(1)" title="เลือก/ยกเลิกเจ้านี้เป็นผู้รับเหมา">🏆</button></div>
         <div class="suprow" id="m_row2"><input id="m_inv2" placeholder="เจ้าที่ 2"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_rep2"></label><button type="button" class="winbtn" onclick="pickWinner(2)" title="เลือก/ยกเลิกเจ้านี้เป็นผู้รับเหมา">🏆</button></div>
         <div class="suprow" id="m_row3"><input id="m_inv3" placeholder="เจ้าที่ 3"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_rep3"></label><button type="button" class="winbtn" onclick="pickWinner(3)" title="เลือก/ยกเลิกเจ้านี้เป็นผู้รับเหมา">🏆</button></div>
         <div class="suprow" id="m_row4"><input id="m_inv4" placeholder="เจ้าที่ 4"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_rep4"></label><button type="button" class="winbtn" onclick="pickWinner(4)" title="เลือก/ยกเลิกเจ้านี้เป็นผู้รับเหมา">🏆</button></div>
         <div class="suprow" id="m_row5"><input id="m_inv5" placeholder="เจ้าที่ 5"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_rep5"></label><button type="button" class="winbtn" onclick="pickWinner(5)" title="เลือก/ยกเลิกเจ้านี้เป็นผู้รับเหมา">🏆</button></div>
+      </div>
+    </div>
+    <div class="field"><label>🔧 ผู้รับเหมาที่เสนอค่าแรง (สูงสุด 5 เจ้า) — ติ๊ก ✓ = ตอบกลับแล้ว, กด 🏆 = เลือกเจ้านี้ <span id="m_labwinnerLbl" style="color:#16a34a;font-weight:700"></span></label>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="suprow" id="m_labrow1"><input id="m_labinv1" placeholder="ผู้รับเหมาค่าแรง 1"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_labrep1"></label><button type="button" class="winbtn" onclick="pickWinnerLab(1)" title="เลือก/ยกเลิกเจ้านี้">🏆</button></div>
+        <div class="suprow" id="m_labrow2"><input id="m_labinv2" placeholder="ผู้รับเหมาค่าแรง 2"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_labrep2"></label><button type="button" class="winbtn" onclick="pickWinnerLab(2)" title="เลือก/ยกเลิกเจ้านี้">🏆</button></div>
+        <div class="suprow" id="m_labrow3"><input id="m_labinv3" placeholder="ผู้รับเหมาค่าแรง 3"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_labrep3"></label><button type="button" class="winbtn" onclick="pickWinnerLab(3)" title="เลือก/ยกเลิกเจ้านี้">🏆</button></div>
+        <div class="suprow" id="m_labrow4"><input id="m_labinv4" placeholder="ผู้รับเหมาค่าแรง 4"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_labrep4"></label><button type="button" class="winbtn" onclick="pickWinnerLab(4)" title="เลือก/ยกเลิกเจ้านี้">🏆</button></div>
+        <div class="suprow" id="m_labrow5"><input id="m_labinv5" placeholder="ผู้รับเหมาค่าแรง 5"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_labrep5"></label><button type="button" class="winbtn" onclick="pickWinnerLab(5)" title="เลือก/ยกเลิกเจ้านี้">🏆</button></div>
       </div>
     </div>
     <div class="grid2">
@@ -602,6 +611,7 @@
     </div>
     <div class="field" id="m_costTotal" style="font-size:13px;color:var(--muted);background:var(--card2);padding:8px 10px;border-radius:8px"></div>
     <input type="hidden" id="m_winner">
+    <input type="hidden" id="m_winnerLab">
     <div class="field"><label>เหตุผลในการเลือก</label><input id="m_reason"></div>
     <div class="grid2">
       <div class="field"><label>วันที่อนุมัติ</label><input id="m_appdate" type="date"></div>
@@ -1192,10 +1202,14 @@ function render(){
          <input type="text" inputmode="numeric" value="${dispNum(d.priceLab)}" placeholder="—" oninput="fmtLive(this)" onchange="setNumSub('${d.id}','priceLab',this.value)"></div>
        <div class="pc-costtotal">รวม: BOQ <b class="lbl-boq">${d.boq!==''&&d.boq!=null?Number(d.boq).toLocaleString():'—'}</b> • จริง <b class="lbl-real">${d.price!==''&&d.price!=null?Number(d.price).toLocaleString():'—'}</b>${(d.boq&&d.price)?` • <b class="${(d.boq-d.price)>=0?'diffpos':'diffneg'}">${(d.boq-d.price>=0?'ประหยัด ':'เกิน ')}${Math.abs(d.boq-d.price).toLocaleString()}</b>`:''}</div>
      </div>
-     <div class="pc-fld" style="margin-bottom:6px"><label>ผู้รับเหมาที่เลือก</label>
+     <div class="pc-fld" style="margin-bottom:6px"><label>🧱 ผู้รับเหมา/ซัพพลาย ที่เลือก (วัสดุ)</label>
        <input list="wl_${d.id}" value="${esc(d.winner||'')}" placeholder="—" onchange="setField('${d.id}','winner',this.value)">
        <datalist id="wl_${d.id}">${(d.invited||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>`<option value="${esc(s)}">`).join('')}</datalist></div>
-     ${d.invited?`<div class="pc-meta" style="margin-bottom:4px">เชิญ: ${(d.invited||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>`<span class="winchip ${s===d.winner?'sel':''}" onclick="pickWinnerCard('${d.id}','${s.replace(/'/g,"\\'")}')" title="กดเพื่อเลือกเป็นผู้รับเหมา">${s===d.winner?'🏆 ':''}${esc(s)}</span>`).join(' ')}</div>`:''}
+     ${d.invited?`<div class="pc-meta" style="margin-bottom:4px">เชิญ(วัสดุ): ${(d.invited||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>`<span class="winchip ${s===d.winner?'sel':''}" onclick="pickWinnerCard('${d.id}','${s.replace(/'/g,"\\'")}')" title="กดเพื่อเลือกเป็นผู้รับเหมา">${s===d.winner?'🏆 ':''}${esc(s)}</span>`).join(' ')}</div>`:''}
+     <div class="pc-fld" style="margin-bottom:6px"><label>🔧 ผู้รับเหมาค่าแรง ที่เลือก</label>
+       <input list="wll_${d.id}" value="${esc(d.winnerLab||'')}" placeholder="—" onchange="setField('${d.id}','winnerLab',this.value)">
+       <datalist id="wll_${d.id}">${(d.invitedLab||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>`<option value="${esc(s)}">`).join('')}</datalist></div>
+     ${d.invitedLab?`<div class="pc-meta" style="margin-bottom:4px">เชิญ(ค่าแรง): ${(d.invitedLab||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>`<span class="winchip ${s===d.winnerLab?'sel':''}" onclick="pickWinnerLabCard('${d.id}','${s.replace(/'/g,"\\'")}')" title="กดเพื่อเลือกเป็นผู้รับเหมาค่าแรง">${s===d.winnerLab?'🏆 ':''}${esc(s)}</span>`).join(' ')}</div>`:''}
      ${(d.appdate||d.po||d.owner)?`<div class="pc-meta">
        ${d.appdate?`อนุมัติ: ${esc(fmtDate(d.appdate))} &nbsp;`:''}${d.po?`PO: ${esc(d.po)}`:''}
        ${d.owner?`<br>ผู้รับผิดชอบ: ${esc(d.owner)}`:''}
@@ -1384,6 +1398,7 @@ function setStatus(id,v){const d=data.find(x=>x.id===id);if(d){d.status=+v;touch
 function stepStatus(id){const d=data.find(x=>x.id===id);if(d&&d.status<10){d.status++;touch(d);save();render()}}
 function setField(id,k,v){const d=data.find(x=>x.id===id);if(d){d[k]=(k==='price'?v:v.trim());touch(d);save();render()}}
 function pickWinnerCard(id,name){const d=data.find(x=>x.id===id);if(d){d.winner=(d.winner===name)?'':name;touch(d);save();render()}}
+function pickWinnerLabCard(id,name){const d=data.find(x=>x.id===id);if(d){d.winnerLab=(d.winnerLab===name)?'':name;touch(d);save();render()}}
 function setNum(id,k,v){const d=data.find(x=>x.id===id);if(d){const n=String(v).replace(/[^\d.]/g,'');d[k]=n===''?'':Number(n);touch(d);save();render()}}
 function setNumSub(id,k,v){const d=data.find(x=>x.id===id);if(d){const n=String(v).replace(/[^\d.]/g,'');d[k]=n===''?'':Number(n);recomputeTotals(d);touch(d);save();render()}}
 function calcFormTotal(){
@@ -1633,8 +1648,11 @@ function openForm(id){
   const invArr=String(g('invited')||'').split(',').map(x=>x.trim());
   const repSet=new Set(String(g('replied')||'').split(',').map(x=>x.trim()).filter(Boolean));
   for(let k=1;k<=5;k++){const nm=invArr[k-1]||'';document.getElementById('m_inv'+k).value=nm;document.getElementById('m_rep'+k).checked=!!nm&&repSet.has(nm)}
+  const labInvArr=String(g('invitedLab')||'').split(',').map(x=>x.trim());
+  const labRepSet=new Set(String(g('repliedLab')||'').split(',').map(x=>x.trim()).filter(Boolean));
+  for(let k=1;k<=5;k++){const nm=labInvArr[k-1]||'';document.getElementById('m_labinv'+k).value=nm;document.getElementById('m_labrep'+k).checked=!!nm&&labRepSet.has(nm)}
   m_boqMat.value=dispNum(g('boqMat'));m_priceMat.value=dispNum(g('priceMat'));m_boqLab.value=dispNum(g('boqLab'));m_priceLab.value=dispNum(g('priceLab'));calcFormTotal();
-  m_winner.value=g('winner');m_reason.value=g('reason');m_appdate.value=g('appdate');
+  m_winner.value=g('winner');m_winnerLab.value=g('winnerLab');m_reason.value=g('reason');m_appdate.value=g('appdate');
   m_po.value=g('po');m_start.value=g('start');m_end.value=g('end');
   m_followup.value=g('followup');m_owner.value=g('owner');m_note.value=g('note');
   formAttachments=(d.attachments&&Array.isArray(d.attachments))?d.attachments.slice():[];renderAttachList();
@@ -1650,6 +1668,13 @@ function pickWinner(k){
   if(m_winner.value)document.getElementById('m_rep'+k).checked=true;
   refreshWinnerHighlight();
 }
+function pickWinnerLab(k){
+  const nm=document.getElementById('m_labinv'+k).value.trim();
+  if(!nm){alert('กรอกชื่อผู้รับเหมาค่าแรงที่ '+k+' ก่อน');return}
+  m_winnerLab.value=(m_winnerLab.value.trim()===nm)?'':nm;
+  if(m_winnerLab.value)document.getElementById('m_labrep'+k).checked=true;
+  refreshWinnerHighlight();
+}
 function refreshWinnerHighlight(){
   const w=m_winner.value.trim();
   for(let k=1;k<=5;k++){
@@ -1657,6 +1682,12 @@ function refreshWinnerHighlight(){
     document.getElementById('m_row'+k).classList.toggle('iswinner',!!nm&&nm===w);
   }
   document.getElementById('m_winnerLbl').textContent=w?('— เลือก: 🏆 '+w):'';
+  const wl=m_winnerLab.value.trim();
+  for(let k=1;k<=5;k++){
+    const nm=document.getElementById('m_labinv'+k).value.trim();
+    document.getElementById('m_labrow'+k).classList.toggle('iswinner',!!nm&&nm===wl);
+  }
+  document.getElementById('m_labwinnerLbl').textContent=wl?('— เลือก: 🏆 '+wl):'';
 }
 function closeForm(){document.getElementById('modal').classList.remove('open')}
 
@@ -1888,10 +1919,12 @@ function saveForm(){
   if(!m_project.value.trim()||!m_pkg.value.trim()){alert('กรุณากรอกโครงการ และ หัวข้องาน');return}
   const invited=[1,2,3,4,5].map(k=>document.getElementById('m_inv'+k).value.trim()).filter(Boolean).join(', ');
   const replied=[1,2,3,4,5].map(k=>{const nm=document.getElementById('m_inv'+k).value.trim();return (nm&&document.getElementById('m_rep'+k).checked)?nm:''}).filter(Boolean).join(', ');
+  const invitedLab=[1,2,3,4,5].map(k=>document.getElementById('m_labinv'+k).value.trim()).filter(Boolean).join(', ');
+  const repliedLab=[1,2,3,4,5].map(k=>{const nm=document.getElementById('m_labinv'+k).value.trim();return (nm&&document.getElementById('m_labrep'+k).checked)?nm:''}).filter(Boolean).join(', ');
   const rec={id:editId||uid(),
     project:m_project.value.trim(),cat:m_cat.value,pkg:m_pkg.value.trim(),
     status:+m_status.value,detail:m_detail.value.trim(),invited:invited,
-    replied:replied,boqMat:m_boqMat.value.replace(/[^\d.]/g,''),priceMat:m_priceMat.value.replace(/[^\d.]/g,''),boqLab:m_boqLab.value.replace(/[^\d.]/g,''),priceLab:m_priceLab.value.replace(/[^\d.]/g,''),winner:m_winner.value.trim(),
+    replied:replied,boqMat:m_boqMat.value.replace(/[^\d.]/g,''),priceMat:m_priceMat.value.replace(/[^\d.]/g,''),boqLab:m_boqLab.value.replace(/[^\d.]/g,''),priceLab:m_priceLab.value.replace(/[^\d.]/g,''),winner:m_winner.value.trim(),invitedLab:invitedLab,repliedLab:repliedLab,winnerLab:m_winnerLab.value.trim(),
     reason:m_reason.value.trim(),appdate:m_appdate.value,po:m_po.value.trim(),
     start:m_start.value,end:m_end.value,followup:m_followup.value,owner:m_owner.value.trim(),note:m_note.value.trim(),attachments:formAttachments.slice(),history:formHistory.slice()};
   ['boqMat','priceMat','boqLab','priceLab'].forEach(k=>{rec[k]=(rec[k]===''||rec[k]==null)?'':Number(rec[k])});
