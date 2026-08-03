@@ -195,7 +195,16 @@
   .pc-histbadge{font-size:10px;padding:2px 7px;border-radius:20px;background:#dcfce7;color:#16a34a;white-space:nowrap;cursor:pointer;font-weight:700}
   .pc-histbadge:hover{filter:brightness(.95)}
   [data-theme="dark"] .pc-histbadge{background:#123a24;color:#86efac}
-  .pc-catbadge{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--card2);color:var(--muted);white-space:nowrap}
+  .pc-costs{margin-bottom:8px}
+  .pc-costhead,.pc-costrow{display:grid;grid-template-columns:60px 1fr 1fr;gap:5px;align-items:center}
+  .pc-costhead{font-size:9.5px;color:var(--muted);margin-bottom:2px;padding-left:2px}
+  .pc-costhead span{text-align:center}.pc-costhead span:first-child{text-align:left}
+  .pc-costrow{margin-bottom:4px}
+  .pc-costlbl{font-size:11px;color:var(--muted);white-space:nowrap}
+  .pc-costrow input{padding:5px 7px;font-size:12px;background:var(--card2);border:1px solid transparent;border-radius:6px;color:var(--txt);width:100%;text-align:right}
+  .pc-costrow input:focus{border-color:var(--accent);background:var(--card)}
+  .pc-costtotal{font-size:11.5px;color:var(--txt);margin-top:3px;padding-top:4px;border-top:1px dashed var(--line)}
+    .pc-catbadge{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--card2);color:var(--muted);white-space:nowrap}
   .splitbtn{font-size:11px;padding:2px 6px;border-radius:6px;background:var(--card2);border:1px solid var(--line);cursor:pointer;line-height:1}
   .draghandle{cursor:grab;font-size:14px;color:var(--muted);padding:2px 5px;border-radius:6px;user-select:none;line-height:1}
   .draghandle:hover{background:var(--card2);color:var(--txt)}
@@ -513,6 +522,7 @@
     <button onclick="migrateBoq();closeMenu()">🔁 ย้ายราคาเดิม→BOQ</button> -->
     <!-- ซ่อน 21 ก.ค. 2026: ซ้ำซ้อนกับ "ล้างข้อมูลซ้ำ" ที่เก่งกว่า [โค้ดฟังก์ชันยังอยู่ครบ เอาปุ่มกลับได้โดยลบเครื่องหมายคอมเมนต์รอบบรรทัดถัดไปออก]
     <button onclick="removeDuplicates();closeMenu()">🧹 ลบรายการซ้ำ (เหมือนกันเป๊ะ)</button> -->
+    <button onclick="mergeSplitBack();closeMenu()">🔗 รวม วัสดุ+ค่าแรง ที่แยกไว้กลับ</button>
     <button onclick="autoFixDuplicates();closeMenu()">🧹 ล้างข้อมูลซ้ำ (รวมโฟลเดอร์+เก็บล่าสุด)</button>
     <button class="danger-btn" onclick="delProject();closeMenu()">🗑 ลบทั้งโครงการ</button>
   </div>
@@ -583,9 +593,14 @@
       </div>
     </div>
     <div class="grid2">
-      <div class="field"><label>ราคา BOQ (ประมาณ)</label><input id="m_boq" type="text" inputmode="numeric" oninput="fmtLive(this)"></div>
-      <div class="field"><label>ราคาจริงที่ได้ (บาท)</label><input id="m_price" type="text" inputmode="numeric" oninput="fmtLive(this)"></div>
+      <div class="field"><label>🧱 ค่าวัสดุ — BOQ</label><input id="m_boqMat" type="text" inputmode="numeric" oninput="fmtLive(this);calcFormTotal()"></div>
+      <div class="field"><label>🧱 ค่าวัสดุ — ราคาจริง</label><input id="m_priceMat" type="text" inputmode="numeric" oninput="fmtLive(this);calcFormTotal()"></div>
     </div>
+    <div class="grid2">
+      <div class="field"><label>🔧 ค่าแรง — BOQ</label><input id="m_boqLab" type="text" inputmode="numeric" oninput="fmtLive(this);calcFormTotal()"></div>
+      <div class="field"><label>🔧 ค่าแรง — ราคาจริง</label><input id="m_priceLab" type="text" inputmode="numeric" oninput="fmtLive(this);calcFormTotal()"></div>
+    </div>
+    <div class="field" id="m_costTotal" style="font-size:13px;color:var(--muted);background:var(--card2);padding:8px 10px;border-radius:8px"></div>
     <input type="hidden" id="m_winner">
     <div class="field"><label>เหตุผลในการเลือก</label><input id="m_reason"></div>
     <div class="grid2">
@@ -681,7 +696,14 @@ function toYMD(v){
   const d=new Date(s);
   return isNaN(d)?'':ymdParts(d.getFullYear(),d.getMonth()+1,d.getDate());
 }
-function normRec(r){if(r&&typeof r==='object')DATE_FIELDS.forEach(f=>{if(f in r)r[f]=toYMD(r[f])});return r}
+function recomputeTotals(d){const n=x=>Number(x)||0;d.boq=(n(d.boqMat)+n(d.boqLab))||'';d.price=(n(d.priceMat)+n(d.priceLab))||'';}
+function normPrice(r){
+  if(!r||typeof r!=='object')return r;
+  const has=('boqMat'in r)||('boqLab'in r)||('priceMat'in r)||('priceLab'in r);
+  if(!has){r.boqMat=(r.boq===''||r.boq==null)?'':r.boq;r.priceMat=(r.price===''||r.price==null)?'':r.price;r.boqLab='';r.priceLab='';}
+  recomputeTotals(r);return r;
+}
+function normRec(r){if(r&&typeof r==='object'){DATE_FIELDS.forEach(f=>{if(f in r)r[f]=toYMD(r[f])});normPrice(r);}return r}
 function normAll(a){return Array.isArray(a)?a.map(normRec):[]}
 
 function load(){try{return normAll(JSON.parse(localStorage.getItem(KEY))||[])}catch(e){return[]}}
@@ -1150,7 +1172,7 @@ function render(){
          ${(d.attachments&&d.attachments.length)?`<span class="pc-attbadge" title="มีไฟล์แนบ ${d.attachments.length} ไฟล์ (กดเพื่อดู)" onclick="openForm('${d.id}')">📎 ${d.attachments.length}</span>`:''}
          ${(d.history&&d.history.length)?`<span class="pc-histbadge" title="มีบันทึกติดตาม ${d.history.length} รายการ (กดเพื่อดู)" onclick="openForm('${d.id}')">📝 ${d.history.length}</span>`:''}
          <span class="pc-catbadge cat-${d.cat}">${d.cat}</span>
-         ${/ – (วัสดุ|ค่าแรง)$/.test(d.pkg)?'':`<button class="splitbtn" title="แยกเป็น วัสดุ + ค่าแรง" onclick="splitItem('${d.id}')">✂️</button>`}
+
        </div>
      </div>
      ${d.detail?`<div class="pc-detail"><span class="lbl">📄 รายละเอียดงาน</span>${esc(d.detail)}</div>`:''}
@@ -1160,15 +1182,16 @@ function render(){
          STATUSES.map((s,i)=>`<option value="${i}" ${i==d.status?'selected':''}>${i+1}. ${s}</option>`).join('')}</select>
        ${d.status<10?`<button class="stepbtn" onclick="stepStatus('${d.id}')">▸ ถัดไป</button>`:''}
      </div>
-     <div class="pc-grid">
-       <div class="pc-fld"><label class="lbl-boq">ราคา BOQ (ประมาณ)</label>
-         <div class="pricerow"><input type="text" inputmode="numeric" value="${dispNum(d.boq)}" placeholder="—" oninput="fmtLive(this)" onchange="setNum('${d.id}','boq',this.value)">
-         ${d.boq!==''&&d.boq!=null?`<button class="clrbtn" title="ลบราคา BOQ" onclick="setNum('${d.id}','boq','')">✕</button>`:''}</div></div>
-       <div class="pc-fld"><label class="lbl-real">ราคาจริงที่ได้</label>
-         <div class="pricerow"><input type="text" inputmode="numeric" value="${dispNum(d.price)}" placeholder="—" oninput="fmtLive(this)" onchange="setNum('${d.id}','price',this.value)">
-         ${d.price!==''&&d.price!=null?`<button class="clrbtn" title="ลบราคาจริง" onclick="setNum('${d.id}','price','')">✕</button>`:''}</div></div>
+     <div class="pc-costs">
+       <div class="pc-costhead"><span></span><span>BOQ</span><span>ราคาจริง</span></div>
+       <div class="pc-costrow"><span class="pc-costlbl">🧱 วัสดุ</span>
+         <input type="text" inputmode="numeric" value="${dispNum(d.boqMat)}" placeholder="—" oninput="fmtLive(this)" onchange="setNumSub('${d.id}','boqMat',this.value)">
+         <input type="text" inputmode="numeric" value="${dispNum(d.priceMat)}" placeholder="—" oninput="fmtLive(this)" onchange="setNumSub('${d.id}','priceMat',this.value)"></div>
+       <div class="pc-costrow"><span class="pc-costlbl">🔧 ค่าแรง</span>
+         <input type="text" inputmode="numeric" value="${dispNum(d.boqLab)}" placeholder="—" oninput="fmtLive(this)" onchange="setNumSub('${d.id}','boqLab',this.value)">
+         <input type="text" inputmode="numeric" value="${dispNum(d.priceLab)}" placeholder="—" oninput="fmtLive(this)" onchange="setNumSub('${d.id}','priceLab',this.value)"></div>
+       <div class="pc-costtotal">รวม: BOQ <b class="lbl-boq">${d.boq!==''&&d.boq!=null?Number(d.boq).toLocaleString():'—'}</b> • จริง <b class="lbl-real">${d.price!==''&&d.price!=null?Number(d.price).toLocaleString():'—'}</b>${(d.boq&&d.price)?` • <b class="${(d.boq-d.price)>=0?'diffpos':'diffneg'}">${(d.boq-d.price>=0?'ประหยัด ':'เกิน ')}${Math.abs(d.boq-d.price).toLocaleString()}</b>`:''}</div>
      </div>
-     ${(d.boq&&d.price)?`<div class="pc-meta" style="margin:0 0 4px">ส่วนต่าง: <b class="${(d.boq-d.price)>=0?'diffpos':'diffneg'}">${(d.boq-d.price>=0?'ประหยัด ':'เกิน ')}${Math.abs(d.boq-d.price).toLocaleString()}</b> บาท</div>`:''}
      <div class="pc-fld" style="margin-bottom:6px"><label>ผู้รับเหมาที่เลือก</label>
        <input list="wl_${d.id}" value="${esc(d.winner||'')}" placeholder="—" onchange="setField('${d.id}','winner',this.value)">
        <datalist id="wl_${d.id}">${(d.invited||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>`<option value="${esc(s)}">`).join('')}</datalist></div>
@@ -1362,7 +1385,49 @@ function stepStatus(id){const d=data.find(x=>x.id===id);if(d&&d.status<10){d.sta
 function setField(id,k,v){const d=data.find(x=>x.id===id);if(d){d[k]=(k==='price'?v:v.trim());touch(d);save();render()}}
 function pickWinnerCard(id,name){const d=data.find(x=>x.id===id);if(d){d.winner=(d.winner===name)?'':name;touch(d);save();render()}}
 function setNum(id,k,v){const d=data.find(x=>x.id===id);if(d){const n=String(v).replace(/[^\d.]/g,'');d[k]=n===''?'':Number(n);touch(d);save();render()}}
+function setNumSub(id,k,v){const d=data.find(x=>x.id===id);if(d){const n=String(v).replace(/[^\d.]/g,'');d[k]=n===''?'':Number(n);recomputeTotals(d);touch(d);save();render()}}
+function calcFormTotal(){
+  const num=id=>Number((document.getElementById(id).value||'').replace(/[^\d.]/g,''))||0;
+  const b=num('m_boqMat')+num('m_boqLab'), pr=num('m_priceMat')+num('m_priceLab');
+  const el=document.getElementById('m_costTotal');if(!el)return;
+  const diff=b-pr;
+  el.innerHTML='รวม: BOQ <b style="color:var(--accent)">'+(b?b.toLocaleString():'—')+'</b> • ราคาจริง <b style="color:var(--accent2)">'+(pr?pr.toLocaleString():'—')+'</b>'
+    +((b&&pr)?' • <b class="'+(diff>=0?'diffpos':'diffneg')+'">'+(diff>=0?'ประหยัด ':'เกิน ')+Math.abs(diff).toLocaleString()+'</b> บาท':'');
+}
 function delById(id){const d=data.find(x=>x.id===id);if(d&&confirm('ลบหัวข้องาน "'+d.pkg+'" ?')){pushUndo('ก่อนลบหัวข้องาน "'+d.pkg+'"');data=data.filter(x=>x.id!==id);save();render()}}
+// รวมคู่ "– วัสดุ / – ค่าแรง" ที่เคยแยกไว้ กลับเป็นรายการเดียว (breakdown)
+function mergeSplitBack(){
+  const baseName=x=>String(x||'').replace(/\s*–\s*(วัสดุ|ค่าแรง)\s*$/,'').trim();
+  const groups={};
+  data.forEach(d=>{
+    if(/\s*–\s*(วัสดุ|ค่าแรง)\s*$/.test(d.pkg||'')){
+      const k=(d.project||'')+'|||'+baseName(d.pkg);
+      (groups[k]=groups[k]||[]).push(d);
+    }
+  });
+  const keys=Object.keys(groups).filter(k=>groups[k].length>=1);
+  if(!keys.length){alert('ไม่พบรายการที่แยก "– วัสดุ / – ค่าแรง" ไว้');return;}
+  let n=0;keys.forEach(k=>n+=groups[k].length);
+  if(!confirm('พบ '+n+' รายการที่แยกวัสดุ/ค่าแรงไว้ ('+keys.length+' หัวข้อ)\nรวมกลับเป็นรายการเดียว (ราคาย้ายเข้าช่องวัสดุ/ค่าแรงตามชื่อ)?'))return;
+  pushUndo('ก่อนรวมวัสดุ+ค่าแรงกลับ');
+  const num=x=>Number(x)||0;
+  keys.forEach(k=>{
+    const list=groups[k];
+    const mat=list.find(d=>/วัสดุ\s*$/.test(d.pkg)), lab=list.find(d=>/ค่าแรง\s*$/.test(d.pkg));
+    const primary=mat||lab||list[0];
+    const merged={...primary, pkg:baseName(primary.pkg),
+      boqMat:mat?(num(mat.boq)||num(mat.boqMat)||''):'', priceMat:mat?(num(mat.price)||num(mat.priceMat)||''):'',
+      boqLab:lab?(num(lab.boq)||num(lab.boqLab)||''):'', priceLab:lab?(num(lab.price)||num(lab.priceLab)||''):'',
+      winner:(mat&&mat.winner)||(lab&&lab.winner)||primary.winner||''};
+    recomputeTotals(merged);
+    const ids=new Set(list.map(d=>d.id));
+    const idx=data.findIndex(d=>d.id===primary.id);
+    data=data.filter(d=>!ids.has(d.id));
+    data.splice(Math.max(0,idx),0,merged);
+  });
+  save();render();
+  alert('รวมกลับเรียบร้อย '+keys.length+' หัวข้อ ✓');
+}
 function splitItem(id){
   const i=data.findIndex(x=>x.id===id);if(i<0)return;const d=data[i];
   if(!confirm('แยก "'+d.pkg+'" ออกเป็น 2 หัวข้อ:\n• '+d.pkg+' – วัสดุ\n• '+d.pkg+' – ค่าแรง\n(ราคา BOQ จะย้ายไปฝั่งวัสดุ ปรับได้ทีหลัง)'))return;
@@ -1568,7 +1633,7 @@ function openForm(id){
   const invArr=String(g('invited')||'').split(',').map(x=>x.trim());
   const repSet=new Set(String(g('replied')||'').split(',').map(x=>x.trim()).filter(Boolean));
   for(let k=1;k<=5;k++){const nm=invArr[k-1]||'';document.getElementById('m_inv'+k).value=nm;document.getElementById('m_rep'+k).checked=!!nm&&repSet.has(nm)}
-  m_boq.value=dispNum(g('boq'));m_price.value=dispNum(g('price'));
+  m_boqMat.value=dispNum(g('boqMat'));m_priceMat.value=dispNum(g('priceMat'));m_boqLab.value=dispNum(g('boqLab'));m_priceLab.value=dispNum(g('priceLab'));calcFormTotal();
   m_winner.value=g('winner');m_reason.value=g('reason');m_appdate.value=g('appdate');
   m_po.value=g('po');m_start.value=g('start');m_end.value=g('end');
   m_followup.value=g('followup');m_owner.value=g('owner');m_note.value=g('note');
@@ -1826,10 +1891,11 @@ function saveForm(){
   const rec={id:editId||uid(),
     project:m_project.value.trim(),cat:m_cat.value,pkg:m_pkg.value.trim(),
     status:+m_status.value,detail:m_detail.value.trim(),invited:invited,
-    replied:replied,boq:m_boq.value.replace(/[^\d.]/g,''),price:m_price.value.replace(/[^\d.]/g,''),winner:m_winner.value.trim(),
+    replied:replied,boqMat:m_boqMat.value.replace(/[^\d.]/g,''),priceMat:m_priceMat.value.replace(/[^\d.]/g,''),boqLab:m_boqLab.value.replace(/[^\d.]/g,''),priceLab:m_priceLab.value.replace(/[^\d.]/g,''),winner:m_winner.value.trim(),
     reason:m_reason.value.trim(),appdate:m_appdate.value,po:m_po.value.trim(),
     start:m_start.value,end:m_end.value,followup:m_followup.value,owner:m_owner.value.trim(),note:m_note.value.trim(),attachments:formAttachments.slice(),history:formHistory.slice()};
-  touch(rec);
+  ['boqMat','priceMat','boqLab','priceLab'].forEach(k=>{rec[k]=(rec[k]===''||rec[k]==null)?'':Number(rec[k])});
+  recomputeTotals(rec);touch(rec);
   if(editId){data=data.map(x=>x.id===editId?rec:x)}else{data.push(rec)}
   save();closeForm();render();
 }
