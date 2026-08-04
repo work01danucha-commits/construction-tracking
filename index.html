@@ -2069,6 +2069,7 @@ function updateBackupBar(){
   document.getElementById('backupBar').style.display=(data.length&&last!==ymd)?'block':'none';
 }
 initSelects();render();notifyDue();updateBackupBar();initSaveFile();syncThemeBtn();initSync();initGate();renderUserName();
+try{document.querySelectorAll('input,textarea').forEach(el=>{if(el.type!=='checkbox'&&el.type!=='date'&&el.type!=='file')el.setAttribute('autocomplete','off')})}catch(e){}
 </script>
 </body>
 </html>
