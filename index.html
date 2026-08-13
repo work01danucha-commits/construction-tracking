@@ -730,7 +730,8 @@ const API_URL="https://script.google.com/macros/s/AKfycby6uS09jNLOLrlIovzYq8ErV_
 const SYNCQ_KEY=KEY+'__syncq';
 let lastSynced={};          // id -> JSON ของ record ที่ (เชื่อว่า) อยู่บนชีทแล้ว
 let syncBusy=false;
-let syncState='idle';       // idle|syncing|ok|err|off
+let syncState='idle';
+let lastSyncError='';       // idle|syncing|ok|err|off
 let migrateNeeded=false;
 
 function snapshotMap(arr){const m={};arr.forEach(r=>{if(r&&r.id)m[r.id]=JSON.stringify(r)});return m}
@@ -756,7 +757,7 @@ async function apiWrite(payload){
   const body=Object.assign({},payload,{secret:getSecret()});
   const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
   const j=await res.json();
-  if(j&&j.needSecret){onAuthFail();throw new Error('unauthorized')}
+  if(j&&j.needSecret){throw new Error('ส่งไม่ผ่าน (เซิร์ฟเวอร์ไม่รับรหัสตอนส่งข้อมูล — มักเกิดเมื่อข้อมูลชิ้นใหญ่)')}
   if(!j||!j.ok)throw new Error((j&&j.error)||'server error');
   return j.data;
 }
@@ -793,8 +794,8 @@ async function flushSync(){
       await apiWrite(q[0]);
       q.shift();saveQ(q);
     }
-    setSync('ok');
-  }catch(e){setSync('err')}
+    lastSyncError='';setSync('ok');
+  }catch(e){lastSyncError=(e&&e.message)||String(e);console.error('sync fail:',e);setSync('err')}
   finally{syncBusy=false;renderSyncBar()}
 }
 
@@ -847,6 +848,7 @@ function renderSyncBar(){
   if(syncState==='err'||q>0){
     el.className='info-bar';el.style.background='var(--tint-red)';el.style.color='#dc2626';el.style.display='block';
     el.innerHTML='⚠️ <b>ยังส่งขึ้นชีทไม่สำเร็จ</b> — มี '+q+' รายการค้างในเครื่อง (ข้อมูลไม่หาย) '
+      +(lastSyncError?'<span style="font-size:12px;opacity:.85">['+esc(lastSyncError)+']</span> ':'')
       +'<button style="margin-left:8px;padding:4px 12px" onclick="flushSync()">🔄 ลองส่งใหม่</button>';
     return;
   }
@@ -1755,11 +1757,17 @@ function addHist(){
   pendingHistImgs=[];renderPendingImgs();
   renderHistList();
 }
-function trashDrive(id){if(!id)return;try{fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'deleteFile',secret:getSecret(),fileId:id})});}catch(e){}}
+// ลบไฟล์/รูปออกจาก Drive (ย้ายลงถังขยะ กู้ได้ 30 วัน) — best effort ไม่บล็อก UI
+function driveDelete(id){
+  if(!id)return;
+  try{fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({action:'deleteFile',secret:getSecret(),fileId:id})})}catch(e){}
+}
 function delHist(i){
   const h=formHistory[i];if(!h)return;
-  if(!confirm('ลบบันทึกนี้?'+((h.imgs&&h.imgs.length)?'\n(รูปในบันทึกจะถูกย้ายลงถังขยะ Drive ด้วย กู้คืนได้ 30 วัน)':'')))return;
-  (h.imgs||[]).forEach(o=>trashDrive(o.id));
+  const nImg=(h.imgs&&h.imgs.length)||0;
+  if(!confirm('ลบบันทึกนี้?'+(nImg?('\nรูป '+nImg+' รูปในบันทึกจะถูกย้ายลงถังขยะ Drive ด้วย (กู้ได้ 30 วัน)'):'')))return;
+  if(h.imgs)h.imgs.forEach(o=>driveDelete(o&&o.id));
   formHistory.splice(i,1);renderHistList();
 }
 
@@ -1778,7 +1786,11 @@ function renderPendingImgs(){
     +'<span class="thumb-fallback">🖼</span>'
     +'<button type="button" class="thumb-del" title="เอารูปออก" onclick="delPendingImg('+i+')">✕</button></div>').join('')+'</div>';
 }
-function delPendingImg(i){const o=pendingHistImgs[i];if(o&&o.id)trashDrive(o.id);pendingHistImgs.splice(i,1);renderPendingImgs()}
+function delPendingImg(i){
+  const o=pendingHistImgs[i];
+  if(o&&o.id)driveDelete(o.id);   // รูปอัปขึ้น Drive แล้ว แต่ยังไม่เซฟลงบันทึก → ลบ Drive กันขยะ
+  pendingHistImgs.splice(i,1);renderPendingImgs();
+}
 // ป๊อปอัพดูรูปในหน้าเว็บ (ไม่เด้งแท็บใหม่)
 function isImageName(n){return /\.(jpe?g|png|gif|webp|bmp|svg|heic)$/i.test(n||'')}
 function driveIdFrom(id,url){if(id)return id;const m=String(url||'').match(/\/d\/([^/]+)/);return m?m[1]:''}
@@ -1893,7 +1905,7 @@ async function uploadDrive(file,statusEl){
   const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify({action:'uploadFile',secret:getSecret(),name:file.name,mime:file.type||'application/octet-stream',dataB64:b64})});
   const j=await res.json();
-  if(j&&j.needSecret){onAuthFail();throw new Error('unauthorized')}
+  if(j&&j.needSecret){throw new Error('อัปไฟล์ไม่ผ่าน (เซิร์ฟเวอร์ไม่รับรหัส — ไฟล์อาจใหญ่เกิน)')}
   if(!j||!j.ok||!j.file)throw new Error((j&&j.error)||'อัปโหลดไม่สำเร็จ');
   if(statusEl)statusEl.textContent='';
   return j.file;
