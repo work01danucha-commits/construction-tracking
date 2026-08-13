@@ -777,8 +777,14 @@ function syncDiff(){
   data.forEach(r=>{if(r&&r.id&&lastSynced[r.id]!==cur[r.id])ups.push(r)});
   const dels=[];
   for(const id in lastSynced){if(!(id in cur))dels.push(id)}
-  if(ups.length)enqueue({action:'upsert',records:ups});
-  if(dels.length)enqueue({action:'delete',ids:dels});
+  if(ups.length){
+    // แบ่งส่งทีละก้อนเล็ก (≤ ~250KB/ครั้ง) กัน payload ใหญ่เกินจนเซิร์ฟเวอร์รับไม่ครบ
+    let batch=[],sz=0;const MAXB=250000;
+    const flush=()=>{if(batch.length){enqueue({action:'upsert',records:batch});batch=[];sz=0;}};
+    ups.forEach(r=>{const n=JSON.stringify(r).length;if(batch.length&&sz+n>MAXB)flush();batch.push(r);sz+=n;});
+    flush();
+  }
+  if(dels.length){for(let i=0;i<dels.length;i+=50)enqueue({action:'delete',ids:dels.slice(i,i+50)});}
   lastSynced=cur;                         // มองแง่ดี: ถือว่าจะส่งสำเร็จ (คิว retry ถ้าพลาด)
   if(ups.length||dels.length)flushSync();
 }
