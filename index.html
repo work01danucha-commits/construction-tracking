@@ -474,6 +474,7 @@
   <main class="main">
   <div class="cards" id="kpis"></div>
   <div id="kpiProgress"></div>
+  <div id="dashPanel"></div>
   <div id="backupBar" class="info-bar" style="display:none">
     💾 <b>อย่าลืมสำรองข้อมูล</b> — กด ⬇️ สำรอง(JSON) แล้วเซฟทับไฟล์ใน Google Drive
     <button onclick="exportJSON();updateBackupBar()" style="margin-left:8px;padding:4px 10px">สำรองเลย</button>
@@ -1196,10 +1197,11 @@ function render(){
   if(folderView()){
     renderFolders();
     document.getElementById('empty').style.display=data.length?'none':'block';
-    renderKPIs();renderTotals();renderMiniCal();renderAgenda();
+    renderKPIs();renderTotals();renderMiniCal();renderAgenda();renderDash();
     if(document.getElementById('calModal').classList.contains('open'))renderBigCal();
     return;
   }
+  {const dp=document.getElementById('dashPanel');if(dp)dp.innerHTML='';}
   document.getElementById('folderHead').innerHTML='';
   const rows=filtered();
   const backbar=(fProject.value?`<div class="backbar"><button onclick="backToFolders()">← ทุกโครงการ</button><b>📁 ${esc(fProject.value)}</b><button onclick="renameProject('${fProject.value.replace(/'/g,"\\'")}')" title="แก้ชื่อโครงการ" style="padding:4px 8px;font-size:12px">✏️</button><span style="color:var(--muted);font-size:12px">${rows.length} หัวข้องาน</span></div>`:'');
@@ -1399,6 +1401,48 @@ function renderTotals(){
     <div class="row"><span class="k">รวม BOQ</span><span class="boq">${fmt(sumBoq)}</span></div>
     <div class="row"><span class="k">รวมราคาจริง</span><span class="real">${fmt(sumReal)}</span></div>
     ${sumReal?`<div class="row"><span class="k">ส่วนต่าง</span><span class="diff ${diff>=0?'pos':'neg'}">${diff>=0?'ประหยัด ':'เกิน '}${fmt(Math.abs(diff))}</span></div>`:''}`;
+}
+// ===== Dashboard หน้าแรก: คืบหน้าแยกหมวด + แยกอาคาร =====
+function pctOfRows(rows){return rows.length?Math.round(rows.reduce((a,d)=>a+(+d.status)/10,0)/rows.length*100):0;}
+function dashBar(label,pct,n){
+  const col=pct>=70?'#16a34a':pct>=45?'#2563eb':pct>=1?'#ea580c':'#9ca3af';
+  return `<div style="margin-bottom:9px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:13px;margin-bottom:3px">
+      <span>${label} <span style="color:var(--muted);font-size:12px">(${n} งาน)</span></span><b>${pct}%</b></div>
+    <div style="height:8px;background:var(--card2);border-radius:20px;overflow:hidden"><i style="display:block;height:100%;width:${pct}%;background:${col};border-radius:20px"></i></div>
+  </div>`;
+}
+function renderDash(){
+  const host=document.getElementById('dashPanel'); if(!host)return;
+  if(!data.length){host.innerHTML='';return;}
+  const CATS=[['Structural','โครงสร้าง'],['Architectural','สถาปัตยกรรม'],['MEP','งานระบบ MEP'],['External','งานภายนอก']];
+  const catBars=CATS.map(([c,th])=>{const rows=data.filter(d=>d.cat===c);return rows.length?dashBar('🏗️ '+th,pctOfRows(rows),rows.length):'';}).join('');
+  // แยกอาคาร — จัดกลุ่มตามโครงการ, เฉพาะโครงการที่มีการระบุชื่ออาคาร
+  const projs=[...new Set(data.map(d=>d.project).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'th'));
+  const bldgSecs=projs.map(p=>{
+    const pr=data.filter(d=>d.project===p);
+    const names=[...new Set(pr.flatMap(d=>Array.isArray(d.buildings)?d.buildings:[]).map(s=>String(s).trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'th'));
+    if(!names.length)return'';
+    const bars=names.map(b=>{
+      const rows=pr.filter(d=>!Array.isArray(d.buildings)||d.buildings.length===0||d.buildings.includes(b));
+      return dashBar('🏢 '+esc(b),pctOfRows(rows),rows.length);
+    }).join('');
+    return `<div style="margin-top:12px"><div style="font-size:13px;font-weight:700;margin-bottom:6px;color:var(--muted)">📁 ${esc(p)}</div>${bars}</div>`;
+  }).join('');
+  const open=localStorage.getItem('dashOpen')!=='0';
+  const bldgBlock=bldgSecs?
+    `<div style="margin-top:14px;border-top:1px solid var(--border,#e5e7eb);padding-top:10px">
+       <div style="font-size:13px;font-weight:700;margin-bottom:8px">🏢 ความคืบหน้าแยกรายอาคาร</div>${bldgSecs}</div>`:
+    `<div style="margin-top:12px;font-size:12px;color:var(--muted)">💡 ยังไม่มีการระบุอาคารในงานใด — เปิดงานแล้วใส่ชื่ออาคารในช่อง “ขอบเขตอาคาร” เพื่อดู % รายอาคาร (งานเหมารวมเว้นว่างได้)</div>`;
+  host.innerHTML=`<details ${open?'open':''} ontoggle="localStorage.setItem('dashOpen',this.open?'1':'0')"
+      style="background:var(--card,#fff);border:1px solid var(--border,#e5e7eb);border-radius:12px;padding:12px 14px;margin-bottom:12px">
+    <summary style="cursor:pointer;font-weight:700;font-size:14px;list-style:none">📊 Dashboard ความคืบหน้า <span style="color:var(--muted);font-weight:400;font-size:12px">— แตะเพื่อย่อ/ขยาย</span></summary>
+    <div style="margin-top:12px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">🏗️ ความคืบหน้าแยกหมวดงาน</div>
+      ${catBars||'<div style="font-size:12px;color:var(--muted)">—</div>'}
+      ${bldgBlock}
+    </div>
+  </details>`;
 }
 function renderKPIs(){
   const base=fProject.value?data.filter(d=>d.project===fProject.value):data;
