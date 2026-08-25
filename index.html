@@ -324,6 +324,9 @@
   .att-size{color:var(--muted);font-size:11.5px;flex:0 0 auto}
   .att-del{flex:0 0 auto;width:26px;height:26px;padding:0;color:#dc2626;border:1px solid var(--tint-red2);background:var(--tint-red);border-radius:7px;cursor:pointer;font-size:13px}
   .att-empty{color:var(--muted);font-size:12.5px;padding:3px 0}
+  .att-kind{flex:0 0 auto;width:118px;height:26px;font-size:12px;padding:2px 6px;border:1px solid var(--line);border-radius:7px;background:var(--card)}
+  .att-group-h{font-size:12px;font-weight:700;color:var(--accent);margin:9px 0 5px;padding-left:2px}
+  .att-group:first-child .att-group-h{margin-top:2px}
   .att-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
   .att-btns button{padding:7px 12px;font-size:13px}
   .att-status{font-size:12px;color:var(--accent);margin-top:5px;min-height:15px}
@@ -641,6 +644,7 @@
       <div class="att-status" id="m_attachStatus"></div>
       <input type="file" id="m_fileInput" multiple style="display:none" onchange="onAttachPick(this)">
       <input type="file" id="m_camInput" accept="image/*" capture="environment" style="display:none" onchange="onAttachPick(this)">
+      <datalist id="attKindList"><option value="ใบเสนอราคา"><option value="BOQ"><option value="แบบ/Drawing"><option value="สัญญา/PO"><option value="เอกสารบริษัท"><option value="รูปหน้างาน"><option value="อื่นๆ"></datalist>
     </div>
     <div class="field"><label>📝 บันทึกติดตาม / ต่อรอง (เก็บวันเวลาอัตโนมัติ)</label>
       <div class="hist-list" id="m_histList"></div>
@@ -1960,11 +1964,21 @@ function fmtSize(n){n=Number(n)||0;if(n<1024)return n+' B';if(n<1048576)return (
 function renderAttachList(){
   const box=document.getElementById('m_attachList');if(!box)return;
   if(!formAttachments.length){box.innerHTML='<div class="att-empty">ยังไม่มีไฟล์แนบ</div>';return}
-  box.innerHTML=formAttachments.map((a,i)=>
-    '<div class="att-item"><span class="att-open" onclick="openAttachViewer('+i+')" title="กดดูในหน้าเว็บ">📎 '+esc(a.name)+'</span>'+
-    '<span class="att-size">'+fmtSize(a.size)+'</span>'+
-    '<button type="button" class="att-del" title="เอาออก" onclick="removeAttach('+i+')">✕</button></div>').join('');
+  // จัดกลุ่มตามหมวด (kind) — ไม่ระบุไปกอง "— ไม่ระบุหมวด —" ล่างสุด
+  const groups={};
+  formAttachments.forEach((a,i)=>{const k=(a.kind||'').trim()||'— ไม่ระบุหมวด —';(groups[k]=groups[k]||[]).push(i);});
+  const keys=Object.keys(groups).sort((a,b)=>{const na=a.startsWith('—'),nb=b.startsWith('—');if(na!==nb)return na?1:-1;return a.localeCompare(b,'th');});
+  box.innerHTML=keys.map(k=>{
+    const items=groups[k].map(i=>{const a=formAttachments[i];
+      return '<div class="att-item"><span class="att-open" onclick="openAttachViewer('+i+')" title="กดดูในหน้าเว็บ">📎 '+esc(a.name)+'</span>'+
+        '<span class="att-size">'+fmtSize(a.size)+'</span>'+
+        '<input class="att-kind" list="attKindList" value="'+esc(a.kind||'')+'" placeholder="หมวด…" title="พิมพ์หรือเลือกหมวดของไฟล์นี้" onchange="setAttKind('+i+',this.value)">'+
+        '<button type="button" class="att-del" title="เอาออก" onclick="removeAttach('+i+')">✕</button></div>';
+    }).join('');
+    return '<div class="att-group"><div class="att-group-h">📂 '+esc(k)+' <span style="color:var(--muted);font-weight:400">('+groups[k].length+')</span></div>'+items+'</div>';
+  }).join('');
 }
+function setAttKind(i,v){if(formAttachments[i]){formAttachments[i].kind=(v||'').trim();renderAttachList();}}
 const MAX_ATTACH=10*1024*1024;
 function readB64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>{const s=String(r.result||'');const i=s.indexOf(',');res(i>=0?s.slice(i+1):s)};r.onerror=rej;r.readAsDataURL(file)})}
 async function onAttachPick(input){
@@ -1991,7 +2005,7 @@ async function uploadOne(file){
   const st=document.getElementById('m_attachStatus');
   try{
     const f=await uploadDrive(file,st);
-    formAttachments.push({id:f.id,name:f.name,size:f.size,url:f.url});
+    formAttachments.push({id:f.id,name:f.name,size:f.size,url:f.url,kind:''});
     renderAttachList();
   }catch(e){
     if(st)st.textContent='';
