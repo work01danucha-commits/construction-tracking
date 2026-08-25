@@ -484,6 +484,7 @@
   <div class="toolbar">
     <input id="fSearch" class="grow" placeholder="🔍 ค้นหา หัวข้องาน / Supplier">
     <select id="fProject" class="grow"></select>
+    <select id="fBuilding" class="grow" style="display:none"></select>
     <select id="fCat" class="grow">
       <option value="">ทุกหมวด</option>
       <option>Structural</option><option>Architectural</option>
@@ -583,6 +584,8 @@
     </div>
     <datalist id="pkgList"></datalist>
     <div class="field"><label>รายละเอียดงาน</label><input id="m_detail"></div>
+    <div class="field"><label>🏢 ขอบเขตอาคาร <span style="color:var(--muted);font-weight:400">(เว้นว่าง = ทั้งโครงการทุกหลัง • งานเหมารวมไม่ต้องกรอก)</span></label><input id="m_buildings" list="bldgList" placeholder="เว้นว่าง = ทั้งโครงการ • หรือพิมพ์ชื่ออาคารคั่นด้วย , เช่น อาคาร A, อาคาร B"></div>
+    <datalist id="bldgList"></datalist>
     <div class="field"><label>🧱 Supplier / ผู้เสนอราคาวัสดุ (สูงสุด 5 เจ้า) — ติ๊ก ✓ = ตอบกลับแล้ว, กด 🏆 = เลือกเจ้านี้ <span id="m_winnerLbl" style="color:#16a34a;font-weight:700"></span></label>
       <div style="display:flex;flex-direction:column;gap:6px">
         <div class="suprow" id="m_row1"><input id="m_inv1" placeholder="เจ้าที่ 1"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_rep1"></label><button type="button" class="winbtn" onclick="pickWinner(1)" title="เลือก/ยกเลิกเจ้านี้เป็นผู้รับเหมา">🏆</button></div>
@@ -713,7 +716,7 @@ function normPrice(r){
   if(!has){r.boqMat=(r.boq===''||r.boq==null)?'':r.boq;r.priceMat=(r.price===''||r.price==null)?'':r.price;r.boqLab='';r.priceLab='';}
   recomputeTotals(r);return r;
 }
-function normRec(r){if(r&&typeof r==='object'){DATE_FIELDS.forEach(f=>{if(f in r)r[f]=toYMD(r[f])});normPrice(r);}return r}
+function normRec(r){if(r&&typeof r==='object'){DATE_FIELDS.forEach(f=>{if(f in r)r[f]=toYMD(r[f])});normPrice(r);if(!Array.isArray(r.buildings))r.buildings=[];}return r}
 function normAll(a){return Array.isArray(a)?a.map(normRec):[]}
 
 function load(){try{return normAll(JSON.parse(localStorage.getItem(KEY))||[])}catch(e){return[]}}
@@ -1030,12 +1033,32 @@ function fillPkgList(){
   const cat=document.getElementById('m_cat').value;
   document.getElementById('pkgList').innerHTML=(PKGS[cat]||[]).map(p=>`<option value="${p}">`).join('');
 }
+// รายชื่ออาคารที่เคยพิมพ์ (ช่วย autocomplete) — จำกัดเฉพาะโครงการนี้ถ้าระบุ ไม่งั้นทุกโครงการ
+function bldgNames(project){
+  const src=project?data.filter(d=>d.project===project):data;
+  return [...new Set(src.flatMap(d=>Array.isArray(d.buildings)?d.buildings:[]).map(s=>String(s).trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'th'));
+}
+function fillBldgList(project){
+  const dl=document.getElementById('bldgList');
+  if(dl)dl.innerHTML=bldgNames(project).map(b=>`<option value="${esc(b)}">`).join('');
+}
 function refreshProjectFilters(){
   const projs=[...new Set(data.map(d=>d.project).filter(Boolean))].sort();
   const fp=document.getElementById('fProject'), keep=fp.value;
   fp.innerHTML=`<option value="">ทุกโครงการ (${projs.length})</option>`+projs.map(p=>`<option>${esc(p)}</option>`).join('');
   fp.value=keep;
   document.getElementById('projList').innerHTML=projs.map(p=>`<option value="${esc(p)}">`).join('');
+  // ตัวกรองอาคาร — โชว์เฉพาะตอนเข้าโครงการที่มีการระบุชื่ออาคาร
+  const fb=document.getElementById('fBuilding');
+  if(fb){
+    const bkeep=fb.value;
+    const bs=fp.value?bldgNames(fp.value):[];
+    if(bs.length){
+      fb.innerHTML=`<option value="">ทุกอาคาร (${bs.length})</option>`+bs.map(b=>`<option>${esc(b)}</option>`).join('');
+      fb.value=bs.includes(bkeep)?bkeep:'';
+      fb.style.display='';
+    }else{fb.innerHTML='<option value="">ทุกอาคาร</option>';fb.value='';fb.style.display='none'}
+  }
 }
 
 let dueOnly=false;
@@ -1064,8 +1087,10 @@ function isDue(d){const n=daysTo(d.followup);return n!=null&&n<=0&&d.status<10}
 function isSoon(d){const n=daysTo(d.followup);return n!=null&&n>0&&n<=3&&d.status<10}
 function filtered(){
   const p=fProject.value,c=fCat.value,s=fStatus.value,q=fSearch.value.trim().toLowerCase();
+  const bldg=(document.getElementById('fBuilding')||{}).value||'';
   let rows=data.filter(d=>
     (!p||d.project===p)&&(!c||d.cat===c)&&(s===''||String(d.status)===s)&&
+    (!bldg||!Array.isArray(d.buildings)||d.buildings.length===0||d.buildings.includes(bldg))&&
     (!q||[d.pkg,d.winner,d.invited,d.detail].join(' ').toLowerCase().includes(q))&&
     (!dueOnly||isDue(d)||isSoon(d)));
   const sort=(document.getElementById('fSort')||{}).value||'';
@@ -1088,7 +1113,7 @@ let showDone=false;
 function toggleDone(){showDone=!showDone;render()}
 function folderView(){return !fProject.value && !fSearch.value.trim() && !dueOnly && !fCat.value && fStatus.value===''}
 function openProject(p){fProject.value=p;render();window.scrollTo(0,0)}
-function backToFolders(){fProject.value='';fCat.value='';fStatus.value='';fSearch.value='';if(dueOnly)toggleDue();render()}
+function backToFolders(){fProject.value='';const fb=document.getElementById('fBuilding');if(fb){fb.value='';fb.style.display='none'}fCat.value='';fStatus.value='';fSearch.value='';if(dueOnly)toggleDue();render()}
 function projUrgency(p){
   const ds=data.filter(d=>d.project===p&&d.followup&&d.status<10).map(d=>daysTo(d.followup));
   return ds.length?Math.min(...ds):Infinity; // เลยกำหนด(ติดลบ) มาก่อน, ไม่มีวัน = ท้ายสุด
@@ -1194,6 +1219,7 @@ function render(){
        </div>
      </div>
      ${d.detail?`<div class="pc-detail"><span class="lbl">📄 รายละเอียดงาน</span>${esc(d.detail)}</div>`:''}
+     ${(d.buildings&&d.buildings.length)?`<div class="pc-meta" style="margin:3px 0"><span class="bldgchip" style="display:inline-block;background:#ede9fe;color:#6d28d9;font-size:12px;padding:2px 8px;border-radius:10px">🏢 ${d.buildings.map(esc).join(', ')}</span></div>`:''}
      ${(fc=>fc?`<div class="fu ${fc.c}">${fc.t}</div>`:'')(fuClass(d))}
      <div class="pc-statusrow">
        <select class="s${d.status}" onchange="setStatus('${d.id}',this.value)">${
@@ -1653,6 +1679,7 @@ function openForm(id){
   m_project.value=g('project',fProject.value||'');
   m_cat.value=g('cat','Structural');fillPkgList();
   m_pkg.value=g('pkg');m_status.value=g('status',0);m_detail.value=g('detail');
+  m_buildings.value=(Array.isArray(d.buildings)?d.buildings:[]).join(', ');fillBldgList(m_project.value);
   const invArr=String(g('invited')||'').split(',').map(x=>x.trim());
   const repSet=new Set(String(g('replied')||'').split(',').map(x=>x.trim()).filter(Boolean));
   for(let k=1;k<=5;k++){const nm=invArr[k-1]||'';document.getElementById('m_inv'+k).value=nm;document.getElementById('m_rep'+k).checked=!!nm&&repSet.has(nm)}
@@ -1946,7 +1973,7 @@ function saveForm(){
     status:+m_status.value,detail:m_detail.value.trim(),invited:invited,
     replied:replied,boqMat:m_boqMat.value.replace(/[^\d.]/g,''),priceMat:m_priceMat.value.replace(/[^\d.]/g,''),boqLab:m_boqLab.value.replace(/[^\d.]/g,''),priceLab:m_priceLab.value.replace(/[^\d.]/g,''),winner:m_winner.value.trim(),invitedLab:invitedLab,repliedLab:repliedLab,winnerLab:m_winnerLab.value.trim(),
     reason:m_reason.value.trim(),appdate:m_appdate.value,po:m_po.value.trim(),
-    start:m_start.value,end:m_end.value,followup:m_followup.value,owner:m_owner.value.trim(),note:m_note.value.trim(),attachments:formAttachments.slice(),history:formHistory.slice()};
+    start:m_start.value,end:m_end.value,followup:m_followup.value,owner:m_owner.value.trim(),note:m_note.value.trim(),buildings:m_buildings.value.split(',').map(x=>x.trim()).filter(Boolean),attachments:formAttachments.slice(),history:formHistory.slice()};
   ['boqMat','priceMat','boqLab','priceLab'].forEach(k=>{rec[k]=(rec[k]===''||rec[k]==null)?'':Number(rec[k])});
   recomputeTotals(rec);touch(rec);
   if(editId){data=data.map(x=>x.id===editId?rec:x)}else{data.push(rec)}
@@ -2080,7 +2107,7 @@ function seedDemo(){
   data=data.concat(demo);save();render();
 }
 
-['fProject','fCat','fStatus','fSearch','fSort'].forEach(id=>document.getElementById(id).addEventListener('input',render));
+['fProject','fBuilding','fCat','fStatus','fSearch','fSort'].forEach(id=>document.getElementById(id).addEventListener('input',render));
 document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeForm()});
 document.getElementById('calModal').addEventListener('click',e=>{if(e.target.id==='calModal')e.currentTarget.classList.remove('open')});
 function updateBackupBar(){
