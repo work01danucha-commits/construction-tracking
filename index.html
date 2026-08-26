@@ -324,7 +324,11 @@
   .att-size{color:var(--muted);font-size:11.5px;flex:0 0 auto}
   .att-del{flex:0 0 auto;width:26px;height:26px;padding:0;color:#dc2626;border:1px solid var(--tint-red2);background:var(--tint-red);border-radius:7px;cursor:pointer;font-size:13px}
   .att-empty{color:var(--muted);font-size:12.5px;padding:3px 0}
-  .att-kind{flex:0 0 auto;width:118px;height:26px;font-size:12px;padding:2px 6px;border:1px solid var(--line);border-radius:7px;background:var(--card)}
+  .att-item{flex-wrap:wrap}
+  .att-open{flex:1 1 140px;min-width:120px;color:var(--accent);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:underline}
+  .att-open:hover{opacity:.8}
+  .att-openbtn{flex:0 0 auto;height:26px;padding:0 9px;font-size:12px;color:var(--accent);border:1px solid var(--accent);background:transparent;border-radius:7px;cursor:pointer;white-space:nowrap}
+  .att-kind{flex:0 0 auto;width:104px;height:26px;font-size:12px;padding:2px 6px;border:1px solid var(--line);border-radius:7px;background:var(--card)}
   .att-group-h{font-size:12px;font-weight:700;color:var(--accent);margin:9px 0 5px;padding-left:2px}
   .att-group:first-child .att-group-h{margin-top:2px}
   .att-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
@@ -1977,9 +1981,10 @@ function renderAttachList(){
   const keys=Object.keys(groups).sort((a,b)=>{const na=a.startsWith('—'),nb=b.startsWith('—');if(na!==nb)return na?1:-1;return a.localeCompare(b,'th');});
   box.innerHTML=keys.map(k=>{
     const items=groups[k].map(i=>{const a=formAttachments[i];
-      return '<div class="att-item"><span class="att-open" onclick="openAttachViewer('+i+')" title="กดดูในหน้าเว็บ">📎 '+esc(a.name)+'</span>'+
+      return '<div class="att-item"><span class="att-open" onclick="openAttachViewer('+i+')" title="เปิดไฟล์ในแท็บใหม่">📎 '+esc(a.name||'(ไม่มีชื่อไฟล์)')+'</span>'+
         '<span class="att-size">'+fmtSize(a.size)+'</span>'+
         '<input class="att-kind" list="attKindList" value="'+esc(a.kind||'')+'" placeholder="หมวด…" title="พิมพ์หรือเลือกหมวดของไฟล์นี้" onchange="setAttKind('+i+',this.value)">'+
+        '<button type="button" class="att-openbtn" title="เปิดไฟล์ในแท็บใหม่" onclick="openAttachViewer('+i+')">↗ เปิด</button>'+
         '<button type="button" class="att-del" title="เอาออก" onclick="removeAttach('+i+')">✕</button></div>';
     }).join('');
     return '<div class="att-group"><div class="att-group-h">📂 '+esc(k)+' <span style="color:var(--muted);font-weight:400">('+groups[k].length+')</span></div>'+items+'</div>';
