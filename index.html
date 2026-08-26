@@ -334,6 +334,15 @@
   .att-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
   .att-btns button{padding:7px 12px;font-size:13px}
   .att-status{font-size:12px;color:var(--accent);margin-top:5px;min-height:15px}
+  .att-folder{border:1px solid var(--line);border-radius:9px;margin-bottom:6px;overflow:hidden;background:var(--card2)}
+  .att-fhead{display:flex;align-items:center;gap:7px;padding:8px 10px;cursor:pointer;user-select:none;font-size:13px;font-weight:700}
+  .att-fhead:hover{background:var(--card)}
+  .att-fcaret{width:12px;color:var(--muted);font-size:11px}
+  .att-fname{color:var(--fg)}
+  .att-fcount{color:var(--muted);font-weight:400;font-size:12px}
+  .att-fspace{flex:1}
+  .att-addbtn{flex:0 0 auto;height:24px;padding:0 8px;font-size:11.5px;color:var(--accent);border:1px solid var(--accent);background:transparent;border-radius:6px;cursor:pointer;white-space:nowrap}
+  .att-fbody{padding:4px 8px 8px;display:flex;flex-direction:column;gap:5px}
   /* บันทึกติดตาม/ต่อรอง (ประวัติ) */
   .hist-list{display:flex;flex-direction:column;gap:6px;margin-top:6px}
   .hist-item{background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:13px}
@@ -642,8 +651,9 @@
     <div class="field"><label>📎 ไฟล์แนบ (สัญญา / ใบเสนอราคา / เอกสาร)</label>
       <div class="att-list" id="m_attachList"></div>
       <div class="att-btns">
-        <button type="button" onclick="document.getElementById('m_fileInput').click()">📎 แนบไฟล์</button>
-        <button type="button" onclick="document.getElementById('m_camInput').click()">📷 ถ่ายรูป</button>
+        <button type="button" onclick="newFolder()">➕ สร้างโฟลเดอร์</button>
+        <button type="button" onclick="uploadKind='';document.getElementById('m_fileInput').click()">📎 แนบไฟล์</button>
+        <button type="button" onclick="uploadKind='';document.getElementById('m_camInput').click()">📷 ถ่ายรูป</button>
       </div>
       <div class="att-status" id="m_attachStatus"></div>
       <input type="file" id="m_fileInput" multiple style="display:none" onchange="onAttachPick(this)">
@@ -725,7 +735,7 @@ function normPrice(r){
   if(!has){r.boqMat=(r.boq===''||r.boq==null)?'':r.boq;r.priceMat=(r.price===''||r.price==null)?'':r.price;r.boqLab='';r.priceLab='';}
   recomputeTotals(r);return r;
 }
-function normRec(r){if(r&&typeof r==='object'){DATE_FIELDS.forEach(f=>{if(f in r)r[f]=toYMD(r[f])});normPrice(r);if(!Array.isArray(r.buildings))r.buildings=[];}return r}
+function normRec(r){if(r&&typeof r==='object'){DATE_FIELDS.forEach(f=>{if(f in r)r[f]=toYMD(r[f])});normPrice(r);if(!Array.isArray(r.buildings))r.buildings=[];if(!Array.isArray(r.folders))r.folders=[];}return r}
 function normAll(a){return Array.isArray(a)?a.map(normRec):[]}
 
 function load(){try{return normAll(JSON.parse(localStorage.getItem(KEY))||[])}catch(e){return[]}}
@@ -1742,7 +1752,8 @@ function openForm(id){
   m_winner.value=g('winner');m_winnerLab.value=g('winnerLab');m_reason.value=g('reason');m_appdate.value=g('appdate');
   m_po.value=g('po');m_start.value=g('start');m_end.value=g('end');
   m_followup.value=g('followup');m_owner.value=g('owner');m_note.value=g('note');
-  formAttachments=(d.attachments&&Array.isArray(d.attachments))?d.attachments.slice():[];renderAttachList();
+  formAttachments=(d.attachments&&Array.isArray(d.attachments))?d.attachments.slice():[];
+  formFolders=(d.folders&&Array.isArray(d.folders))?d.folders.slice():[];openFolders=null;uploadKind='';renderAttachList();
   formHistory=(d.history&&Array.isArray(d.history))?d.history.slice():[];pendingHistImgs=[];renderHistList();renderPendingImgs();
   refreshWinnerHighlight();
   document.getElementById('modal').classList.add('open');
@@ -1972,25 +1983,62 @@ async function onHistImgPick(input){
 
 let formAttachments=[];
 function fmtSize(n){n=Number(n)||0;if(n<1024)return n+' B';if(n<1048576)return (n/1024).toFixed(0)+' KB';return (n/1048576).toFixed(1)+' MB'}
+// ===== ไฟล์แนบแบบโฟลเดอร์ =====
+const ATT_SUGGEST=['ใบเสนอราคา','BOQ','แบบ/Drawing','สัญญา/PO','เอกสารบริษัท','รูปหน้างาน'];
+const DEFAULT_FOLDER='ไฟล์ทั่วไป';
+let formFolders=[];      // ชื่อโฟลเดอร์ที่สร้างไว้ (อาจยังไม่มีไฟล์)
+let openFolders=null;    // Set โฟลเดอร์ที่กางอยู่ (null = ยังไม่ init → กางหมด)
+let uploadKind='';       // โฟลเดอร์เป้าหมายของการอัปครั้งถัดไป
+function folderKind(name){return name===DEFAULT_FOLDER?'':name;}
+function folderList(){
+  const set=[];
+  formFolders.forEach(n=>{n=(n||'').trim();if(n&&!set.includes(n))set.push(n);});
+  formAttachments.forEach(a=>{const k=(a.kind||'').trim();if(k&&!set.includes(k))set.push(k);});
+  set.sort((a,b)=>a.localeCompare(b,'th'));
+  if(formAttachments.some(a=>!(a.kind||'').trim()))set.push(DEFAULT_FOLDER);   // ไฟล์ที่ยังไม่เข้าโฟลเดอร์
+  return set;
+}
 function renderAttachList(){
   const box=document.getElementById('m_attachList');if(!box)return;
-  if(!formAttachments.length){box.innerHTML='<div class="att-empty">ยังไม่มีไฟล์แนบ</div>';return}
-  // จัดกลุ่มตามหมวด (kind) — ไม่ระบุไปกอง "— ไม่ระบุหมวด —" ล่างสุด
-  const groups={};
-  formAttachments.forEach((a,i)=>{const k=(a.kind||'').trim()||'— ไม่ระบุหมวด —';(groups[k]=groups[k]||[]).push(i);});
-  const keys=Object.keys(groups).sort((a,b)=>{const na=a.startsWith('—'),nb=b.startsWith('—');if(na!==nb)return na?1:-1;return a.localeCompare(b,'th');});
-  box.innerHTML=keys.map(k=>{
-    const items=groups[k].map(i=>{const a=formAttachments[i];
-      return '<div class="att-item"><span class="att-open" onclick="openAttachViewer('+i+')" title="เปิดไฟล์ในแท็บใหม่">📎 '+esc(a.name||'(ไม่มีชื่อไฟล์)')+'</span>'+
-        '<span class="att-size">'+fmtSize(a.size)+'</span>'+
-        '<input class="att-kind" list="attKindList" value="'+esc(a.kind||'')+'" placeholder="หมวด…" title="พิมพ์หรือเลือกหมวดของไฟล์นี้" onchange="setAttKind('+i+',this.value)">'+
-        '<button type="button" class="att-openbtn" title="เปิดไฟล์ในแท็บใหม่" onclick="openAttachViewer('+i+')">↗ เปิด</button>'+
-        '<button type="button" class="att-del" title="เอาออก" onclick="removeAttach('+i+')">✕</button></div>';
-    }).join('');
-    return '<div class="att-group"><div class="att-group-h">📂 '+esc(k)+' <span style="color:var(--muted);font-weight:400">('+groups[k].length+')</span></div>'+items+'</div>';
+  const folders=folderList();
+  if(openFolders===null)openFolders=new Set(folders);   // ครั้งแรกกางหมด
+  if(!folders.length){box.innerHTML='<div class="att-empty">ยังไม่มีไฟล์แนบ — กด “➕ สร้างโฟลเดอร์” หรือ “📎 แนบไฟล์”</div>';return}
+  box.innerHTML=folders.map((name,fi)=>{
+    const kind=folderKind(name);
+    const idxs=formAttachments.map((a,i)=>i).filter(i=>((formAttachments[i].kind||'').trim())===kind);
+    const isOpen=openFolders.has(name);
+    const canDel=(name!==DEFAULT_FOLDER)&&idxs.length===0;
+    const head='<div class="att-fhead" onclick="toggleFolder('+fi+')">'
+      +'<span class="att-fcaret">'+(isOpen?'▾':'▸')+'</span>'
+      +'<span class="att-fname">📁 '+esc(name)+'</span>'
+      +'<span class="att-fcount">('+idxs.length+')</span><span class="att-fspace"></span>'
+      +'<button type="button" class="att-addbtn" title="แนบไฟล์เข้าโฟลเดอร์นี้" onclick="event.stopPropagation();addToFolder('+fi+')">＋ ไฟล์</button>'
+      +(canDel?'<button type="button" class="att-del" title="ลบโฟลเดอร์ว่าง" onclick="event.stopPropagation();delFolder('+fi+')">✕</button>':'')
+      +'</div>';
+    let body='';
+    if(isOpen){
+      const items=idxs.length?idxs.map(i=>{const a=formAttachments[i];
+        return '<div class="att-item"><span class="att-open" onclick="openAttachViewer('+i+')" title="เปิดไฟล์ในแท็บใหม่">📎 '+esc(a.name||'(ไม่มีชื่อไฟล์)')+'</span>'
+          +'<span class="att-size">'+fmtSize(a.size)+'</span>'
+          +'<button type="button" class="att-openbtn" title="เปิดไฟล์ในแท็บใหม่" onclick="openAttachViewer('+i+')">↗ เปิด</button>'
+          +'<button type="button" class="att-del" title="เอาไฟล์ออก" onclick="removeAttach('+i+')">✕</button></div>';
+      }).join(''):'<div class="att-empty" style="padding:3px 2px">โฟลเดอร์ว่าง — กด “＋ ไฟล์” เพื่อแนบ</div>';
+      body='<div class="att-fbody">'+items+'</div>';
+    }
+    return '<div class="att-folder">'+head+body+'</div>';
   }).join('');
 }
-function setAttKind(i,v){if(formAttachments[i]){formAttachments[i].kind=(v||'').trim();renderAttachList();}}
+function toggleFolder(fi){const f=folderList();const name=f[fi];if(!name)return;if(openFolders.has(name))openFolders.delete(name);else openFolders.add(name);renderAttachList();}
+function addToFolder(fi){const f=folderList();uploadKind=folderKind(f[fi]||'');document.getElementById('m_fileInput').click();}
+function delFolder(fi){const f=folderList();const name=f[fi];if(!name||name===DEFAULT_FOLDER)return;formFolders=formFolders.filter(n=>n!==name);if(openFolders)openFolders.delete(name);renderAttachList();}
+function newFolder(){
+  let n=prompt('ตั้งชื่อโฟลเดอร์ใหม่\n(แนะนำ: '+ATT_SUGGEST.join(', ')+')','');
+  if(n==null)return;n=n.trim();if(!n){return}
+  if(n===DEFAULT_FOLDER){alert('ชื่อนี้ระบบใช้อยู่ ลองชื่ออื่น');return}
+  if(!formFolders.includes(n))formFolders.push(n);
+  if(openFolders)openFolders.add(n);
+  renderAttachList();
+}
 const MAX_ATTACH=10*1024*1024;
 function readB64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>{const s=String(r.result||'');const i=s.indexOf(',');res(i>=0?s.slice(i+1):s)};r.onerror=rej;r.readAsDataURL(file)})}
 async function onAttachPick(input){
@@ -2001,6 +2049,7 @@ async function onAttachPick(input){
     if(f.size>MAX_ATTACH){alert('ไฟล์ "'+f.name+'" ใหญ่เกิน 10MB — ข้ามไฟล์นี้ (Apps Script รับไฟล์ใหญ่ไม่ไหว)');continue}
     await uploadOne(f);
   }
+  uploadKind='';   // รีเซ็ตเป้าหมายหลังอัปเสร็จ
 }
 async function uploadDrive(file,statusEl){
   if(statusEl)statusEl.textContent='กำลังอัปโหลด '+file.name+' …';
@@ -2017,7 +2066,7 @@ async function uploadOne(file){
   const st=document.getElementById('m_attachStatus');
   try{
     const f=await uploadDrive(file,st);
-    formAttachments.push({id:f.id,name:f.name,size:f.size,url:f.url,kind:''});
+    formAttachments.push({id:f.id,name:f.name,size:f.size,url:f.url,kind:uploadKind||''});
     renderAttachList();
   }catch(e){
     if(st)st.textContent='';
@@ -2043,7 +2092,7 @@ function saveForm(){
     status:+m_status.value,detail:m_detail.value.trim(),invited:invited,
     replied:replied,boqMat:m_boqMat.value.replace(/[^\d.]/g,''),priceMat:m_priceMat.value.replace(/[^\d.]/g,''),boqLab:m_boqLab.value.replace(/[^\d.]/g,''),priceLab:m_priceLab.value.replace(/[^\d.]/g,''),winner:m_winner.value.trim(),invitedLab:invitedLab,repliedLab:repliedLab,winnerLab:m_winnerLab.value.trim(),
     reason:m_reason.value.trim(),appdate:m_appdate.value,po:m_po.value.trim(),
-    start:m_start.value,end:m_end.value,followup:m_followup.value,owner:m_owner.value.trim(),note:m_note.value.trim(),buildings:m_buildings.value.split(',').map(x=>x.trim()).filter(Boolean),attachments:formAttachments.slice(),history:formHistory.slice()};
+    start:m_start.value,end:m_end.value,followup:m_followup.value,owner:m_owner.value.trim(),note:m_note.value.trim(),buildings:m_buildings.value.split(',').map(x=>x.trim()).filter(Boolean),attachments:formAttachments.slice(),folders:[...new Set(formFolders.map(n=>(n||'').trim()).filter(Boolean))],history:formHistory.slice()};
   ['boqMat','priceMat','boqLab','priceLab'].forEach(k=>{rec[k]=(rec[k]===''||rec[k]==null)?'':Number(rec[k])});
   recomputeTotals(rec);touch(rec);
   if(editId){data=data.map(x=>x.id===editId?rec:x)}else{data.push(rec)}
