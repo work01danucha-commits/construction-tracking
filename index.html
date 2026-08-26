@@ -1921,7 +1921,14 @@ function openFileViewer(id,url,name,forceImg){
   lb.classList.add('on');
 }
 function openImgLightbox(id,url){openFileViewer(id,url,'',true)}       // รูปในบันทึก (บังคับโหมดรูป)
-function openAttachViewer(i){const a=formAttachments[i];if(a)openFileViewer(a.id,a.url,a.name,false)}
+// เปิดไฟล์แนบในแท็บใหม่ (หน้า Drive จริง) — เชื่อถือได้ทุกชนิดไฟล์ ไม่ติดปัญหา iframe ฝังบน github.io ที่ Drive บล็อก
+function openAttachViewer(i){
+  const a=formAttachments[i];if(!a)return;
+  const fid=driveIdFrom(a.id,a.url);
+  const viewUrl=a.url||(fid?('https://drive.google.com/file/d/'+encodeURIComponent(fid)+'/view'):'');
+  if(viewUrl){window.open(viewUrl,'_blank','noopener');}
+  else{openFileViewer(a.id,a.url,a.name,false);}  // ไม่มีลิงก์จริง ค่อยลองตัวแสดงในหน้าเดิม
+}
 function closeImgLightbox(){
   const lb=document.getElementById('imgLightbox');if(!lb)return;
   lb.classList.remove('on');
