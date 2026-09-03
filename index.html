@@ -1399,7 +1399,7 @@ function apptRow(d){
       <button onclick="apptSnooze('${d.id}',3)">+3</button>
       <button onclick="apptSnooze('${d.id}',7)">+7 วัน</button>
       <button class="appt-done" onclick="apptDone('${d.id}')">✓ ตามแล้ว</button>
-      <button onclick="document.getElementById('apptModal').classList.remove('open');openForm('${d.id}')">✏️ เปิดงาน</button>
+      <button onclick="openForm('${d.id}')">✏️ เปิดงาน</button>
     </div></div>`;
 }
 function apptGroup(label,color,arr){
@@ -2218,8 +2218,9 @@ function saveForm(){
   recomputeTotals(rec);touch(rec);
   if(editId){data=data.map(x=>x.id===editId?rec:x)}else{data.push(rec)}
   save();closeForm();render();
+  if(document.getElementById('apptModal').classList.contains('open'))renderAppts();  // ค้างหน้านัดไว้ + อัปเดต
 }
-function delItem(){if(confirm('ลบรายการนี้?')){pushUndo('ก่อนลบรายการ');data=data.filter(x=>x.id!==editId);save();closeForm();render()}}
+function delItem(){if(confirm('ลบรายการนี้?')){pushUndo('ก่อนลบรายการ');data=data.filter(x=>x.id!==editId);save();closeForm();render();if(document.getElementById('apptModal').classList.contains('open'))renderAppts();}}
 
 function exportSheet(){
   // ส่งออกเป็นชีท Excel (.xls) — จัดกลุ่มตามโครงการ, หัวตารางเน้นสี, ตัวเลขมีลูกน้ำ, มีรวมยอด
