@@ -80,6 +80,7 @@
   .theme-toggle{position:relative;width:38px;height:38px;border-radius:11px;background:var(--card2);
     border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;padding:0}
   .theme-toggle:hover{background:#e6edf7}
+  .theme-toggle.on{background:var(--accent);color:#fff;border-color:var(--accent)}
   [data-theme="dark"] .theme-toggle:hover{background:#2a3650}
   *{box-sizing:border-box}
   /* แถบเลื่อนบางเรียบ กลืนกับธีม (21 ก.ค. 2026) — Firefox */
@@ -556,6 +557,7 @@
     <div class="hdr-right">
       <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()" title="สลับธีมสว่าง/มืด">🌙</button>
       <button class="theme-toggle" onclick="openAppts()" title="นัดหมายทั้งหมด">📅</button>
+      <button class="theme-toggle" id="mineBtn" onclick="toggleMine()" title="ดูเฉพาะงานที่ฉันรับผิดชอบ (สลับกดอีกครั้งเพื่อดูทั้งหมด)">👤</button>
       <div class="bell" id="bellBtn" onclick="showDueOnly()" title="งานที่ต้องตาม">
         🔔<span class="bell-badge" id="bellBadge" style="display:none">0</span>
       </div>
@@ -1194,6 +1196,18 @@ function refreshProjectFilters(){
 }
 
 let dueOnly=false;
+// ตัวกรอง "เฉพาะงานของฉัน" — ยึดช่องผู้รับผิดชอบ (owner) เทียบชื่อผู้ใช้ (m( ยังไม่ตั้งชื่อ = เห็นทั้งหมด)
+let mineOnly=(function(){try{return localStorage.getItem('mineOnly')==='1'}catch(e){return false}})();
+function isMine(d){const u=(getUserName()||'').trim().toLowerCase();if(!u)return true;return String(d.owner||'').trim().toLowerCase()===u;}
+function toggleMine(){
+  if(!mineOnly){
+    if(!(getUserName()||'').trim()){alert('ตั้งชื่อผู้ใช้ก่อน (กดที่ชื่อมุมขวาบน) จึงจะกรอง “งานของฉัน” ได้');if(typeof changeUserName==='function')changeUserName();if(!(getUserName()||'').trim())return;}
+  }
+  mineOnly=!mineOnly;try{localStorage.setItem('mineOnly',mineOnly?'1':'0')}catch(e){}
+  const b=document.getElementById('mineBtn');if(b)b.classList.toggle('on',mineOnly);
+  render();
+  if(document.getElementById('apptModal').classList.contains('open'))renderAppts();
+}
 function todayStr(){const t=new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0')}
 function daysTo(dateStr){
   if(!dateStr)return null;
@@ -1225,6 +1239,7 @@ function filtered(){
     (!p||d.project===p)&&(!c||d.cat===c)&&(s===''||String(d.status)===s)&&
     (!bldg||!Array.isArray(d.buildings)||d.buildings.length===0||d.buildings.includes(bldg))&&
     (!q||[d.pkg,d.winner,d.invited,d.detail].join(' ').toLowerCase().includes(q))&&
+    (!mineOnly||isMine(d))&&
     (!dueOnly||isDue(d)||isSoon(d)));
   const sort=(document.getElementById('fSort')||{}).value||'';
   const num=(x)=>Number(x)||0;
@@ -1443,7 +1458,7 @@ function calToday(){const t=new Date();calMonth=new Date(t.getFullYear(),t.getMo
 function openBigCal(){document.getElementById('calModal').classList.add('open');renderBigCal()}
 // ===== หน้ารวมนัดหมายทั้งหมด =====
 let apptProject='',apptProjs=[],apptDoneId=null;
-function apptItems(){return data.filter(d=>d.followup&&d.status<10&&daysTo(d.followup)!=null);}
+function apptItems(){return data.filter(d=>d.followup&&d.status<10&&daysTo(d.followup)!=null&&(!mineOnly||isMine(d)));}
 function addDaysYMD(baseYMD,n){const m=toYMD(baseYMD).match(/^(\d{4})-(\d{2})-(\d{2})$/);let dt=m?new Date(+m[1],+m[2]-1,+m[3]):new Date();dt.setDate(dt.getDate()+n);return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');}
 function openAppts(){apptProject='';document.getElementById('apptModal').classList.add('open');renderAppts();}
 function apptSetProject(i){apptProject=(i<0?'':apptProjs[i]||'');renderAppts();}
@@ -2502,6 +2517,7 @@ function updateBackupBar(){
   const b=document.getElementById('backupBar');if(b)b.style.display='none';
 }
 initSelects();render();notifyDue();updateBackupBar();initSaveFile();syncThemeBtn();initSync();initGate();renderUserName();
+try{const mb=document.getElementById('mineBtn');if(mb)mb.classList.toggle('on',mineOnly)}catch(e){}
 try{document.querySelectorAll('input,textarea').forEach(el=>{if(el.type!=='checkbox'&&el.type!=='date'&&el.type!=='file')el.setAttribute('autocomplete','off')})}catch(e){}
 </script>
 </body>
