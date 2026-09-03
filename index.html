@@ -343,6 +343,32 @@
   .att-fspace{flex:1}
   .att-addbtn{flex:0 0 auto;height:24px;padding:0 8px;font-size:11.5px;color:var(--accent);border:1px solid var(--accent);background:transparent;border-radius:6px;cursor:pointer;white-space:nowrap}
   .att-fbody{padding:4px 8px 8px;display:flex;flex-direction:column;gap:5px}
+  .cat-sec{margin-bottom:6px}
+  .cat-sec-h{font-size:14px;font-weight:700;margin:10px 0 8px;padding:9px 12px;border-radius:8px;background:var(--card2);border:1px solid var(--line);border-left:4px solid var(--muted);display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none}
+  .cat-sec-h:hover{background:var(--card)}
+  .cat-sec:first-child .cat-sec-h{margin-top:2px}
+  .cat-caret{width:12px;color:var(--muted);font-size:11px;flex:0 0 auto}
+  .cat-sec-n{font-size:12px;font-weight:400;color:var(--muted);background:var(--card);padding:1px 9px;border-radius:10px;border:1px solid var(--line)}
+  .cat-sec-sum{font-size:12px;font-weight:400;color:var(--muted);margin-left:auto}
+  .cat-sec-body{display:flex;flex-direction:column;gap:10px;margin-bottom:4px}
+  .appt-sum{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .appt-badge{padding:3px 11px;border-radius:20px;font-size:13px}
+  .appt-badge.b-red{background:var(--tint-red);color:#dc2626}
+  .appt-badge.b-amber{background:#ffedd5;color:#ea580c}
+  .appt-badge.b-green{background:#dcfce7;color:#16a34a}
+  .appt-chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+  .appt-chip{padding:5px 13px;border-radius:20px;font-size:13px;border:1px solid var(--line);color:var(--muted);cursor:pointer;user-select:none}
+  .appt-chip:hover{background:var(--card2)}
+  .appt-chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .appt-card{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--muted);border-radius:8px;padding:10px 12px;margin-bottom:8px}
+  .appt-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+  .appt-sub{color:var(--muted);font-size:12px}
+  .appt-when{font-size:12px;white-space:nowrap}
+  .appt-mid{margin-top:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px}
+  .appt-purpose{background:#dbeafe;color:#2563eb;padding:2px 9px;border-radius:20px;font-size:12px}
+  .appt-acts{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+  .appt-acts button{padding:4px 10px;font-size:12px}
+  .appt-acts .appt-done{color:#16a34a;border-color:#16a34a}
   /* บันทึกติดตาม/ต่อรอง (ประวัติ) */
   .hist-list{display:flex;flex-direction:column;gap:6px;margin-top:6px}
   .hist-item{background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:13px}
@@ -469,6 +495,7 @@
     </div>
     <div class="hdr-right">
       <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()" title="สลับธีมสว่าง/มืด">🌙</button>
+      <button class="theme-toggle" onclick="openAppts()" title="นัดหมายทั้งหมด">📅</button>
       <div class="bell" id="bellBtn" onclick="showDueOnly()" title="งานที่ต้องตาม">
         🔔<span class="bell-badge" id="bellBadge" style="display:none">0</span>
       </div>
@@ -578,9 +605,33 @@
 <div class="modal" id="calModal"><div class="sheet" style="max-width:900px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
     <h2 style="margin:0">📅 ปฏิทินงานตามงาน</h2>
-    <button onclick="document.getElementById('calModal').classList.remove('open')">✕ ปิด</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn-primary" onclick="document.getElementById('calModal').classList.remove('open');openAppts()" title="ดูเป็นรายการ + เลื่อน/ตามแล้ว">📋 รายการนัด</button>
+      <button onclick="document.getElementById('calModal').classList.remove('open')">✕ ปิด</button>
+    </div>
   </div>
   <div id="calBig"></div>
+</div></div>
+
+<div class="modal" id="apptModal"><div class="sheet" style="max-width:820px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <h2 style="margin:0">📅 นัดหมายทั้งหมด</h2>
+    <button onclick="document.getElementById('apptModal').classList.remove('open')">✕ ปิด</button>
+  </div>
+  <div id="apptBody"></div>
+</div></div>
+
+<div class="modal" id="apptDoneModal"><div class="sheet" style="max-width:420px">
+  <h2 style="margin:0 0 4px;font-size:17px">ตามงานแล้ว ✓</h2>
+  <div id="ad_title" style="font-size:13px;color:var(--muted);margin-bottom:12px"></div>
+  <div class="field"><label>📅 วันนัดถัดไป</label><input type="date" id="ad_date"></div>
+  <div class="field"><label>🎯 นัดเพื่ออะไร</label><input id="ad_note" list="fuNoteList" placeholder="เช่น ตามใบเสนอราคา"></div>
+  <div style="font-size:12px;color:var(--muted);margin:2px 0 10px">* จะบันทึกลงประวัติงานว่า “ตามงานแล้ว” วันนี้อัตโนมัติ</div>
+  <div class="modal-actions" style="justify-content:flex-end">
+    <button onclick="document.getElementById('apptDoneModal').classList.remove('open')">ยกเลิก</button>
+    <button onclick="apptDoneNoNext()">ไม่ตั้งนัดต่อ</button>
+    <button class="btn-primary" onclick="apptDoneSave()">บันทึกนัดถัดไป</button>
+  </div>
 </div></div>
 
 <!-- Modal -->
@@ -642,7 +693,7 @@
       <div class="field"><label>วันแล้วเสร็จ</label><input id="m_end" type="date"></div>
     </div>
     <div class="grid2">
-      <div class="field"><label>🔔 วันตามงาน (นัดติดตามครั้งถัดไป)</label><input id="m_followup" type="date"></div>
+      <div class="field"><label>🔔 วันตามงาน (นัดติดตามครั้งถัดไป)</label><input id="m_followup" type="date"><input id="m_followupNote" list="fuNoteList" placeholder="นัดเพื่ออะไร? เช่น ตามใบเสนอราคา, ต่อรองราคา, ส่งแบบ" style="margin-top:6px"><datalist id="fuNoteList"><option value="ตามใบเสนอราคา"><option value="ต่อรองราคา"><option value="ส่งแบบ/อนุมัติแบบ"><option value="นัดดูหน้างาน"><option value="เซ็นสัญญา/ออก PO"><option value="ทวงเอกสาร"><option value="ตามความคืบหน้า"></datalist></div>
       <div class="field"><label>ผู้รับผิดชอบ</label><input id="m_owner"></div>
     </div>
     <div class="field"><label>หมายเหตุ</label><input id="m_note"></div>
@@ -1098,10 +1149,11 @@ function fmtDate(v){
   return m[3]+'/'+m[2]+'/'+(+m[1]+543);
 }
 function fuClass(d){const n=daysTo(d.followup);if(n==null||d.status>=10)return null;
-  if(n<0)return{c:'fu-over',t:'⚠️ เลยกำหนด '+(-n)+' วัน ('+fmtDate(d.followup)+')'};
-  if(n===0)return{c:'fu-today',t:'🔔 ครบกำหนดวันนี้ ('+fmtDate(d.followup)+')'};
-  if(n<=3)return{c:'fu-soon',t:'🔔 อีก '+n+' วัน ('+fmtDate(d.followup)+')'};
-  return{c:'fu-later',t:'📅 ตามงาน '+fmtDate(d.followup)+' (อีก '+n+' วัน)'}}
+  const note=(d.followupNote||'').trim();const suf=note?' — '+esc(note):'';
+  if(n<0)return{c:'fu-over',t:'⚠️ เลยกำหนด '+(-n)+' วัน ('+fmtDate(d.followup)+')'+suf};
+  if(n===0)return{c:'fu-today',t:'🔔 ครบกำหนดวันนี้ ('+fmtDate(d.followup)+')'+suf};
+  if(n<=3)return{c:'fu-soon',t:'🔔 อีก '+n+' วัน ('+fmtDate(d.followup)+')'+suf};
+  return{c:'fu-later',t:'📅 ตามงาน '+fmtDate(d.followup)+' (อีก '+n+' วัน)'+suf}}
 function isDue(d){const n=daysTo(d.followup);return n!=null&&n<=0&&d.status<10}
 function isSoon(d){const n=daysTo(d.followup);return n!=null&&n>0&&n<=3&&d.status<10}
 function filtered(){
@@ -1130,6 +1182,18 @@ function toggleDue(){dueOnly=!dueOnly;document.getElementById('fDueBtn').classLi
 function showDueOnly(){if(!dueOnly)toggleDue()}
 let showDone=false;
 function toggleDone(){showDone=!showDone;render()}
+// พับ/กาง หมวดงานในหน้ารายการ — จำสถานะใน localStorage, ครั้งแรกยุบทุกหมวดให้สั้น
+let collapsedCats=(function(){try{const s=JSON.parse(localStorage.getItem('collapsedCats'));if(Array.isArray(s))return new Set(s);}catch(e){}return new Set(['Structural','Architectural','MEP','External','other']);})();
+function saveCollapsedCats(){try{localStorage.setItem('collapsedCats',JSON.stringify([...collapsedCats]))}catch(e){}}
+function toggleCatSec(c){
+  const body=document.getElementById('cb_'+c),car=document.getElementById('cc_'+c);
+  if(!body)return;
+  const willCollapse=body.style.display!=='none';
+  body.style.display=willCollapse?'none':'';
+  if(car)car.textContent=willCollapse?'▸':'▾';
+  if(willCollapse)collapsedCats.add(c);else collapsedCats.delete(c);
+  saveCollapsedCats();
+}
 function folderView(){return !fProject.value && !fSearch.value.trim() && !dueOnly && !fCat.value && fStatus.value===''}
 function openProject(p){fProject.value=p;render();window.scrollTo(0,0)}
 function backToFolders(){fProject.value='';const fb=document.getElementById('fBuilding');if(fb){fb.value='';fb.style.display='none'}fCat.value='';fStatus.value='';fSearch.value='';if(dueOnly)toggleDue();render()}
@@ -1315,6 +1379,62 @@ const MONTHS_TH=['มกราคม','กุมภาพันธ์','มี�
 function calShift(n){calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+n,1);render()}
 function calToday(){const t=new Date();calMonth=new Date(t.getFullYear(),t.getMonth(),1);render()}
 function openBigCal(){document.getElementById('calModal').classList.add('open');renderBigCal()}
+// ===== หน้ารวมนัดหมายทั้งหมด =====
+let apptProject='',apptProjs=[],apptDoneId=null;
+function apptItems(){return data.filter(d=>d.followup&&d.status<10&&daysTo(d.followup)!=null);}
+function addDaysYMD(baseYMD,n){const m=toYMD(baseYMD).match(/^(\d{4})-(\d{2})-(\d{2})$/);let dt=m?new Date(+m[1],+m[2]-1,+m[3]):new Date();dt.setDate(dt.getDate()+n);return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');}
+function openAppts(){apptProject='';document.getElementById('apptModal').classList.add('open');renderAppts();}
+function apptSetProject(i){apptProject=(i<0?'':apptProjs[i]||'');renderAppts();}
+function apptRow(d){
+  const n=daysTo(d.followup);
+  const when=n<0?('เลย '+(-n)+' วัน'):n===0?'วันนี้':n===1?'พรุ่งนี้':(fmtDate(d.followup)+' · อีก '+n+' วัน');
+  const col=n<0?'#dc2626':n===0?'#ea580c':n===1?'#d97706':'#16a34a';
+  const bldg=(d.buildings&&d.buildings.length)?' · '+d.buildings.map(esc).join(', '):'';
+  const note=(d.followupNote||'').trim();
+  return `<div class="appt-card" style="border-left-color:${col}">
+    <div class="appt-top"><div><b>${esc(d.pkg)}</b> <span class="appt-sub">· ${esc(d.project)}${bldg}</span></div><span class="appt-when" style="color:${col}">${when}</span></div>
+    <div class="appt-mid">${note?`<span class="appt-purpose">🎯 ${esc(note)}</span>`:'<span class="appt-sub">— ไม่ระบุเหตุผล —</span>'}${d.owner?` <span class="appt-sub">👤 ${esc(d.owner)}</span>`:''} <span class="appt-sub">· ${esc(STATUSES[d.status]||'')}</span></div>
+    <div class="appt-acts">
+      <button onclick="apptSnooze('${d.id}',1)">เลื่อน +1</button>
+      <button onclick="apptSnooze('${d.id}',3)">+3</button>
+      <button onclick="apptSnooze('${d.id}',7)">+7 วัน</button>
+      <button class="appt-done" onclick="apptDone('${d.id}')">✓ ตามแล้ว</button>
+      <button onclick="document.getElementById('apptModal').classList.remove('open');openForm('${d.id}')">✏️ เปิดงาน</button>
+    </div></div>`;
+}
+function apptGroup(label,color,arr){
+  if(!arr.length)return'';
+  const rows=arr.slice().sort((a,b)=>a.followup<b.followup?-1:1).map(apptRow).join('');
+  return `<div style="margin-bottom:14px"><div style="font-weight:700;color:${color};margin-bottom:8px">${label} <span style="color:var(--muted);font-weight:400">(${arr.length})</span></div>${rows}</div>`;
+}
+function renderAppts(){
+  const host=document.getElementById('apptBody');if(!host)return;
+  const all=apptItems();
+  apptProjs=[...new Set(all.map(d=>d.project).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'th'));
+  const items=apptProject?all.filter(d=>d.project===apptProject):all;
+  const over=items.filter(d=>daysTo(d.followup)<0), tdy=items.filter(d=>daysTo(d.followup)===0),
+        tmr=items.filter(d=>daysTo(d.followup)===1), wk=items.filter(d=>{const n=daysTo(d.followup);return n>=2&&n<=7;}),
+        later=items.filter(d=>daysTo(d.followup)>7);
+  let chips=`<span class="appt-chip ${!apptProject?'on':''}" onclick="apptSetProject(-1)">ทุกโครงการ (${all.length})</span>`;
+  chips+=apptProjs.map((p,i)=>`<span class="appt-chip ${apptProject===p?'on':''}" onclick="apptSetProject(${i})">${esc(p)} (${all.filter(d=>d.project===p).length})</span>`).join('');
+  let h=`<div class="appt-sum"><span class="appt-badge b-red">เลยกำหนด ${over.length}</span><span class="appt-badge b-amber">วันนี้ ${tdy.length}</span><span class="appt-badge b-green">ใน 7 วัน ${tmr.length+wk.length}</span></div>`;
+  h+=`<div class="appt-chips">${chips}</div>`;
+  h+=apptGroup('🔴 เลยกำหนด','#dc2626',over)+apptGroup('🔴 วันนี้','#ea580c',tdy)+apptGroup('🟡 พรุ่งนี้','#d97706',tmr)+apptGroup('🟢 ใน 7 วัน','#16a34a',wk)+apptGroup('📅 ต่อไป','#2563eb',later);
+  if(!items.length)h+=`<div class="ag-empty" style="padding:22px;text-align:center">— ไม่มีนัดติดตามที่ค้างอยู่ —</div>`;
+  host.innerHTML=h;
+}
+function apptSnooze(id,days){const d=data.find(x=>x.id===id);if(!d)return;const n=daysTo(d.followup);const base=(n!=null&&n<0)?todayStr():d.followup;d.followup=addDaysYMD(base,days);touch(d);save();renderAppts();render();}
+function apptLogDone(d){const note=(d.followupNote||'').trim();if(!Array.isArray(d.history))d.history=[];d.history.push({t:Date.now(),by:getUserName()||'',text:'✅ ตามงานแล้ว'+(note?' — '+note:''),imgs:[]});}
+function apptDone(id){const d=data.find(x=>x.id===id);if(!d)return;apptDoneId=id;
+  document.getElementById('ad_title').textContent=d.pkg+' · '+d.project;
+  document.getElementById('ad_date').value=addDaysYMD(todayStr(),7);
+  document.getElementById('ad_note').value=(d.followupNote||'').trim();
+  document.getElementById('apptDoneModal').classList.add('open');}
+function apptDoneSave(){const d=data.find(x=>x.id===apptDoneId);if(!d)return;apptLogDone(d);
+  d.followup=document.getElementById('ad_date').value;d.followupNote=document.getElementById('ad_note').value.trim();
+  touch(d);save();document.getElementById('apptDoneModal').classList.remove('open');renderAppts();render();}
+function apptDoneNoNext(){const d=data.find(x=>x.id===apptDoneId);if(!d)return;apptLogDone(d);
+  d.followup='';d.followupNote='';touch(d);save();document.getElementById('apptDoneModal').classList.remove('open');renderAppts();render();}
 function calByDay(){const by={};filtered().filter(d=>d.followup).forEach(d=>{const k=toYMD(d.followup);if(!k)return;(by[k]=by[k]||[]).push(d)});return by}
 function dayCls(ds,today){return ds<today?'d-over':(ds===today?'d-today':'d-future')}
 // ลากการ์ดงาน/รายการปฏิทิน ไปวางบนวันที่ เพื่อกำหนด "วันตามงาน" โดยไม่ต้องเปิดฟอร์มแก้ไข
@@ -1378,7 +1498,8 @@ function renderAgenda(){
     list.forEach(d=>{
       const n=daysTo(d.followup);
       const sub=gr.key==='over'?('เลย '+(-n)+' วัน'):(gr.key==='soon'?('อีก '+n+' วัน'):fmtDate(d.followup));
-      h+=`<div class="ag-item" onclick="openForm('${d.id}')" title="${esc(d.project)} – ${esc(d.pkg)}"><span class="ag-pkg">${esc(d.pkg)}</span><span class="ag-day">${sub}</span></div>`;
+      const fnote=(d.followupNote||'').trim();
+      h+=`<div class="ag-item" onclick="openForm('${d.id}')" title="${esc(d.project)} – ${esc(d.pkg)}${fnote?' — '+esc(fnote):''}"><span class="ag-pkg">${esc(d.pkg)}${fnote?` <span style="color:var(--muted);font-weight:400">· ${esc(fnote)}</span>`:''}</span><span class="ag-day">${sub}</span></div>`;
     });
     h+=`</div>`;
   });
@@ -1751,7 +1872,7 @@ function openForm(id){
   m_boqMat.value=dispNum(g('boqMat'));m_priceMat.value=dispNum(g('priceMat'));m_boqLab.value=dispNum(g('boqLab'));m_priceLab.value=dispNum(g('priceLab'));calcFormTotal();
   m_winner.value=g('winner');m_winnerLab.value=g('winnerLab');m_reason.value=g('reason');m_appdate.value=g('appdate');
   m_po.value=g('po');m_start.value=g('start');m_end.value=g('end');
-  m_followup.value=g('followup');m_owner.value=g('owner');m_note.value=g('note');
+  m_followup.value=g('followup');m_followupNote.value=g('followupNote');m_owner.value=g('owner');m_note.value=g('note');
   formAttachments=(d.attachments&&Array.isArray(d.attachments))?d.attachments.slice():[];
   formFolders=(d.folders&&Array.isArray(d.folders))?d.folders.slice():[];openFolders=null;uploadKind='';renderAttachList();
   formHistory=(d.history&&Array.isArray(d.history))?d.history.slice():[];pendingHistImgs=[];renderHistList();renderPendingImgs();
@@ -2092,7 +2213,7 @@ function saveForm(){
     status:+m_status.value,detail:m_detail.value.trim(),invited:invited,
     replied:replied,boqMat:m_boqMat.value.replace(/[^\d.]/g,''),priceMat:m_priceMat.value.replace(/[^\d.]/g,''),boqLab:m_boqLab.value.replace(/[^\d.]/g,''),priceLab:m_priceLab.value.replace(/[^\d.]/g,''),winner:m_winner.value.trim(),invitedLab:invitedLab,repliedLab:repliedLab,winnerLab:m_winnerLab.value.trim(),
     reason:m_reason.value.trim(),appdate:m_appdate.value,po:m_po.value.trim(),
-    start:m_start.value,end:m_end.value,followup:m_followup.value,owner:m_owner.value.trim(),note:m_note.value.trim(),buildings:m_buildings.value.split(',').map(x=>x.trim()).filter(Boolean),attachments:formAttachments.slice(),folders:[...new Set(formFolders.map(n=>(n||'').trim()).filter(Boolean))],history:formHistory.slice()};
+    start:m_start.value,end:m_end.value,followup:m_followup.value,followupNote:m_followupNote.value.trim(),owner:m_owner.value.trim(),note:m_note.value.trim(),buildings:m_buildings.value.split(',').map(x=>x.trim()).filter(Boolean),attachments:formAttachments.slice(),folders:[...new Set(formFolders.map(n=>(n||'').trim()).filter(Boolean))],history:formHistory.slice()};
   ['boqMat','priceMat','boqLab','priceLab'].forEach(k=>{rec[k]=(rec[k]===''||rec[k]==null)?'':Number(rec[k])});
   recomputeTotals(rec);touch(rec);
   if(editId){data=data.map(x=>x.id===editId?rec:x)}else{data.push(rec)}
@@ -2229,6 +2350,8 @@ function seedDemo(){
 ['fProject','fBuilding','fCat','fStatus','fSearch','fSort'].forEach(id=>document.getElementById(id).addEventListener('input',render));
 document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeForm()});
 document.getElementById('calModal').addEventListener('click',e=>{if(e.target.id==='calModal')e.currentTarget.classList.remove('open')});
+document.getElementById('apptModal').addEventListener('click',e=>{if(e.target.id==='apptModal')e.currentTarget.classList.remove('open')});
+document.getElementById('apptDoneModal').addEventListener('click',e=>{if(e.target.id==='apptDoneModal')e.currentTarget.classList.remove('open')});
 function updateBackupBar(){
   const d=new Date(),ymd=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   const last=localStorage.getItem('lastBackup');
