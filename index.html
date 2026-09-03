@@ -515,8 +515,6 @@
     <div id="totalBox"></div>
   </aside>
   <main class="main">
-  <div class="cards" id="kpis"></div>
-  <div id="kpiProgress"></div>
   <div id="dashPanel"></div>
   <div id="backupBar" class="info-bar" style="display:none">
     💾 <b>อย่าลืมสำรองข้อมูล</b> — กด ⬇️ สำรอง(JSON) แล้วเซฟทับไฟล์ใน Google Drive
@@ -1541,67 +1539,98 @@ function renderTotals(){
     <div class="row"><span class="k">รวมราคาจริง</span><span class="real">${fmt(sumReal)}</span></div>
     ${sumReal?`<div class="row"><span class="k">ส่วนต่าง</span><span class="diff ${diff>=0?'pos':'neg'}">${diff>=0?'ประหยัด ':'เกิน '}${fmt(Math.abs(diff))}</span></div>`:''}`;
 }
-// ===== Dashboard หน้าแรก: คืบหน้าแยกหมวด + แยกอาคาร =====
+// ===== Dashboard หน้าแรก (Modern) : summary cards + คืบหน้าแยกหมวด + แยกอาคาร =====
+const DASH_BLUE='#2563eb',DASH_BLUEDK='#1e3a8a',DASH_ORANGE='#f97316',DASH_TRACK='#eef1f5',DASH_TXT='#1f2937',DASH_MUTE='#8a94a6';
 function pctOfRows(rows){return rows.length?Math.round(rows.reduce((a,d)=>a+(+d.status)/10,0)/rows.length*100):0;}
-function dashBar(label,pct,n){
-  const col=pct>=70?'#16a34a':pct>=45?'#2563eb':pct>=1?'#ea580c':'#9ca3af';
-  return `<div style="margin-bottom:9px">
-    <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:13px;margin-bottom:3px">
-      <span>${label} <span style="color:var(--muted);font-size:12px">(${n} งาน)</span></span><b>${pct}%</b></div>
-    <div style="height:8px;background:var(--card2);border-radius:20px;overflow:hidden"><i style="display:block;height:100%;width:${pct}%;background:${col};border-radius:20px"></i></div>
+function dashCircle(pct,size){
+  const r=(size/2)-5,c=2*Math.PI*r,off=c*(1-pct/100);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="flex:0 0 auto">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${DASH_TRACK}" stroke-width="6"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${DASH_BLUE}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 ${size/2} ${size/2})"/>
+    <text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="700" fill="${DASH_BLUEDK}">${pct}%</text></svg>`;
+}
+function dashSumCard(inner){return `<div style="background:#fff;border:1px solid #eef1f5;border-radius:14px;padding:14px 16px;box-shadow:0 1px 3px rgba(16,24,40,.06);display:flex;align-items:center;gap:13px;min-width:0">${inner}</div>`;}
+function dashStat(icon,big,cap,accent){
+  const bg=accent==='blue'?'#eaf1fe':'#fff3e9',fg=accent==='blue'?DASH_BLUE:DASH_ORANGE;
+  return dashSumCard(`<div style="width:40px;height:40px;flex:0 0 auto;border-radius:11px;background:${bg};color:${fg};display:flex;align-items:center;justify-content:center;font-size:20px">${icon}</div>`
+    +`<div style="min-width:0"><div style="font-size:23px;font-weight:800;color:${DASH_TXT};line-height:1.05">${big}</div><div style="font-size:12px;color:${DASH_MUTE};margin-top:3px">${cap}</div></div>`);
+}
+function dashRow(icon,name,count,pct,barCol,pctCol,iconBg,iconCol){
+  return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0f2f6">
+    <div style="width:34px;height:34px;flex:0 0 auto;border-radius:9px;background:${iconBg};color:${iconCol};display:flex;align-items:center;justify-content:center;font-size:17px">${icon}</div>
+    <div style="flex:0 0 148px;min-width:0"><div style="font-size:13.5px;font-weight:600;color:${DASH_TXT};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div><div style="font-size:11.5px;color:${DASH_MUTE}">${count} งาน</div></div>
+    <div style="flex:1;height:9px;background:${DASH_TRACK};border-radius:20px;overflow:hidden;min-width:50px"><i style="display:block;height:100%;width:${pct}%;background:${barCol};border-radius:20px"></i></div>
+    <div style="flex:0 0 auto;font-size:15px;font-weight:800;color:${pctCol};width:48px;text-align:right">${pct}%</div>
   </div>`;
+}
+function dashCard(title,sub,inner){
+  return `<div style="background:#fff;border:1px solid #eef1f5;border-radius:16px;padding:16px 18px;box-shadow:0 1px 3px rgba(16,24,40,.06);margin-top:14px">
+    <div style="font-size:15px;font-weight:800;color:${DASH_TXT}">${title}</div>
+    ${sub?`<div style="font-size:12px;color:${DASH_MUTE};margin-top:3px">${sub}</div>`:''}
+    <div style="margin-top:8px">${inner}</div></div>`;
 }
 function renderDash(){
   const host=document.getElementById('dashPanel'); if(!host)return;
   if(!data.length){host.innerHTML='';return;}
-  const CATS=[['Structural','โครงสร้าง'],['Architectural','สถาปัตยกรรม'],['MEP','งานระบบ MEP'],['External','งานภายนอก']];
-  const catBars=CATS.map(([c,th])=>{const rows=data.filter(d=>d.cat===c);return rows.length?dashBar('🏗️ '+th,pctOfRows(rows),rows.length):'';}).join('');
-  // แยกอาคาร — จัดกลุ่มตามโครงการ, เฉพาะโครงการที่มีการระบุชื่ออาคาร
+  const CATS=[['Structural','โครงสร้าง','🏗️'],['Architectural','สถาปัตยกรรม','🏛️'],['MEP','งานระบบ MEP','⚙️'],['External','งานภายนอก','🌳']];
+  const overall=pctOfRows(data), total=data.length;
+  const catsPresent=CATS.filter(([c])=>data.some(d=>d.cat===c)).length;
+  const allBldgs=[...new Set(data.flatMap(d=>Array.isArray(d.buildings)?d.buildings:[]).map(s=>String(s).trim()).filter(Boolean))];
+  // summary cards
+  const sum=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+    ${dashSumCard(dashCircle(overall,58)+`<div style="min-width:0"><div style="font-size:13px;font-weight:700;color:${DASH_TXT}">ความคืบหน้ารวม</div><div style="font-size:12px;color:${DASH_MUTE};margin-top:2px">ทั้งโครงการ</div></div>`)}
+    ${dashStat('📋',total,'งานทั้งหมด','orange')}
+    ${dashStat('🗂️',catsPresent,'หมวดงาน','blue')}
+    ${dashStat('🏢',allBldgs.length,'อาคาร','blue')}
+  </div>`;
+  // แยกหมวด — โครงสร้าง=น้ำเงิน, อื่น=ส้ม
+  const catRows=CATS.map(([c,th,ic])=>{const rows=data.filter(d=>d.cat===c);if(!rows.length)return'';
+    const isStruct=c==='Structural';
+    return dashRow(ic,th,rows.length,pctOfRows(rows),isStruct?DASH_BLUE:DASH_ORANGE,DASH_TXT,isStruct?'#eaf1fe':'#fff3e9',isStruct?DASH_BLUE:DASH_ORANGE);
+  }).join('');
+  const catCard=dashCard('ความคืบหน้าแยกหมวดงาน','',catRows||`<div style="font-size:12px;color:${DASH_MUTE}">—</div>`);
+  // แยกอาคาร — จัดกลุ่มตามโครงการ (เฉพาะที่มีชื่ออาคาร), บาร์ส้ม, %น้ำเงินเข้ม
   const projs=[...new Set(data.map(d=>d.project).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'th'));
-  const bldgSecs=projs.map(p=>{
+  const secs=projs.map(p=>{
     const pr=data.filter(d=>d.project===p);
     const names=[...new Set(pr.flatMap(d=>Array.isArray(d.buildings)?d.buildings:[]).map(s=>String(s).trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'th'));
-    if(!names.length)return'';
-    const bars=names.map(b=>{
-      const rows=pr.filter(d=>!Array.isArray(d.buildings)||d.buildings.length===0||d.buildings.includes(b));
-      return dashBar('🏢 '+esc(b),pctOfRows(rows),rows.length);
-    }).join('');
-    return `<div style="margin-top:12px"><div style="font-size:13px;font-weight:700;margin-bottom:6px;color:var(--muted)">📁 ${esc(p)}</div>${bars}</div>`;
-  }).join('');
+    if(!names.length)return null;
+    const loc=projLoc(p);
+    const bars=names.map(b=>{const rows=pr.filter(d=>!Array.isArray(d.buildings)||d.buildings.length===0||d.buildings.includes(b));
+      return dashRow('🏢',b,rows.length,pctOfRows(rows),DASH_ORANGE,DASH_BLUEDK,'#eaf1fe',DASH_BLUE);}).join('');
+    return {p,loc,bars};
+  }).filter(Boolean);
+  let bldgCard;
+  if(!secs.length){
+    bldgCard=dashCard('ความคืบหน้าแยกรายอาคาร','',`<div style="font-size:12px;color:${DASH_MUTE}">💡 ยังไม่มีการระบุอาคารในงานใด — เปิดงานแล้วใส่ชื่ออาคารในช่อง “ขอบเขตอาคาร” เพื่อดู % รายอาคาร (งานเหมารวมเว้นว่างได้)</div>`);
+  }else if(secs.length===1){
+    bldgCard=dashCard('ความคืบหน้าแยกรายอาคาร',esc(secs[0].p)+(secs[0].loc?' · '+esc(secs[0].loc):''),secs[0].bars);
+  }else{
+    const inner=secs.map(s=>`<div style="margin-top:6px"><div style="font-size:12.5px;font-weight:700;color:${DASH_MUTE};margin:6px 0 2px">📁 ${esc(s.p)}${s.loc?' · '+esc(s.loc):''}</div>${s.bars}</div>`).join('');
+    bldgCard=dashCard('ความคืบหน้าแยกรายอาคาร','',inner);
+  }
+  // แถบสถานะการคัดเลือก (ย้ายมาจาก KPI เดิม)
+  const sel=data.filter(d=>d.status>=7).length, pend=data.filter(d=>d.status===6).length,
+        cmp=data.filter(d=>d.status>=3&&d.status<=5).length, ns=data.filter(d=>d.status<=1).length;
+  const spill=(lab,val,col)=>`<div style="flex:1;min-width:130px;background:#fff;border:1px solid #eef1f5;border-radius:12px;padding:9px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 3px rgba(16,24,40,.05)"><span style="font-size:19px;font-weight:800;color:${col}">${val}</span><span style="font-size:12.5px;color:${DASH_MUTE}">${lab}</span></div>`;
+  const statusRow=`<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">${spill('เลือกแล้ว',sel,'#16a34a')}${spill('รออนุมัติ',pend,DASH_ORANGE)}${spill('เปรียบเทียบราคา',cmp,DASH_BLUE)}${spill('ยังไม่เริ่ม',ns,'#dc2626')}</div>`;
   const open=localStorage.getItem('dashOpen')!=='0';
-  const bldgBlock=bldgSecs?
-    `<div style="margin-top:14px;border-top:1px solid var(--border,#e5e7eb);padding-top:10px">
-       <div style="font-size:13px;font-weight:700;margin-bottom:8px">🏢 ความคืบหน้าแยกรายอาคาร</div>${bldgSecs}</div>`:
-    `<div style="margin-top:12px;font-size:12px;color:var(--muted)">💡 ยังไม่มีการระบุอาคารในงานใด — เปิดงานแล้วใส่ชื่ออาคารในช่อง “ขอบเขตอาคาร” เพื่อดู % รายอาคาร (งานเหมารวมเว้นว่างได้)</div>`;
-  host.innerHTML=`<details ${open?'open':''} ontoggle="localStorage.setItem('dashOpen',this.open?'1':'0')"
-      style="background:var(--card,#fff);border:1px solid var(--border,#e5e7eb);border-radius:12px;padding:12px 14px;margin-bottom:12px">
-    <summary style="cursor:pointer;font-weight:700;font-size:14px;list-style:none">📊 Dashboard ความคืบหน้า <span style="color:var(--muted);font-weight:400;font-size:12px">— แตะเพื่อย่อ/ขยาย</span></summary>
-    <div style="margin-top:12px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:8px">🏗️ ความคืบหน้าแยกหมวดงาน</div>
-      ${catBars||'<div style="font-size:12px;color:var(--muted)">—</div>'}
-      ${bldgBlock}
+  host.innerHTML=`<div style="background:#f5f7fa;border:1px solid #e9edf3;border-radius:16px;padding:14px 16px;margin-bottom:14px">
+    <div onclick="toggleDashDetail()" style="cursor:pointer;display:flex;align-items:center;gap:11px;user-select:none">
+      <span style="width:34px;height:34px;flex:0 0 auto;border-radius:10px;background:${DASH_BLUE};color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px">📊</span>
+      <span style="font-size:16px;font-weight:800;color:${DASH_TXT}">Dashboard ความคืบหน้า</span>
+      <span style="font-size:12px;color:${DASH_MUTE};font-weight:400">— แตะเพื่อย่อ/ขยายรายละเอียด</span>
+      <span id="dashCaret" style="margin-left:auto;color:${DASH_MUTE};font-size:13px">${open?'▾':'▸'}</span>
     </div>
-  </details>`;
+    <div style="margin-top:14px">${sum}${statusRow}</div>
+    <div id="dashDetail" style="display:${open?'block':'none'}">${catCard}${bldgCard}</div>
+  </div>`;
 }
+function toggleDashDetail(){const el=document.getElementById('dashDetail'),c=document.getElementById('dashCaret');if(!el)return;const show=el.style.display==='none';el.style.display=show?'block':'none';if(c)c.textContent=show?'▾':'▸';try{localStorage.setItem('dashOpen',show?'1':'0')}catch(e){}}
+// แถบ KPI เก่าถูกแทนที่ด้วย Dashboard ใหม่ (renderDash) — ล้างกล่องเดิมทิ้ง เหลือแค่อัปเดตกระดิ่ง
 function renderKPIs(){
-  const base=fProject.value?data.filter(d=>d.project===fProject.value):data;
-  const total=base.length;
-  const selected=base.filter(d=>d.status>=7).length;
-  const pending=base.filter(d=>d.status===6).length;
-  const comparing=base.filter(d=>d.status>=3&&d.status<=5).length;
-  const notStarted=base.filter(d=>d.status<=1).length;
-  const pct=total?Math.round(base.reduce((a,d)=>a+(+d.status)/10,0)/total*100):0;
-  const pctOf=n=>total?Math.round(n/total*100)+'% ของทั้งหมด':'—';
-  const kpi=(ic,bg,fg,n,l,sl)=>`<div class="kpi"><div class="kpi-ic" style="background:${bg};color:${fg}">${ic}</div>
-    <div class="kpi-txt"><div class="n">${n}</div><div class="l">${l}</div><div class="sl">${sl}</div></div></div>`;
-  document.getElementById('kpis').innerHTML=
-    kpi('🏢','#dbeafe','#2563eb',total,'หัวข้องาน ทั้งหมด',fProject.value?esc(fProject.value):(new Set(data.map(d=>d.project))).size+' โครงการ')+
-    kpi('✅','#dcfce7','#16a34a',selected,'เลือกแล้ว',pctOf(selected))+
-    kpi('⏳','#ffedd5','#ea580c',pending,'รออนุมัติ',pctOf(pending))+
-    kpi('⚖️','#ede9fe','#7c3aed',comparing,'เปรียบเทียบราคา',pctOf(comparing))+
-    kpi('⏱️','#fee2e2','#dc2626',notStarted,'ยังไม่เริ่ม',pctOf(notStarted));
-  document.getElementById('kpiProgress').innerHTML=
-    `<div class="kpi kpi-wide"><div class="kpi-wide-top"><span>ความคืบหน้าการคัดเลือกโดยรวม</span><b>${pct}%</b></div><div class="bar"><i style="width:${pct}%"></i></div></div>`;
+  const k=document.getElementById('kpis');if(k)k.innerHTML='';
+  const kp=document.getElementById('kpiProgress');if(kp)kp.innerHTML='';
   renderBell();
 }
 function renderBell(){
