@@ -2383,9 +2383,9 @@ document.getElementById('calModal').addEventListener('click',e=>{if(e.target.id=
 document.getElementById('apptModal').addEventListener('click',e=>{if(e.target.id==='apptModal')e.currentTarget.classList.remove('open')});
 document.getElementById('apptDoneModal').addEventListener('click',e=>{if(e.target.id==='apptDoneModal')e.currentTarget.classList.remove('open')});
 function updateBackupBar(){
-  const d=new Date(),ymd=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  const last=localStorage.getItem('lastBackup');
-  document.getElementById('backupBar').style.display=(data.length&&last!==ymd)?'block':'none';
+  // ปิดแถบเตือนสำรองอัตโนมัติ — ข้อมูลปลอดภัยแล้วผ่านชีทกลาง + backup ทุกจันทร์ + version history
+  // (ปุ่ม "⬇️ สำรอง (JSON)" ยังอยู่ในเมนู ☰ ถ้าอยากเซฟเอง)
+  const b=document.getElementById('backupBar');if(b)b.style.display='none';
 }
 initSelects();render();notifyDue();updateBackupBar();initSaveFile();syncThemeBtn();initSync();initGate();renderUserName();
 try{document.querySelectorAll('input,textarea').forEach(el=>{if(el.type!=='checkbox'&&el.type!=='date'&&el.type!=='file')el.setAttribute('autocomplete','off')})}catch(e){}
