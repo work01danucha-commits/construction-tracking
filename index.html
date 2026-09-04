@@ -368,6 +368,12 @@
   .fm-ft-r{display:flex;gap:8px}
   .fm-ft button{padding:9px 18px;font-size:14px}
   .form-sheet textarea{width:100%;min-height:52px;font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt);resize:vertical}
+  /* ช่องวันที่แบบ พ.ศ. (วว/ดด/ปปปป) — เก็บค่าเบื้องหลังเป็น ISO */
+  .thdate{display:flex;align-items:center;gap:6px;position:relative}
+  .thdate-txt{flex:1;min-width:0}
+  .thdate-txt.bad{border-color:#ef4444 !important;background:#fef2f2}
+  .thdate-btn{flex:0 0 auto;width:38px;height:38px;padding:0;font-size:15px;line-height:1}
+  .thdate-native{position:absolute;right:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0;margin:0}
   @media(max-width:1100px){.form-sheet{width:calc(100vw - 24px);height:calc(100vh - 24px)}.fm-2col{grid-template-columns:1fr}.fm-kpis{grid-template-columns:1fr}}
   @media(max-width:640px){.form-sheet{width:100vw;height:100vh;border-radius:0}.fm-hd-sub{display:none}}
   /* แนบไฟล์ */
@@ -741,7 +747,7 @@
 <div class="modal" id="apptDoneModal"><div class="sheet" style="max-width:420px">
   <h2 style="margin:0 0 4px;font-size:17px">ตามงานแล้ว ✓</h2>
   <div id="ad_title" style="font-size:13px;color:var(--muted);margin-bottom:12px"></div>
-  <div class="field"><label>📅 วันนัดถัดไป</label><input type="date" id="ad_date"></div>
+  <div class="field"><label>📅 วันนัดถัดไป</label><div class="thdate"><input id="ad_date_th" class="thdate-txt" inputmode="numeric" autocomplete="off" placeholder="วว/ดด/ปปปป" oninput="onThInput('ad_date')" onchange="onThInput('ad_date',true)"><button type="button" class="thdate-btn" onclick="pickDate('ad_date')" aria-label="เลือกวันที่">📅</button><input type="date" id="ad_date" class="thdate-native" tabindex="-1" aria-hidden="true" onchange="onNativeDate('ad_date')"></div></div>
   <div class="field"><label>🎯 นัดเพื่ออะไร</label><input id="ad_note" list="fuNoteList" placeholder="เช่น ตามใบเสนอราคา"></div>
   <div style="font-size:12px;color:var(--muted);margin:2px 0 10px">* จะบันทึกลงประวัติงานว่า “ตามงานแล้ว” วันนี้อัตโนมัติ</div>
   <div class="modal-actions" style="justify-content:flex-end">
@@ -883,20 +889,20 @@
       <div class="fm-panel" data-panel="4" hidden>
        <div class="fm-2col">
         <div class="fm-card"><div class="fm-ct">ข้อมูลสัญญาและอนุมัติ</div>
-          <div class="field"><label>วันที่อนุมัติ</label><input id="m_appdate" type="date" onchange="renderFormTimeline()"></div>
+          <div class="field"><label>วันที่อนุมัติ</label><div class="thdate"><input id="m_appdate_th" class="thdate-txt" inputmode="numeric" autocomplete="off" placeholder="วว/ดด/ปปปป" oninput="onThInput('m_appdate')" onchange="onThInput('m_appdate',true)"><button type="button" class="thdate-btn" onclick="pickDate('m_appdate')" aria-label="เลือกวันที่">📅</button><input id="m_appdate" type="date" class="thdate-native" tabindex="-1" aria-hidden="true" onchange="onNativeDate('m_appdate')"></div></div>
           <div class="field"><label>PO / เลขที่สัญญา</label><input id="m_po"></div>
         </div>
         <div class="fm-card"><div class="fm-ct">ระยะเวลาดำเนินงาน</div>
           <div class="grid2">
-            <div class="field"><label>วันเริ่มงาน</label><input id="m_start" type="date" onchange="calcDuration();renderFormTimeline()"></div>
-            <div class="field"><label>วันแล้วเสร็จ</label><input id="m_end" type="date" onchange="calcDuration();renderFormTimeline()"></div>
+            <div class="field"><label>วันเริ่มงาน</label><div class="thdate"><input id="m_start_th" class="thdate-txt" inputmode="numeric" autocomplete="off" placeholder="วว/ดด/ปปปป" oninput="onThInput('m_start')" onchange="onThInput('m_start',true)"><button type="button" class="thdate-btn" onclick="pickDate('m_start')" aria-label="เลือกวันที่">📅</button><input id="m_start" type="date" class="thdate-native" tabindex="-1" aria-hidden="true" onchange="onNativeDate('m_start')"></div></div>
+            <div class="field"><label>วันแล้วเสร็จ</label><div class="thdate"><input id="m_end_th" class="thdate-txt" inputmode="numeric" autocomplete="off" placeholder="วว/ดด/ปปปป" oninput="onThInput('m_end')" onchange="onThInput('m_end',true)"><button type="button" class="thdate-btn" onclick="pickDate('m_end')" aria-label="เลือกวันที่">📅</button><input id="m_end" type="date" class="thdate-native" tabindex="-1" aria-hidden="true" onchange="onNativeDate('m_end')"></div></div>
           </div>
           <div class="fm-sub" id="m_duration"></div>
         </div>
        </div>
        <div class="fm-card"><div class="fm-ct">การติดตามงาน</div>
          <div class="grid2">
-           <div class="field"><label>🔔 วันตามงาน</label><input id="m_followup" type="date" onchange="renderFormTimeline()"></div>
+           <div class="field"><label>🔔 วันตามงาน</label><div class="thdate"><input id="m_followup_th" class="thdate-txt" inputmode="numeric" autocomplete="off" placeholder="วว/ดด/ปปปป" oninput="onThInput('m_followup')" onchange="onThInput('m_followup',true)"><button type="button" class="thdate-btn" onclick="pickDate('m_followup')" aria-label="เลือกวันที่">📅</button><input id="m_followup" type="date" class="thdate-native" tabindex="-1" aria-hidden="true" onchange="onNativeDate('m_followup')"></div></div>
            <div class="field"><label>ผู้รับผิดชอบ</label><input id="m_owner"></div>
          </div>
          <div class="field"><label>🎯 นัดเพื่ออะไร?</label><input id="m_followupNote" list="fuNoteList" placeholder="เช่น ตามใบเสนอราคา"></div>
@@ -1623,6 +1629,7 @@ function apptDone(id){const d=data.find(x=>x.id===id);if(!d)return;apptDoneId=id
   document.getElementById('ad_title').textContent=d.pkg+' · '+d.project;
   document.getElementById('ad_date').value=addDaysYMD(todayStr(),7);
   document.getElementById('ad_note').value=(d.followupNote||'').trim();
+  syncThaiDates(['ad_date']);
   document.getElementById('apptDoneModal').classList.add('open');}
 function apptDoneSave(){const d=data.find(x=>x.id===apptDoneId);if(!d)return;apptLogDone(d);
   d.followup=document.getElementById('ad_date').value;d.followupNote=document.getElementById('ad_note').value.trim();
@@ -1968,6 +1975,23 @@ function renderFormTimeline(){
     return '<div class="fm-tl-step"><span class="fm-tl-dot" style="background:'+col+'"></span><div class="fm-tl-l">'+lab+'</div><div class="fm-tl-d">'+(has?fmtDate(d):'—')+'</div></div>';
   }).join('<span class="fm-tl-line"></span>')+'</div>';
 }
+// ===== ช่องวันที่แบบ พ.ศ. (แสดง วว/ดด/ปปปป) — native input ที่ id เดิมเก็บ ISO ไว้ให้ save/logic ใช้เหมือนเดิม =====
+function toThaiDisplay(iso){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||'');return m?(m[3]+'/'+m[2]+'/'+(+m[1]+543)):'';}
+function parseThaiInput(s){s=(s||'').trim();if(!s)return '';const m=/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/.exec(s);if(!m)return null;
+  let d=+m[1],mo=+m[2],y=+m[3];if(y<100)y+=2500;if(y>=2400)y-=543;if(mo<1||mo>12||d<1||d>31)return null;
+  const dt=new Date(y,mo-1,d);if(isNaN(dt)||dt.getFullYear()!==y||dt.getMonth()!==mo-1||dt.getDate()!==d)return null;   // กัน invalid + อธิกสุรทิน
+  return y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
+function pickDate(id){const el=document.getElementById(id);if(!el)return;try{if(el.showPicker)el.showPicker();else el.click();}catch(e){try{el.click()}catch(e2){}}}
+function dateRecompute(){if(document.getElementById('m_duration'))calcDuration();if(document.getElementById('m_timeline'))renderFormTimeline();}
+function onNativeDate(id){const el=document.getElementById(id),th=document.getElementById(id+'_th');if(th){th.value=toThaiDisplay(el.value);th.classList.remove('bad');}dateRecompute();}
+function onThInput(id,commit){const el=document.getElementById(id),th=document.getElementById(id+'_th');if(!el||!th)return;
+  const v=th.value.trim();
+  if(!v){el.value='';th.classList.remove('bad');dateRecompute();return;}
+  const iso=parseThaiInput(v);
+  if(iso){el.value=iso;th.classList.remove('bad');dateRecompute();}
+  else if(commit){th.classList.add('bad');}   // เตือนเฉพาะตอนออกจากช่อง ไม่เตือนระหว่างพิมพ์
+}
+function syncThaiDates(ids){(ids||[]).forEach(id=>{const el=document.getElementById(id),th=document.getElementById(id+'_th');if(el&&th){th.value=toThaiDisplay(el.value);th.classList.remove('bad');}});}
 function delById(id){const d=data.find(x=>x.id===id);if(d&&confirm('ลบหัวข้องาน "'+d.pkg+'" ?')){pushUndo('ก่อนลบหัวข้องาน "'+d.pkg+'"');data=data.filter(x=>x.id!==id);save();render()}}
 // รวมคู่ "– วัสดุ / – ค่าแรง" ที่เคยแยกไว้ กลับเป็นรายการเดียว (breakdown)
 function mergeSplitBack(){
@@ -2221,6 +2245,7 @@ function openForm(id,preset){
   formHistory=(d.history&&Array.isArray(d.history))?d.history.slice():[];pendingHistImgs=[];renderHistList();renderPendingImgs();
   refreshWinnerHighlight();
   const e1=document.getElementById('fmErr1');if(e1)e1.style.display='none';
+  syncThaiDates(['m_appdate','m_start','m_end','m_followup']);
   updateFormStatusBadge();showFormTab(1);
   document.getElementById('modal').classList.add('open');
 }
