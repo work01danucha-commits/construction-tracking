@@ -312,11 +312,64 @@
   .field input,.field select,.field textarea{width:100%}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   /* ฟอร์มแก้ไข 2 คอลัมน์: ซ้าย=ข้อมูลหลัก / ขวา=ไฟล์แนบ+บันทึกติดตาม (30 ก.ค. 2026) */
-  #modal .sheet{max-width:940px}
+  #modal .sheet:not(.form-sheet){max-width:940px}
+  #modal .sheet.form-sheet{max-width:none}
   .form-cols{display:grid;grid-template-columns:1.15fr 1fr;gap:0 20px;align-items:start}
   .form-right{border-left:1px solid var(--line);padding-left:20px}
   @media(max-width:820px){.form-cols{grid-template-columns:1fr;gap:0}.form-right{border-left:none;padding-left:0;margin-top:2px}}
   .modal-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  /* ===== ฟอร์มแก้ไขหัวข้องาน แบบ 4 แท็บ ===== */
+  .form-sheet{width:min(1280px,calc(100vw - 48px));height:min(830px,calc(100vh - 48px));max-width:none;display:flex;flex-direction:column;padding:0;overflow:hidden;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.28)}
+  .fm-hd{flex:0 0 auto;min-height:64px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 20px;border-bottom:1px solid var(--line)}
+  .fm-hd-l{display:flex;align-items:center;gap:12px}
+  .fm-hd-ic{width:38px;height:38px;flex:0 0 auto;border-radius:10px;background:#eff6ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-size:19px}
+  .fm-hd h2{margin:0;font-size:20px;color:var(--txt)}
+  .fm-hd-sub{font-size:12.5px;color:var(--muted);margin-top:1px}
+  .fm-hd-r{display:flex;align-items:center;gap:10px}
+  .fm-badge{font-size:12.5px;padding:4px 12px;border-radius:20px;background:var(--card2);color:var(--muted);white-space:nowrap}
+  .fm-badge.s7,.fm-badge.s8,.fm-badge.s9,.fm-badge.s10,.fm-badge.s11{background:#dcfce7;color:#15803d}
+  .fm-badge.s6{background:#fef3c7;color:#92400e}
+  .fm-badge.s3,.fm-badge.s4,.fm-badge.s5{background:#eff6ff;color:#1e40af}
+  .fm-x{width:34px;height:34px;padding:0;border-radius:9px;font-size:15px;flex:0 0 auto}
+  .fm-tabs{flex:0 0 auto;display:flex;gap:2px;padding:0 14px;border-bottom:1px solid var(--line);overflow-x:auto}
+  .fm-tab{border:none;background:transparent;border-radius:0;border-bottom:2.5px solid transparent;padding:11px 16px;font-size:14px;color:var(--muted);display:inline-flex;align-items:center;gap:7px;white-space:nowrap;cursor:pointer}
+  .fm-tab i{font-style:normal;font-size:15px}
+  .fm-tab:hover{color:var(--txt)}
+  .fm-tab.on{color:#2563eb;border-bottom-color:#2563eb;font-weight:700}
+  .fm-dot{width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block}
+  .fm-body{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:16px 18px;background:#f8fafc}
+  [data-theme="dark"] .fm-body{background:var(--bg)}
+  .fm-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+  .fm-colR{display:flex;flex-direction:column;gap:14px;min-width:0}
+  .fm-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px}
+  .fm-2col>.fm-card,.fm-colR>.fm-card{margin-bottom:0}
+  .fm-ct{font-size:15.5px;font-weight:700;color:var(--txt);margin-bottom:12px}
+  .fm-help{font-size:12px;color:var(--muted);font-weight:400}
+  .fm-count{font-size:12.5px;color:#2563eb;font-weight:600}
+  .fm-sub{font-size:13px;color:var(--txt);margin-top:8px;padding:8px 10px;background:var(--card2);border-radius:8px}
+  .fm-subh{font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:4px}
+  .fm-tbl{width:100%;border-collapse:collapse;font-size:13px}
+  .fm-tbl th{text-align:left;font-weight:600;color:var(--muted);padding:5px 8px;border-bottom:1px solid var(--line);font-size:12px}
+  .fm-tbl td{padding:6px 8px;border-bottom:1px solid var(--line)}
+  .fm-tag-win{font-size:11px;background:#dcfce7;color:#15803d;padding:1px 7px;border-radius:10px}
+  .fm-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .fm-kpi{background:var(--card2);border-radius:10px;padding:12px 14px}
+  .fm-kpi-l{font-size:12px;color:var(--muted)}
+  .fm-kpi-v{font-size:19px;font-weight:800;margin-top:3px}
+  .fm-bar{height:9px;background:#eef1f5;border-radius:20px;overflow:hidden;margin-top:12px}
+  .fm-bar i{display:block;height:100%;border-radius:20px}
+  .fm-tl{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+  .fm-tl-step{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:70px}
+  .fm-tl-dot{width:14px;height:14px;border-radius:50%}
+  .fm-tl-l{font-size:12.5px;font-weight:600;color:var(--txt)}
+  .fm-tl-d{font-size:12px;color:var(--muted)}
+  .fm-tl-line{flex:1;height:2px;background:var(--line);min-width:16px}
+  .fm-ft{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 18px;border-top:1px solid var(--line);background:var(--card)}
+  .fm-ft-r{display:flex;gap:8px}
+  .fm-ft button{padding:9px 18px;font-size:14px}
+  .form-sheet textarea{width:100%;min-height:52px;font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt);resize:vertical}
+  @media(max-width:1100px){.form-sheet{width:calc(100vw - 24px);height:calc(100vh - 24px)}.fm-2col{grid-template-columns:1fr}.fm-kpis{grid-template-columns:1fr}}
+  @media(max-width:640px){.form-sheet{width:100vw;height:100vh;border-radius:0}.fm-hd-sub{display:none}}
   /* แนบไฟล์ */
   .att-list{display:flex;flex-direction:column;gap:5px;margin-top:6px}
   .att-item{display:flex;align-items:center;gap:8px;padding:6px 9px;background:var(--card2);border:1px solid var(--line);border-radius:9px;font-size:13px}
@@ -698,103 +751,167 @@
   </div>
 </div></div>
 
-<!-- Modal -->
+<!-- Modal แก้ไขหัวข้องาน (4 แท็บ) -->
 <div class="modal" id="modal">
-  <div class="sheet">
-    <h2 id="mTitle">เพิ่ม หัวข้องาน</h2>
-    <div class="form-cols">
-    <div class="form-left">
-    <div class="grid2">
-      <div class="field"><label>โครงการ *</label><input id="m_project" list="projList" placeholder="เช่น อาคาร A"></div>
-      <div class="field"><label>หมวดงาน *</label>
-        <select id="m_cat"><option>Structural</option><option>Architectural</option><option>MEP</option><option>External</option></select></div>
-    </div>
-    <datalist id="projList"></datalist>
-    <div class="grid2">
-      <div class="field"><label>หัวข้องาน *</label><input id="m_pkg" list="pkgList" placeholder="เช่น เสาเข็ม"></div>
-      <div class="field"><label>สถานะ</label><select id="m_status"></select></div>
-    </div>
-    <datalist id="pkgList"></datalist>
-    <div class="field"><label>รายละเอียดงาน</label><input id="m_detail"></div>
-    <div class="field"><label>🏢 ขอบเขตอาคาร <span style="color:var(--muted);font-weight:400">(เว้นว่าง = ทั้งโครงการทุกหลัง • งานเหมารวมไม่ต้องกรอก)</span></label><input id="m_buildings" list="bldgList" placeholder="เว้นว่าง = ทั้งโครงการ • หรือพิมพ์ชื่ออาคารคั่นด้วย , เช่น อาคาร A, อาคาร B"></div>
-    <datalist id="bldgList"></datalist>
-    <div class="field"><label>🧱 Supplier / ผู้เสนอราคาวัสดุ (สูงสุด 5 เจ้า) — ติ๊ก ✓ = ตอบกลับแล้ว, กด 🏆 = เลือกเจ้านี้ <span id="m_winnerLbl" style="color:#16a34a;font-weight:700"></span></label>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <div class="suprow" id="m_row1"><input id="m_inv1" placeholder="เจ้าที่ 1"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_rep1"></label><button type="button" class="winbtn" onclick="pickWinner(1)" title="เลือก/ยกเลิกเจ้านี้เป็นผู้รับเหมา">🏆</button></div>
-        <div class="suprow" id="m_row2"><input id="m_inv2" placeholder="เจ้าที่ 2"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_rep2"></label><button type="button" class="winbtn" onclick="pickWinner(2)" title="เลือก/ยกเลิกเจ้านี้เป็นผู้รับเหมา">🏆</button></div>
-        <div class="suprow" id="m_row3"><input id="m_inv3" placeholder="เจ้าที่ 3"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_rep3"></label><button type="button" class="winbtn" onclick="pickWinner(3)" title="เลือก/ยกเลิกเจ้านี้เป็นผู้รับเหมา">🏆</button></div>
-        <div class="suprow" id="m_row4"><input id="m_inv4" placeholder="เจ้าที่ 4"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_rep4"></label><button type="button" class="winbtn" onclick="pickWinner(4)" title="เลือก/ยกเลิกเจ้านี้เป็นผู้รับเหมา">🏆</button></div>
-        <div class="suprow" id="m_row5"><input id="m_inv5" placeholder="เจ้าที่ 5"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_rep5"></label><button type="button" class="winbtn" onclick="pickWinner(5)" title="เลือก/ยกเลิกเจ้านี้เป็นผู้รับเหมา">🏆</button></div>
+  <div class="sheet form-sheet">
+    <div class="fm-hd">
+      <div class="fm-hd-l">
+        <span class="fm-hd-ic">✏️</span>
+        <div><h2 id="mTitle">แก้ไข หัวข้องาน</h2><div class="fm-hd-sub">แก้ไขรายละเอียดและติดตามความคืบหน้า</div></div>
+      </div>
+      <div class="fm-hd-r">
+        <span id="mStatusBadge" class="fm-badge"></span>
+        <button class="fm-x" aria-label="ปิด" onclick="closeForm()">✕</button>
       </div>
     </div>
-    <div class="field"><label>🔧 ผู้รับเหมาที่เสนอค่าแรง (สูงสุด 5 เจ้า) — ติ๊ก ✓ = ตอบกลับแล้ว, กด 🏆 = เลือกเจ้านี้ <span id="m_labwinnerLbl" style="color:#16a34a;font-weight:700"></span></label>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <div class="suprow" id="m_labrow1"><input id="m_labinv1" placeholder="ผู้รับเหมาค่าแรง 1"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_labrep1"></label><button type="button" class="winbtn" onclick="pickWinnerLab(1)" title="เลือก/ยกเลิกเจ้านี้">🏆</button></div>
-        <div class="suprow" id="m_labrow2"><input id="m_labinv2" placeholder="ผู้รับเหมาค่าแรง 2"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_labrep2"></label><button type="button" class="winbtn" onclick="pickWinnerLab(2)" title="เลือก/ยกเลิกเจ้านี้">🏆</button></div>
-        <div class="suprow" id="m_labrow3"><input id="m_labinv3" placeholder="ผู้รับเหมาค่าแรง 3"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_labrep3"></label><button type="button" class="winbtn" onclick="pickWinnerLab(3)" title="เลือก/ยกเลิกเจ้านี้">🏆</button></div>
-        <div class="suprow" id="m_labrow4"><input id="m_labinv4" placeholder="ผู้รับเหมาค่าแรง 4"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_labrep4"></label><button type="button" class="winbtn" onclick="pickWinnerLab(4)" title="เลือก/ยกเลิกเจ้านี้">🏆</button></div>
-        <div class="suprow" id="m_labrow5"><input id="m_labinv5" placeholder="ผู้รับเหมาค่าแรง 5"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_labrep5"></label><button type="button" class="winbtn" onclick="pickWinnerLab(5)" title="เลือก/ยกเลิกเจ้านี้">🏆</button></div>
+    <div class="fm-tabs" role="tablist">
+      <button type="button" class="fm-tab on" id="fmTab1" role="tab" aria-selected="true" aria-label="ข้อมูลทั่วไป" onclick="showFormTab(1)"><i>📋</i>ข้อมูลทั่วไป<span class="fm-dot" id="fmErr1" style="display:none"></span></button>
+      <button type="button" class="fm-tab" id="fmTab2" role="tab" aria-selected="false" aria-label="ผู้เสนอราคา" onclick="showFormTab(2)"><i>🧑‍💼</i>ผู้เสนอราคา</button>
+      <button type="button" class="fm-tab" id="fmTab3" role="tab" aria-selected="false" aria-label="งบประมาณ" onclick="showFormTab(3)"><i>💰</i>งบประมาณ</button>
+      <button type="button" class="fm-tab" id="fmTab4" role="tab" aria-selected="false" aria-label="กำหนดการ" onclick="showFormTab(4)"><i>📅</i>กำหนดการ</button>
+    </div>
+    <div class="fm-body">
+
+      <div class="fm-panel" data-panel="1">
+       <div class="fm-2col">
+        <div class="fm-card">
+          <div class="fm-ct">ข้อมูลทั่วไป</div>
+          <div class="grid2">
+            <div class="field"><label>โครงการ *</label><input id="m_project" list="projList" placeholder="เช่น อาคาร A"></div>
+            <div class="field"><label>หมวดงาน *</label><select id="m_cat"><option>Structural</option><option>Architectural</option><option>MEP</option><option>External</option></select></div>
+          </div>
+          <datalist id="projList"></datalist>
+          <div class="grid2">
+            <div class="field"><label>หัวข้องาน *</label><input id="m_pkg" list="pkgList" placeholder="เช่น เสาเข็ม"></div>
+            <div class="field"><label>สถานะ</label><select id="m_status" onchange="updateFormStatusBadge()"></select></div>
+          </div>
+          <datalist id="pkgList"></datalist>
+          <div class="field"><label>รายละเอียดงาน</label><input id="m_detail"></div>
+          <div class="field"><label>🏢 ขอบเขตอาคาร <span class="fm-help">เว้นว่าง = ทั้งโครงการ</span></label><input id="m_buildings" list="bldgList" placeholder="เว้นว่าง = ทั้งโครงการ • หรือพิมพ์ชื่ออาคารคั่นด้วย , เช่น อาคาร A, อาคาร B"></div>
+          <datalist id="bldgList"></datalist>
+          <div class="field"><label>หมายเหตุ</label><input id="m_note"></div>
+        </div>
+        <div class="fm-colR">
+          <div class="fm-card">
+            <div class="fm-ct">ไฟล์แนบ <span class="fm-help">(สัญญา / ใบเสนอราคา / เอกสาร)</span></div>
+            <div class="att-list" id="m_attachList"></div>
+            <div class="att-btns">
+              <button type="button" onclick="newFolder()">➕ สร้างโฟลเดอร์</button>
+              <button type="button" onclick="uploadKind='';document.getElementById('m_fileInput').click()">📎 แนบไฟล์</button>
+              <button type="button" onclick="uploadKind='';document.getElementById('m_camInput').click()">📷 ถ่ายรูป</button>
+            </div>
+            <div class="att-status" id="m_attachStatus"></div>
+            <input type="file" id="m_fileInput" multiple style="display:none" onchange="onAttachPick(this)">
+            <input type="file" id="m_camInput" accept="image/*" capture="environment" style="display:none" onchange="onAttachPick(this)">
+            <datalist id="attKindList"><option value="ใบเสนอราคา"><option value="BOQ"><option value="แบบ/Drawing"><option value="สัญญา/PO"><option value="เอกสารบริษัท"><option value="รูปหน้างาน"><option value="อื่นๆ"></datalist>
+          </div>
+          <div class="fm-card">
+            <div class="fm-ct">บันทึกติดตาม / ต่อรอง <span class="fm-help">เก็บวันเวลาอัตโนมัติ</span></div>
+            <div class="hist-list" id="m_histList"></div>
+            <div class="hist-add">
+              <textarea id="m_histText" placeholder="เช่น โทรต่อรอง เจ้า A ลดได้ 5% — วางรูปได้เลย (Ctrl+V)" onpaste="onHistPaste(event)" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey))addHist()"></textarea>
+              <button type="button" class="btn-primary" onclick="addHist()">＋ เพิ่ม</button>
+            </div>
+            <div class="hist-imgbtns">
+              <button type="button" onclick="document.getElementById('m_histImgInput').click()">📷 แนบรูป</button>
+              <span style="font-size:11.5px;color:var(--muted)">หรือวางรูปในช่องข้อความ (Ctrl+V)</span>
+              <span class="att-status" id="m_histImgStatus" style="margin:0"></span>
+            </div>
+            <div id="m_histPending"></div>
+            <input type="file" id="m_histImgInput" accept="image/*" multiple style="display:none" onchange="onHistImgPick(this)">
+          </div>
+        </div>
+       </div>
       </div>
-    </div>
-    <div class="grid2">
-      <div class="field"><label>🧱 ค่าวัสดุ — BOQ</label><input id="m_boqMat" type="text" inputmode="numeric" oninput="fmtLive(this);calcFormTotal()"></div>
-      <div class="field"><label>🧱 ค่าวัสดุ — ราคาจริง</label><input id="m_priceMat" type="text" inputmode="numeric" oninput="fmtLive(this);calcFormTotal()"></div>
-    </div>
-    <div class="grid2">
-      <div class="field"><label>🔧 ค่าแรง — BOQ</label><input id="m_boqLab" type="text" inputmode="numeric" oninput="fmtLive(this);calcFormTotal()"></div>
-      <div class="field"><label>🔧 ค่าแรง — ราคาจริง</label><input id="m_priceLab" type="text" inputmode="numeric" oninput="fmtLive(this);calcFormTotal()"></div>
-    </div>
-    <div class="field" id="m_costTotal" style="font-size:13px;color:var(--muted);background:var(--card2);padding:8px 10px;border-radius:8px"></div>
-    <input type="hidden" id="m_winner">
-    <input type="hidden" id="m_winnerLab">
-    <div class="field"><label>เหตุผลในการเลือก</label><input id="m_reason"></div>
-    <div class="grid2">
-      <div class="field"><label>วันที่อนุมัติ</label><input id="m_appdate" type="date"></div>
-      <div class="field"><label>PO / เลขที่สัญญา</label><input id="m_po"></div>
-    </div>
-    <div class="grid2">
-      <div class="field"><label>วันเริ่มงาน</label><input id="m_start" type="date"></div>
-      <div class="field"><label>วันแล้วเสร็จ</label><input id="m_end" type="date"></div>
-    </div>
-    <div class="grid2">
-      <div class="field"><label>🔔 วันตามงาน (นัดติดตามครั้งถัดไป)</label><input id="m_followup" type="date"><input id="m_followupNote" list="fuNoteList" placeholder="นัดเพื่ออะไร? เช่น ตามใบเสนอราคา, ต่อรองราคา, ส่งแบบ" style="margin-top:6px"><datalist id="fuNoteList"><option value="ตามใบเสนอราคา"><option value="ต่อรองราคา"><option value="ส่งแบบ/อนุมัติแบบ"><option value="นัดดูหน้างาน"><option value="เซ็นสัญญา/ออก PO"><option value="ทวงเอกสาร"><option value="ตามความคืบหน้า"></datalist></div>
-      <div class="field"><label>ผู้รับผิดชอบ</label><input id="m_owner"></div>
-    </div>
-    <div class="field"><label>หมายเหตุ</label><input id="m_note"></div>
-    </div><!--form-left-->
-    <div class="form-right">
-    <div class="field"><label>📎 ไฟล์แนบ (สัญญา / ใบเสนอราคา / เอกสาร)</label>
-      <div class="att-list" id="m_attachList"></div>
-      <div class="att-btns">
-        <button type="button" onclick="newFolder()">➕ สร้างโฟลเดอร์</button>
-        <button type="button" onclick="uploadKind='';document.getElementById('m_fileInput').click()">📎 แนบไฟล์</button>
-        <button type="button" onclick="uploadKind='';document.getElementById('m_camInput').click()">📷 ถ่ายรูป</button>
+
+      <div class="fm-panel" data-panel="2" hidden>
+       <div class="fm-2col">
+        <div class="fm-card">
+          <div class="fm-ct">Supplier / ผู้เสนอราคาวัสดุ <span class="fm-count" id="m_matCount"></span> <span id="m_winnerLbl" style="color:#16a34a;font-weight:700"></span></div>
+          <div class="fm-help" style="margin-bottom:6px">ติ๊ก ✓ = ตอบกลับแล้ว • กด 🏆 = เลือกเจ้านี้ (สูงสุด 5 เจ้า)</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div class="suprow" id="m_row1"><input id="m_inv1" placeholder="เจ้าที่ 1"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_rep1"></label><button type="button" class="winbtn" onclick="pickWinner(1)" title="เลือก/ยกเลิกเจ้านี้เป็นผู้รับเหมา">🏆</button></div>
+            <div class="suprow" id="m_row2"><input id="m_inv2" placeholder="เจ้าที่ 2"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_rep2"></label><button type="button" class="winbtn" onclick="pickWinner(2)" title="เลือก/ยกเลิกเจ้านี้เป็นผู้รับเหมา">🏆</button></div>
+            <div class="suprow" id="m_row3"><input id="m_inv3" placeholder="เจ้าที่ 3"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_rep3"></label><button type="button" class="winbtn" onclick="pickWinner(3)" title="เลือก/ยกเลิกเจ้านี้เป็นผู้รับเหมา">🏆</button></div>
+            <div class="suprow" id="m_row4"><input id="m_inv4" placeholder="เจ้าที่ 4"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_rep4"></label><button type="button" class="winbtn" onclick="pickWinner(4)" title="เลือก/ยกเลิกเจ้านี้เป็นผู้รับเหมา">🏆</button></div>
+            <div class="suprow" id="m_row5"><input id="m_inv5" placeholder="เจ้าที่ 5"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_rep5"></label><button type="button" class="winbtn" onclick="pickWinner(5)" title="เลือก/ยกเลิกเจ้านี้เป็นผู้รับเหมา">🏆</button></div>
+          </div>
+        </div>
+        <div class="fm-card">
+          <div class="fm-ct">ผู้รับเหมาที่เสนอค่าแรง <span class="fm-count" id="m_labCount"></span> <span id="m_labwinnerLbl" style="color:#16a34a;font-weight:700"></span></div>
+          <div class="fm-help" style="margin-bottom:6px">ติ๊ก ✓ = ตอบกลับแล้ว • กด 🏆 = เลือกเจ้านี้ (สูงสุด 5 เจ้า)</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div class="suprow" id="m_labrow1"><input id="m_labinv1" placeholder="ผู้รับเหมาค่าแรง 1"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_labrep1"></label><button type="button" class="winbtn" onclick="pickWinnerLab(1)" title="เลือก/ยกเลิกเจ้านี้">🏆</button></div>
+            <div class="suprow" id="m_labrow2"><input id="m_labinv2" placeholder="ผู้รับเหมาค่าแรง 2"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_labrep2"></label><button type="button" class="winbtn" onclick="pickWinnerLab(2)" title="เลือก/ยกเลิกเจ้านี้">🏆</button></div>
+            <div class="suprow" id="m_labrow3"><input id="m_labinv3" placeholder="ผู้รับเหมาค่าแรง 3"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_labrep3"></label><button type="button" class="winbtn" onclick="pickWinnerLab(3)" title="เลือก/ยกเลิกเจ้านี้">🏆</button></div>
+            <div class="suprow" id="m_labrow4"><input id="m_labinv4" placeholder="ผู้รับเหมาค่าแรง 4"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_labrep4"></label><button type="button" class="winbtn" onclick="pickWinnerLab(4)" title="เลือก/ยกเลิกเจ้านี้">🏆</button></div>
+            <div class="suprow" id="m_labrow5"><input id="m_labinv5" placeholder="ผู้รับเหมาค่าแรง 5"><label class="repchk" title="ตอบกลับแล้ว"><input type="checkbox" id="m_labrep5"></label><button type="button" class="winbtn" onclick="pickWinnerLab(5)" title="เลือก/ยกเลิกเจ้านี้">🏆</button></div>
+          </div>
+        </div>
+       </div>
+       <div class="fm-card"><div class="fm-ct">สรุปการเปรียบเทียบ</div><div id="m_bidSummary"></div></div>
+       <input type="hidden" id="m_winner"><input type="hidden" id="m_winnerLab">
       </div>
-      <div class="att-status" id="m_attachStatus"></div>
-      <input type="file" id="m_fileInput" multiple style="display:none" onchange="onAttachPick(this)">
-      <input type="file" id="m_camInput" accept="image/*" capture="environment" style="display:none" onchange="onAttachPick(this)">
-      <datalist id="attKindList"><option value="ใบเสนอราคา"><option value="BOQ"><option value="แบบ/Drawing"><option value="สัญญา/PO"><option value="เอกสารบริษัท"><option value="รูปหน้างาน"><option value="อื่นๆ"></datalist>
-    </div>
-    <div class="field"><label>📝 บันทึกติดตาม / ต่อรอง (เก็บวันเวลาอัตโนมัติ)</label>
-      <div class="hist-list" id="m_histList"></div>
-      <div class="hist-add">
-        <textarea id="m_histText" placeholder="เช่น โทรต่อรอง เจ้า A ลดได้ 5% — วางรูปได้เลย (Ctrl+V)" onpaste="onHistPaste(event)" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey))addHist()"></textarea>
-        <button type="button" class="btn-primary" onclick="addHist()">＋ เพิ่ม</button>
+
+      <div class="fm-panel" data-panel="3" hidden>
+       <div class="fm-2col">
+        <div class="fm-card"><div class="fm-ct">ต้นทุนตาม BOQ</div>
+          <div class="field"><label>🧱 ค่าวัสดุ — BOQ</label><input id="m_boqMat" type="text" inputmode="numeric" oninput="fmtLive(this);calcFormTotal()"></div>
+          <div class="field"><label>🔧 ค่าแรง — BOQ</label><input id="m_boqLab" type="text" inputmode="numeric" oninput="fmtLive(this);calcFormTotal()"></div>
+          <div class="fm-sub" id="m_boqSum"></div>
+        </div>
+        <div class="fm-card"><div class="fm-ct">ราคาจริง</div>
+          <div class="field"><label>🧱 ค่าวัสดุ — ราคาจริง</label><input id="m_priceMat" type="text" inputmode="numeric" oninput="fmtLive(this);calcFormTotal()"></div>
+          <div class="field"><label>🔧 ค่าแรง — ราคาจริง</label><input id="m_priceLab" type="text" inputmode="numeric" oninput="fmtLive(this);calcFormTotal()"></div>
+          <div class="fm-sub" id="m_realSum"></div>
+        </div>
+       </div>
+       <div class="fm-card"><div class="fm-ct">สรุปงบประมาณ</div>
+         <div id="m_budgetSummary"></div>
+         <div id="m_costTotal" style="display:none"></div>
+       </div>
+       <div class="fm-card"><div class="fm-ct">เหตุผลในการเลือก</div>
+         <textarea id="m_reason" rows="2" placeholder="ระบุเหตุผลด้านราคา คุณภาพ เงื่อนไข หรือระยะเวลาส่งมอบ"></textarea>
+       </div>
+       <div class="fm-card"><div class="fm-ct">ข้อมูลอ้างอิงราคา</div>
+         <div id="m_priceRef"></div>
+         <button type="button" style="margin-top:8px" onclick="showFormTab(2)">ดูการเปรียบเทียบผู้เสนอราคา →</button>
+         <div class="fm-help" style="margin-top:6px">ระบบคำนวณยอดรวมและส่วนต่างอัตโนมัติ</div>
+       </div>
       </div>
-      <div class="hist-imgbtns">
-        <button type="button" onclick="document.getElementById('m_histImgInput').click()">📷 แนบรูป</button>
-        <span style="font-size:11.5px;color:var(--muted)">หรือวางรูปในช่องข้อความ (Ctrl+V)</span>
-        <span class="att-status" id="m_histImgStatus" style="margin:0"></span>
+
+      <div class="fm-panel" data-panel="4" hidden>
+       <div class="fm-2col">
+        <div class="fm-card"><div class="fm-ct">ข้อมูลสัญญาและอนุมัติ</div>
+          <div class="field"><label>วันที่อนุมัติ</label><input id="m_appdate" type="date" onchange="renderFormTimeline()"></div>
+          <div class="field"><label>PO / เลขที่สัญญา</label><input id="m_po"></div>
+        </div>
+        <div class="fm-card"><div class="fm-ct">ระยะเวลาดำเนินงาน</div>
+          <div class="grid2">
+            <div class="field"><label>วันเริ่มงาน</label><input id="m_start" type="date" onchange="calcDuration();renderFormTimeline()"></div>
+            <div class="field"><label>วันแล้วเสร็จ</label><input id="m_end" type="date" onchange="calcDuration();renderFormTimeline()"></div>
+          </div>
+          <div class="fm-sub" id="m_duration"></div>
+        </div>
+       </div>
+       <div class="fm-card"><div class="fm-ct">การติดตามงาน</div>
+         <div class="grid2">
+           <div class="field"><label>🔔 วันตามงาน</label><input id="m_followup" type="date" onchange="renderFormTimeline()"></div>
+           <div class="field"><label>ผู้รับผิดชอบ</label><input id="m_owner"></div>
+         </div>
+         <div class="field"><label>🎯 นัดเพื่ออะไร?</label><input id="m_followupNote" list="fuNoteList" placeholder="เช่น ตามใบเสนอราคา"></div>
+         <datalist id="fuNoteList"><option value="ตามใบเสนอราคา"><option value="ต่อรองราคา"><option value="ส่งแบบ/อนุมัติแบบ"><option value="นัดดูหน้างาน"><option value="เซ็นสัญญา/ออก PO"><option value="ทวงเอกสาร"><option value="ตามความคืบหน้า"></datalist>
+       </div>
+       <div class="fm-card"><div class="fm-ct">Timeline งาน</div><div id="m_timeline"></div></div>
       </div>
-      <div id="m_histPending"></div>
-      <input type="file" id="m_histImgInput" accept="image/*" multiple style="display:none" onchange="onHistImgPick(this)">
+
     </div>
-    </div><!--form-right-->
-    </div><!--form-cols-->
-    <div class="modal-actions">
-      <button class="btn-ok" onclick="saveForm()">💾 บันทึก</button>
-      <button onclick="closeForm()">ยกเลิก</button>
-      <button class="danger-btn" style="margin-left:auto" id="mDel" onclick="delItem()">🗑 ลบ</button>
+    <div class="fm-ft">
+      <button class="danger-btn" id="mDel" onclick="delItem()">🗑 ลบหัวข้องาน</button>
+      <div class="fm-ft-r">
+        <button onclick="closeForm()">ยกเลิก</button>
+        <button class="btn-ok" id="mSaveBtn" onclick="saveForm()">💾 บันทึกการแก้ไข</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1782,6 +1899,74 @@ function calcFormTotal(){
   const diff=b-pr;
   el.innerHTML='รวม: BOQ <b style="color:var(--accent)">'+(b?b.toLocaleString():'—')+'</b> • ราคาจริง <b style="color:var(--accent2)">'+(pr?pr.toLocaleString():'—')+'</b>'
     +((b&&pr)?' • <b class="'+(diff>=0?'diffpos':'diffneg')+'">'+(diff>=0?'ประหยัด ':'เกิน ')+Math.abs(diff).toLocaleString()+'</b> บาท':'');
+  renderBudget();
+}
+// ===== ฟอร์มแก้ไข 4 แท็บ — สลับแท็บ (ข้อมูลไม่หายเพราะ input อยู่ใน DOM ตลอด) + คำนวณเสริมจากข้อมูลจริง =====
+function showFormTab(n){
+  for(let i=1;i<=4;i++){
+    const p=document.querySelector('.fm-panel[data-panel="'+i+'"]');if(p)p.hidden=(i!==n);
+    const t=document.getElementById('fmTab'+i);if(t){t.classList.toggle('on',i===n);t.setAttribute('aria-selected',i===n?'true':'false');}
+  }
+  const body=document.querySelector('.fm-body');if(body)body.scrollTop=0;
+  if(n===2)renderBidSummary();
+  if(n===3){calcFormTotal();renderPriceRef();}
+  if(n===4){calcDuration();renderFormTimeline();}
+}
+function updateFormStatusBadge(){
+  const b=document.getElementById('mStatusBadge');if(!b)return;
+  const s=+(((document.getElementById('m_status')||{}).value)||0);
+  b.textContent=(STATUSES[s]||'');b.className='fm-badge s'+s;
+}
+function fmNum(id){return Number((((document.getElementById(id)||{}).value)||'').replace(/[^\d.]/g,''))||0;}
+function renderBidSummary(){
+  const inv=[],lab=[];
+  for(let k=1;k<=5;k++){const v=((document.getElementById('m_inv'+k)||{}).value||'').trim();if(v)inv.push({n:v,rep:!!(document.getElementById('m_rep'+k)||{}).checked});}
+  for(let k=1;k<=5;k++){const v=((document.getElementById('m_labinv'+k)||{}).value||'').trim();if(v)lab.push({n:v,rep:!!(document.getElementById('m_labrep'+k)||{}).checked});}
+  const mc=document.getElementById('m_matCount');if(mc)mc.textContent=inv.length?('('+inv.length+'/5 เจ้า)'):'';
+  const lc=document.getElementById('m_labCount');if(lc)lc.textContent=lab.length?('('+lab.length+'/5 เจ้า)'):'';
+  const win=((document.getElementById('m_winner')||{}).value||'').trim(),winL=((document.getElementById('m_winnerLab')||{}).value||'').trim();
+  const el=document.getElementById('m_bidSummary');if(!el)return;
+  if(!inv.length&&!lab.length){el.innerHTML='<div class="fm-help">ยังไม่มีผู้เสนอราคา — เพิ่มในการ์ดด้านบน</div>';return;}
+  const row=(o,isWin)=>'<tr><td>'+esc(o.n)+(isWin?' <span class="fm-tag-win">เลือกเจ้านี้</span>':'')+'</td><td style="text-align:center">'+(o.rep?'✓ ตอบกลับแล้ว':'<span style="color:var(--muted)">รอตอบกลับ</span>')+'</td><td style="text-align:center">'+(isWin?'🏆':'')+'</td></tr>';
+  let h='<div class="fm-help" style="margin-bottom:8px">ระบบเก็บ “ยอดรวม” ราคา ไม่ได้เก็บราคาแยกรายเจ้า จึงเทียบได้ระดับ ตอบกลับ/ผู้ชนะ (ยอดรวมดูที่แท็บงบประมาณ)</div>';
+  if(inv.length)h+='<div class="fm-subh">วัสดุ</div><table class="fm-tbl"><tr><th>ผู้เสนอราคา</th><th style="text-align:center">สถานะ</th><th style="text-align:center">ผู้ชนะ</th></tr>'+inv.map(o=>row(o,o.n===win)).join('')+'</table>';
+  if(lab.length)h+='<div class="fm-subh" style="margin-top:10px">ค่าแรง</div><table class="fm-tbl"><tr><th>ผู้รับเหมา</th><th style="text-align:center">สถานะ</th><th style="text-align:center">ผู้ชนะ</th></tr>'+lab.map(o=>row(o,o.n===winL)).join('')+'</table>';
+  el.innerHTML=h;
+}
+function renderBudget(){
+  const boq=fmNum('m_boqMat')+fmNum('m_boqLab'),real=fmNum('m_priceMat')+fmNum('m_priceLab'),diff=boq-real;
+  const bs=document.getElementById('m_boqSum');if(bs)bs.innerHTML='รวม BOQ: <b>'+(boq?boq.toLocaleString():'—')+'</b> บาท';
+  const rs=document.getElementById('m_realSum');if(rs)rs.innerHTML='รวมราคาจริง: <b>'+(real?real.toLocaleString():'—')+'</b> บาท';
+  const el=document.getElementById('m_budgetSummary');if(!el)return;
+  const hasBoth=boq>0&&real>0, pct=boq>0?Math.round(diff/boq*100):0;
+  const kpi=(l,v,c)=>'<div class="fm-kpi"><div class="fm-kpi-l">'+l+'</div><div class="fm-kpi-v" style="color:'+c+'">'+v+'</div></div>';
+  const dcol=!hasBoth?'#64748b':(diff>=0?'#22a75a':'#ef4444');
+  const dtxt=!hasBoth?'—':((diff>=0?'ประหยัด ':'เกิน ')+Math.abs(diff).toLocaleString()+' ('+(diff>=0?'':'-')+Math.abs(pct)+'%)');
+  let h='<div class="fm-kpis">'+kpi('งบประมาณ BOQ',boq?boq.toLocaleString():'—','#2563eb')+kpi('ราคาจริง',real?real.toLocaleString():'—','#f97316')+kpi('ประหยัด/เกินงบ',dtxt,dcol)+'</div>';
+  if(hasBoth){const w=Math.max(0,Math.min(100,Math.round(real/boq*100)));h+='<div class="fm-bar"><i style="width:'+w+'%;background:'+(real<=boq?'#22a75a':'#ef4444')+'"></i></div><div class="fm-help" style="margin-top:6px">ราคาจริงคิดเป็น '+w+'% ของ BOQ</div>';}
+  el.innerHTML=h;
+}
+function renderPriceRef(){
+  const win=((document.getElementById('m_winner')||{}).value||'').trim()||'—',winL=((document.getElementById('m_winnerLab')||{}).value||'').trim()||'—';
+  const el=document.getElementById('m_priceRef');if(el)el.innerHTML='<div style="font-size:13.5px">🧱 ผู้ขายวัสดุที่เลือก: <b>'+esc(win)+'</b></div><div style="font-size:13.5px;margin-top:4px">🔧 ผู้รับเหมาค่าแรงที่เลือก: <b>'+esc(winL)+'</b></div>';
+}
+function calcDuration(){
+  const a=((document.getElementById('m_start')||{}).value)||'',b=((document.getElementById('m_end')||{}).value)||'';
+  const el=document.getElementById('m_duration');if(!el)return;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(a)||!/^\d{4}-\d{2}-\d{2}$/.test(b)){el.textContent='ระยะเวลา: —';return;}
+  const d1=new Date(a),d2=new Date(b);
+  if(isNaN(d1)||isNaN(d2)||d2<d1){el.textContent='ระยะเวลา: — (วันแล้วเสร็จต้องไม่ก่อนวันเริ่ม)';return;}
+  const days=Math.round((d2-d1)/86400000)+1;
+  el.innerHTML='ระยะเวลาดำเนินงาน: <b>'+days.toLocaleString()+'</b> วัน ('+fmtDate(a)+' – '+fmtDate(b)+')';
+}
+function renderFormTimeline(){
+  const el=document.getElementById('m_timeline');if(!el)return;
+  const g=id=>((document.getElementById(id)||{}).value)||'',today=todayStr();
+  const steps=[['อนุมัติ',g('m_appdate')],['เริ่มงาน',g('m_start')],['ตามงาน',g('m_followup')],['แล้วเสร็จ',g('m_end')]];
+  el.innerHTML='<div class="fm-tl">'+steps.map(([lab,d])=>{
+    const has=/^\d{4}-\d{2}-\d{2}$/.test(d),done=has&&d<=today,col=done?'#22a75a':(has?'#2563eb':'#cbd5e1');
+    return '<div class="fm-tl-step"><span class="fm-tl-dot" style="background:'+col+'"></span><div class="fm-tl-l">'+lab+'</div><div class="fm-tl-d">'+(has?fmtDate(d):'—')+'</div></div>';
+  }).join('<span class="fm-tl-line"></span>')+'</div>';
 }
 function delById(id){const d=data.find(x=>x.id===id);if(d&&confirm('ลบหัวข้องาน "'+d.pkg+'" ?')){pushUndo('ก่อนลบหัวข้องาน "'+d.pkg+'"');data=data.filter(x=>x.id!==id);save();render()}}
 // รวมคู่ "– วัสดุ / – ค่าแรง" ที่เคยแยกไว้ กลับเป็นรายการเดียว (breakdown)
@@ -2035,6 +2220,8 @@ function openForm(id,preset){
   formFolders=(d.folders&&Array.isArray(d.folders))?d.folders.slice():[];openFolders=null;uploadKind='';renderAttachList();
   formHistory=(d.history&&Array.isArray(d.history))?d.history.slice():[];pendingHistImgs=[];renderHistList();renderPendingImgs();
   refreshWinnerHighlight();
+  const e1=document.getElementById('fmErr1');if(e1)e1.style.display='none';
+  updateFormStatusBadge();showFormTab(1);
   document.getElementById('modal').classList.add('open');
 }
 // กด 🏆 ที่แถว Supplier เพื่อเลือก/ยกเลิกเป็นผู้รับเหมาที่เลือก แทนการพิมพ์ชื่อซ้ำ
@@ -2361,7 +2548,7 @@ async function removeAttach(i){
   formAttachments.splice(i,1);renderAttachList();
 }
 function saveForm(){
-  if(!m_project.value.trim()||!m_pkg.value.trim()){alert('กรุณากรอกโครงการ และ หัวข้องาน');return}
+  if(!m_project.value.trim()||!m_pkg.value.trim()){alert('กรุณากรอกโครงการ และ หัวข้องาน');showFormTab(1);const e=document.getElementById('fmErr1');if(e)e.style.display='inline-block';return}
   const invited=[1,2,3,4,5].map(k=>document.getElementById('m_inv'+k).value.trim()).filter(Boolean).join(', ');
   const replied=[1,2,3,4,5].map(k=>{const nm=document.getElementById('m_inv'+k).value.trim();return (nm&&document.getElementById('m_rep'+k).checked)?nm:''}).filter(Boolean).join(', ');
   const invitedLab=[1,2,3,4,5].map(k=>document.getElementById('m_labinv'+k).value.trim()).filter(Boolean).join(', ');
