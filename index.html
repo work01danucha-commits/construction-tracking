@@ -903,7 +903,7 @@
        <div class="fm-card"><div class="fm-ct">การติดตามงาน</div>
          <div class="grid2">
            <div class="field"><label>🔔 วันตามงาน</label><div class="thdate"><input id="m_followup_th" class="thdate-txt" inputmode="numeric" autocomplete="off" placeholder="วว/ดด/ปปปป" oninput="onThInput('m_followup')" onchange="onThInput('m_followup',true)"><button type="button" class="thdate-btn" onclick="pickDate('m_followup')" aria-label="เลือกวันที่">📅</button><input id="m_followup" type="date" class="thdate-native" tabindex="-1" aria-hidden="true" onchange="onNativeDate('m_followup')"></div></div>
-           <div class="field"><label>ผู้รับผิดชอบ</label><input id="m_owner"></div>
+           <div class="field"><label>ผู้รับผิดชอบ</label><input id="m_owner" list="ownerList" autocomplete="off" placeholder="พิมพ์หรือเลือกจากรายชื่อที่เคยใช้"><datalist id="ownerList"></datalist></div>
          </div>
          <div class="field"><label>🎯 นัดเพื่ออะไร?</label><input id="m_followupNote" list="fuNoteList" placeholder="เช่น ตามใบเสนอราคา"></div>
          <datalist id="fuNoteList"><option value="ตามใบเสนอราคา"><option value="ต่อรองราคา"><option value="ส่งแบบ/อนุมัติแบบ"><option value="นัดดูหน้างาน"><option value="เซ็นสัญญา/ออก PO"><option value="ทวงเอกสาร"><option value="ตามความคืบหน้า"></datalist>
@@ -1298,6 +1298,14 @@ function bldgNames(project){
 function fillBldgList(project){
   const dl=document.getElementById('bldgList');
   if(dl)dl.innerHTML=bldgNames(project).map(b=>`<option value="${esc(b)}">`).join('');
+}
+// รายชื่อผู้รับผิดชอบที่เคยใช้ (autocomplete) + ดันชื่อผู้ใช้ปัจจุบันขึ้นบนสุด
+function fillOwnerList(){
+  const dl=document.getElementById('ownerList');if(!dl)return;
+  const names=[...new Set(data.map(d=>String(d.owner||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'th'));
+  const me=(getUserName()||'').trim();
+  if(me&&!names.includes(me))names.unshift(me);
+  dl.innerHTML=names.map(n=>`<option value="${esc(n)}">`).join('');
 }
 function refreshProjectFilters(){
   const projs=[...new Set(data.map(d=>d.project).filter(Boolean))].sort();
@@ -2239,6 +2247,8 @@ function openForm(id,preset){
   m_winner.value=g('winner');m_winnerLab.value=g('winnerLab');m_reason.value=g('reason');m_appdate.value=g('appdate');
   m_po.value=g('po');m_start.value=g('start');m_end.value=g('end');
   m_followup.value=g('followup');m_followupNote.value=g('followupNote');m_owner.value=g('owner');m_note.value=g('note');
+  if(!id&&!m_owner.value.trim())m_owner.value=(getUserName()||'').trim();   // งานใหม่ = เติมชื่อผู้ใช้ให้เลย (แก้ได้)
+  fillOwnerList();
   if(!id&&preset)m_followup.value=preset;   // "+ เพิ่มนัดหมาย" จากปฏิทิน = เติมวันตามงานให้ล่วงหน้า
   formAttachments=(d.attachments&&Array.isArray(d.attachments))?d.attachments.slice():[];
   formFolders=(d.folders&&Array.isArray(d.folders))?d.folders.slice():[];openFolders=null;uploadKind='';renderAttachList();
