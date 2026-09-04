@@ -237,6 +237,35 @@
   .pc-actions button{flex:1;padding:6px;font-size:12px}
   .pc-actions .delbtn{flex:0 0 auto;width:40px;color:#dc2626;border-color:var(--tint-red2);background:var(--tint-red)}
   .pc-actions .delbtn:hover{background:var(--tint-red2)}
+  /* การ์ดแบบย่อ–ขยาย (Type 2) */
+  .pc-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0}
+  .pc-owner{font-size:12px;color:var(--muted)}
+  .pc-budget{background:var(--card2);border-radius:9px;padding:8px 10px;margin:6px 0;font-size:12.5px}
+  .pc-bd-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px}
+  .pc-bd-row span{color:var(--muted)}
+  .pc-bar{height:7px;background:var(--line);border-radius:20px;overflow:hidden;margin-top:5px}
+  .pc-bar i{display:block;height:100%;border-radius:20px}
+  .pc-win{margin:6px 0}
+  .pc-winrow{display:flex;align-items:center;gap:8px;font-size:12.5px;margin:3px 0}
+  .pc-winlbl{color:var(--muted);flex:0 0 58px}
+  .pc-winname{color:var(--txt);font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pc-wbadge{flex:0 0 auto;font-size:11px;padding:1px 9px;border-radius:20px}
+  .pc-wbadge.ok{background:#dcfce7;color:#15803d}
+  .pc-wbadge.no{background:var(--card2);color:var(--muted)}
+  .pc-acc{border-top:1px solid var(--line);margin-top:2px}
+  .pc-acc-h{width:100%;text-align:left;background:transparent;border:none;padding:9px 2px;font-size:13px;font-weight:600;color:var(--txt);cursor:pointer;display:flex;align-items:center;gap:8px}
+  .pc-acc-h:hover{color:var(--accent)}
+  .pc-acc-cr{color:var(--muted);font-size:11px;width:12px}
+  .pc-acc-b{padding:2px 2px 8px}
+  .pc-foot{display:flex;gap:8px;margin-top:8px;align-items:center}
+  .pc-foot>.btn-primary{flex:1;padding:8px;font-size:13px}
+  .pc-menu{position:relative;flex:0 0 auto}
+  .pc-menu-btn{width:38px;height:36px;padding:0;font-size:17px;line-height:1}
+  .pc-menu-pop{display:none;position:absolute;right:0;bottom:calc(100% + 4px);background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(15,23,42,.18);padding:4px;min-width:150px;z-index:8}
+  .pc-menu-pop.open{display:block}
+  .pc-menu-pop button{width:100%;text-align:left;background:transparent;border:none;padding:8px 10px;font-size:13px;cursor:pointer;border-radius:7px;color:var(--txt)}
+  .pc-menu-pop button:hover{background:var(--card2)}
+  .pc-menu-pop .danger-text{color:#dc2626}
   .pc-meta{font-size:11px;color:var(--muted);margin-top:4px}
   /* แถวหัวรายการโครงการ (เหนือการ์ดโฟลเดอร์) */
   .folder-headrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
@@ -1495,10 +1524,18 @@ function render(){
   document.getElementById('folderHead').innerHTML='';
   const rows=filtered();
   const backbar=(fProject.value?`<div class="backbar"><button onclick="backToFolders()">← ทุกโครงการ</button><b>📁 ${esc(fProject.value)}</b><button onclick="renameProject('${fProject.value.replace(/'/g,"\\'")}')" title="แก้ชื่อโครงการ" style="padding:4px 8px;font-size:12px">✏️</button><span style="color:var(--muted);font-size:12px">${rows.length} หัวข้องาน</span></div>`:'');
-  const cardHTML=d=>`
+  const cardHTML=d=>{
+   const bq=(d.boq!==''&&d.boq!=null)?Number(d.boq):null;
+   const pr=(d.price!==''&&d.price!=null)?Number(d.price):null;
+   const diff=(bq!=null&&pr!=null)?(bq-pr):null;
+   const fc=fuClass(d);
+   const a1=openAcc.has(d.id+':1'), a2=openAcc.has(d.id+':2');
+   const winRow=(lbl,name)=>`<div class="pc-winrow"><span class="pc-winlbl">${lbl}</span>${name?`<span class="pc-winname">${esc(name)}</span><span class="pc-wbadge ok">เลือกแล้ว</span>`:`<span class="pc-wbadge no">ยังไม่ได้เลือก</span>`}</div>`;
+   const chips=(list,winner,fn)=>(list||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>`<span class="winchip ${s===winner?'sel':''}" onclick="${fn}('${d.id}','${s.replace(/'/g,"\\'")}')" title="กดเพื่อเลือก">${s===winner?'🏆 ':''}${esc(s)}</span>`).join(' ');
+   return `
    <div class="pkgcard cL-${d.cat} ${d.status>=10?'done':(d.status===0?'notstarted':'')}">
      <div class="pc-top">
-       <div>
+       <div style="min-width:0">
          <div class="pc-proj">${esc(d.project)}</div>
          <div class="pc-name">${esc(d.pkg)}</div>
        </div>
@@ -1507,45 +1544,64 @@ function render(){
          ${(d.attachments&&d.attachments.length)?`<span class="pc-attbadge" title="มีไฟล์แนบ ${d.attachments.length} ไฟล์ (กดเพื่อดู)" onclick="openForm('${d.id}')">📎 ${d.attachments.length}</span>`:''}
          ${(d.history&&d.history.length)?`<span class="pc-histbadge" title="มีบันทึกติดตาม ${d.history.length} รายการ (กดเพื่อดู)" onclick="openForm('${d.id}')">📝 ${d.history.length}</span>`:''}
          <span class="pc-catbadge cat-${d.cat}">${d.cat}</span>
-
        </div>
      </div>
-     ${d.detail?`<div class="pc-detail"><span class="lbl">📄 รายละเอียดงาน</span>${esc(d.detail)}</div>`:''}
-     ${(d.buildings&&d.buildings.length)?`<div class="pc-meta" style="margin:3px 0"><span class="bldgchip" style="display:inline-block;background:#ede9fe;color:#6d28d9;font-size:12px;padding:2px 8px;border-radius:10px">🏢 ${d.buildings.map(esc).join(', ')}</span></div>`:''}
-     ${(fc=>fc?`<div class="fu ${fc.c}">${fc.t}</div>`:'')(fuClass(d))}
      <div class="pc-statusrow">
        <select class="s${d.status}" onchange="setStatus('${d.id}',this.value)">${
          STATUSES.map((s,i)=>`<option value="${i}" ${i==d.status?'selected':''}>${i+1}. ${s}</option>`).join('')}</select>
        ${d.status<10?`<button class="stepbtn" onclick="stepStatus('${d.id}')">▸ ถัดไป</button>`:''}
      </div>
-     <div class="pc-costs">
-       <div class="pc-costhead"><span></span><span>BOQ</span><span>ราคาจริง</span></div>
-       <div class="pc-costrow"><span class="pc-costlbl">🧱 วัสดุ</span>
-         <input type="text" inputmode="numeric" value="${dispNum(d.boqMat)}" placeholder="—" oninput="fmtLive(this)" onchange="setNumSub('${d.id}','boqMat',this.value)">
-         <input type="text" inputmode="numeric" value="${dispNum(d.priceMat)}" placeholder="—" oninput="fmtLive(this)" onchange="setNumSub('${d.id}','priceMat',this.value)"></div>
-       <div class="pc-costrow"><span class="pc-costlbl">🔧 ค่าแรง</span>
-         <input type="text" inputmode="numeric" value="${dispNum(d.boqLab)}" placeholder="—" oninput="fmtLive(this)" onchange="setNumSub('${d.id}','boqLab',this.value)">
-         <input type="text" inputmode="numeric" value="${dispNum(d.priceLab)}" placeholder="—" oninput="fmtLive(this)" onchange="setNumSub('${d.id}','priceLab',this.value)"></div>
-       <div class="pc-costtotal">รวม: BOQ <b class="lbl-boq">${d.boq!==''&&d.boq!=null?Number(d.boq).toLocaleString():'—'}</b> • จริง <b class="lbl-real">${d.price!==''&&d.price!=null?Number(d.price).toLocaleString():'—'}</b>${(d.boq&&d.price)?` • <b class="${(d.boq-d.price)>=0?'diffpos':'diffneg'}">${(d.boq-d.price>=0?'ประหยัด ':'เกิน ')}${Math.abs(d.boq-d.price).toLocaleString()}</b>`:''}</div>
-     </div>
-     <div class="pc-fld" style="margin-bottom:6px"><label>🧱 ผู้รับเหมา/ซัพพลาย ที่เลือก (วัสดุ)</label>
-       <input list="wl_${d.id}" value="${esc(d.winner||'')}" placeholder="—" onchange="setField('${d.id}','winner',this.value)">
-       <datalist id="wl_${d.id}">${(d.invited||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>`<option value="${esc(s)}">`).join('')}</datalist></div>
-     ${d.invited?`<div class="pc-meta" style="margin-bottom:4px">เชิญ(วัสดุ): ${(d.invited||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>`<span class="winchip ${s===d.winner?'sel':''}" onclick="pickWinnerCard('${d.id}','${s.replace(/'/g,"\\'")}')" title="กดเพื่อเลือกเป็นผู้รับเหมา">${s===d.winner?'🏆 ':''}${esc(s)}</span>`).join(' ')}</div>`:''}
-     <div class="pc-fld" style="margin-bottom:6px"><label>🔧 ผู้รับเหมาค่าแรง ที่เลือก</label>
-       <input list="wll_${d.id}" value="${esc(d.winnerLab||'')}" placeholder="—" onchange="setField('${d.id}','winnerLab',this.value)">
-       <datalist id="wll_${d.id}">${(d.invitedLab||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>`<option value="${esc(s)}">`).join('')}</datalist></div>
-     ${d.invitedLab?`<div class="pc-meta" style="margin-bottom:4px">เชิญ(ค่าแรง): ${(d.invitedLab||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>`<span class="winchip ${s===d.winnerLab?'sel':''}" onclick="pickWinnerLabCard('${d.id}','${s.replace(/'/g,"\\'")}')" title="กดเพื่อเลือกเป็นผู้รับเหมาค่าแรง">${s===d.winnerLab?'🏆 ':''}${esc(s)}</span>`).join(' ')}</div>`:''}
-     ${(d.appdate||d.po||d.owner)?`<div class="pc-meta">
-       ${d.appdate?`อนุมัติ: ${esc(fmtDate(d.appdate))} &nbsp;`:''}${d.po?`PO: ${esc(d.po)}`:''}
-       ${d.owner?`<br>ผู้รับผิดชอบ: ${esc(d.owner)}`:''}
+     ${(fc||d.owner)?`<div class="pc-line">${fc?`<span class="fu ${fc.c}" style="display:inline-block;margin:0">${fc.t}</span>`:''}${d.owner?`<span class="pc-owner">👤 ${esc(d.owner)}</span>`:''}</div>`:''}
+     ${(bq!=null||pr!=null)?`<div class="pc-budget">
+       <div class="pc-bd-row"><span>BOQ รวม</span><b>${bq!=null?bq.toLocaleString():'—'}</b></div>
+       <div class="pc-bd-row"><span>ราคาจริงรวม</span><b>${pr!=null?pr.toLocaleString():'—'}</b></div>
+       ${diff!=null?`<div class="pc-bd-row"><span>ส่วนต่าง</span><b class="${diff>=0?'diffpos':'diffneg'}">${diff>=0?'ประหยัด ':'เกิน '}${Math.abs(diff).toLocaleString()}</b></div>`:''}
+       ${(diff!=null&&bq>0)?`<div class="pc-bar"><i style="width:${Math.max(0,Math.min(100,Math.round(pr/bq*100)))}%;background:${pr<=bq?'#22a75a':'#ef4444'}"></i></div>`:''}
      </div>`:''}
-     ${activityLabel(d)?`<div class="pc-meta pc-time">🕒 ${esc(activityLabel(d))}</div>`:''}
-     <div class="pc-actions">
-       <button onclick="openForm('${d.id}')">✏️ แก้รายละเอียด</button>
-       <button class="delbtn" title="ลบหัวข้องานนี้" onclick="delById('${d.id}')">🗑</button>
+     <div class="pc-win">
+       ${winRow('🧱 วัสดุ',d.winner)}
+       ${winRow('🔧 ค่าแรง',d.winnerLab)}
+     </div>
+     <div class="pc-acc">
+       <button class="pc-acc-h" onclick="toggleAcc(event,'${d.id}','1')"><span class="pc-acc-cr" id="cr_${d.id}_1">${a1?'▾':'▸'}</span>รายละเอียดและงบประมาณ</button>
+       <div class="pc-acc-b" id="acc_${d.id}_1" style="display:${a1?'block':'none'}">
+         ${d.detail?`<div class="pc-detail"><span class="lbl">📄 รายละเอียดงาน</span>${esc(d.detail)}</div>`:'<div class="pc-meta">— ไม่มีรายละเอียด —</div>'}
+         ${(d.buildings&&d.buildings.length)?`<div class="pc-meta" style="margin:4px 0"><span class="bldgchip" style="display:inline-block;background:#ede9fe;color:#6d28d9;font-size:12px;padding:2px 8px;border-radius:10px">🏢 ${d.buildings.map(esc).join(', ')}</span></div>`:''}
+         <div class="pc-costs">
+           <div class="pc-costhead"><span></span><span>BOQ</span><span>ราคาจริง</span></div>
+           <div class="pc-costrow"><span class="pc-costlbl">🧱 วัสดุ</span>
+             <input type="text" inputmode="numeric" value="${dispNum(d.boqMat)}" placeholder="—" oninput="fmtLive(this)" onchange="setNumSub('${d.id}','boqMat',this.value)">
+             <input type="text" inputmode="numeric" value="${dispNum(d.priceMat)}" placeholder="—" oninput="fmtLive(this)" onchange="setNumSub('${d.id}','priceMat',this.value)"></div>
+           <div class="pc-costrow"><span class="pc-costlbl">🔧 ค่าแรง</span>
+             <input type="text" inputmode="numeric" value="${dispNum(d.boqLab)}" placeholder="—" oninput="fmtLive(this)" onchange="setNumSub('${d.id}','boqLab',this.value)">
+             <input type="text" inputmode="numeric" value="${dispNum(d.priceLab)}" placeholder="—" oninput="fmtLive(this)" onchange="setNumSub('${d.id}','priceLab',this.value)"></div>
+         </div>
+         ${(d.appdate||d.po)?`<div class="pc-meta">${d.appdate?`อนุมัติ: ${esc(fmtDate(d.appdate))} `:''}${d.po?`• PO: ${esc(d.po)}`:''}</div>`:''}
+         ${activityLabel(d)?`<div class="pc-meta pc-time">🕒 ${esc(activityLabel(d))}</div>`:''}
+       </div>
+     </div>
+     <div class="pc-acc">
+       <button class="pc-acc-h" onclick="toggleAcc(event,'${d.id}','2')"><span class="pc-acc-cr" id="cr_${d.id}_2">${a2?'▾':'▸'}</span>ผู้เสนอราคาและไฟล์</button>
+       <div class="pc-acc-b" id="acc_${d.id}_2" style="display:${a2?'block':'none'}">
+         <div class="pc-fld" style="margin-bottom:6px"><label>🧱 ผู้รับเหมา/ซัพพลาย ที่เลือก (วัสดุ)</label>
+           <input list="wl_${d.id}" value="${esc(d.winner||'')}" placeholder="—" onchange="setField('${d.id}','winner',this.value)">
+           <datalist id="wl_${d.id}">${(d.invited||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>`<option value="${esc(s)}">`).join('')}</datalist></div>
+         ${d.invited?`<div class="pc-meta" style="margin-bottom:4px">เชิญ(วัสดุ): ${chips(d.invited,d.winner,'pickWinnerCard')}</div>`:''}
+         <div class="pc-fld" style="margin-bottom:6px"><label>🔧 ผู้รับเหมาค่าแรง ที่เลือก</label>
+           <input list="wll_${d.id}" value="${esc(d.winnerLab||'')}" placeholder="—" onchange="setField('${d.id}','winnerLab',this.value)">
+           <datalist id="wll_${d.id}">${(d.invitedLab||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>`<option value="${esc(s)}">`).join('')}</datalist></div>
+         ${d.invitedLab?`<div class="pc-meta" style="margin-bottom:4px">เชิญ(ค่าแรง): ${chips(d.invitedLab,d.winnerLab,'pickWinnerLabCard')}</div>`:''}
+         ${d.replied?`<div class="pc-meta">✓ ตอบกลับแล้ว(วัสดุ): ${esc(d.replied)}</div>`:''}
+         ${d.repliedLab?`<div class="pc-meta">✓ ตอบกลับแล้ว(ค่าแรง): ${esc(d.repliedLab)}</div>`:''}
+         <div class="pc-meta">📎 ไฟล์แนบ ${(d.attachments||[]).length} รายการ • 📝 บันทึกติดตาม ${(d.history||[]).length} รายการ</div>
+       </div>
+     </div>
+     <div class="pc-foot">
+       <button class="btn-primary" onclick="openForm('${d.id}')">✏️ แก้ไขรายละเอียด</button>
+       <div class="pc-menu"><button class="pc-menu-btn" onclick="togglePcMenu(event,'${d.id}')" aria-label="ตัวเลือก">⋮</button><div class="pc-menu-pop" id="pcm_${d.id}"><button class="danger-text" onclick="delById('${d.id}')">🗑 ลบหัวข้องาน</button></div></div>
      </div>
    </div>`;
+  };
   const active=rows.filter(d=>d.status<10), done=rows.filter(d=>d.status>=10);
   let html=backbar+active.map(cardHTML).join('');
   if(fProject.value){
@@ -1903,6 +1959,12 @@ function renderBell(){
 function setStatus(id,v){const d=data.find(x=>x.id===id);if(d){d.status=+v;touch(d);save();render()}}
 function stepStatus(id){const d=data.find(x=>x.id===id);if(d&&d.status<10){d.status++;touch(d);save();render()}}
 function setField(id,k,v){const d=data.find(x=>x.id===id);if(d){d[k]=(k==='price'?v:v.trim());touch(d);save();render()}}
+// การ์ดแบบย่อ–ขยาย: จำสถานะเปิด accordion ใน localStorage (ไม่ส่งขึ้นชีท)
+let openAcc=(function(){try{const a=JSON.parse(localStorage.getItem('openAcc'));return new Set(Array.isArray(a)?a:[]);}catch(e){return new Set();}})();
+function saveOpenAcc(){try{localStorage.setItem('openAcc',JSON.stringify([...openAcc]))}catch(e){}}
+function toggleAcc(ev,id,sec){if(ev)ev.stopPropagation();const b=document.getElementById('acc_'+id+'_'+sec),c=document.getElementById('cr_'+id+'_'+sec);if(!b)return;const show=b.style.display==='none';b.style.display=show?'block':'none';if(c)c.textContent=show?'▾':'▸';if(show)openAcc.add(id+':'+sec);else openAcc.delete(id+':'+sec);saveOpenAcc();}
+function togglePcMenu(ev,id){ev.stopPropagation();document.querySelectorAll('.pc-menu-pop.open').forEach(el=>{if(el.id!=='pcm_'+id)el.classList.remove('open')});const el=document.getElementById('pcm_'+id);if(el)el.classList.toggle('open');}
+document.addEventListener('click',e=>{if(e.target.closest('.pc-menu'))return;document.querySelectorAll('.pc-menu-pop.open').forEach(el=>el.classList.remove('open'))});
 function pickWinnerCard(id,name){const d=data.find(x=>x.id===id);if(d){d.winner=(d.winner===name)?'':name;touch(d);save();render()}}
 function pickWinnerLabCard(id,name){const d=data.find(x=>x.id===id);if(d){d.winnerLab=(d.winnerLab===name)?'':name;touch(d);save();render()}}
 function setNum(id,k,v){const d=data.find(x=>x.id===id);if(d){const n=String(v).replace(/[^\d.]/g,'');d[k]=n===''?'':Number(n);touch(d);save();render()}}
