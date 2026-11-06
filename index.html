@@ -240,6 +240,33 @@
   /* การ์ดแบบย่อ–ขยาย (Type 2) */
   .pc-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0}
   .pc-owner{font-size:12px;color:var(--muted)}
+  /* ===== นัด/งานย่อย (6 พ.ย. 2026) ===== */
+  #taskBox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:12px;box-shadow:var(--sh)}
+  #taskBox .tb-head{display:flex;flex-wrap:wrap;gap:4px;white-space:nowrap;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:700;margin-bottom:6px;border-bottom:1px solid var(--line);padding-bottom:4px}
+  #taskBox .tb-head button{padding:2px 8px;font-size:11.5px}
+  .tb-gh{font-weight:700;margin:6px 0 3px;font-size:11.5px}
+  .tk-row{display:flex;gap:7px;align-items:flex-start;padding:5px 6px;border-radius:7px;cursor:pointer;border-left:3px solid var(--accent)}
+  .tk-row:hover{background:var(--card2)}
+  .tk-row.over{border-left-color:#ef4444}.tk-row.today{border-left-color:#ea580c}.tk-row.done{opacity:.55}
+  .tk-row.done .tk-title{text-decoration:line-through}
+  .tk-row input[type=checkbox]{width:16px;height:16px;margin-top:1px;flex:none;cursor:pointer}
+  .tk-main{min-width:0;flex:1}
+  .tk-title{font-weight:600;word-break:break-word}
+  .tk-sub{color:var(--muted);font-size:11.5px;margin-top:1px}
+  .tk-list .tk-row{background:var(--card);border:1px solid var(--line);border-left-width:3px;margin-bottom:6px;padding:8px 10px;font-size:13px}
+  .tk-empty{color:var(--muted);text-align:center;padding:8px 0}
+  #remindHost{position:fixed;top:14px;right:14px;z-index:9999;display:flex;flex-direction:column;gap:8px;max-width:340px;width:calc(100% - 28px)}
+  .rmd{background:var(--card);border:1px solid var(--line);border-left:5px solid #ea580c;border-radius:12px;padding:12px 14px;box-shadow:0 12px 32px rgba(15,23,42,.28);font-size:13px;animation:rmdIn .25s ease}
+  .rmd b{display:block;font-size:14px;margin:2px 0}
+  .rmd .rmd-t{color:#ea580c;font-weight:700;font-size:12px}
+  .rmd .rmd-s{color:var(--muted);font-size:12px}
+  .rmd .rmd-a{display:flex;gap:6px;justify-content:flex-end;margin-top:8px}
+  .rmd .rmd-a button{padding:4px 10px;font-size:12px}
+  @keyframes rmdIn{from{transform:translateY(-8px);opacity:0}to{transform:none;opacity:1}}
+  .tb-bell{font-size:11px;padding:2px 6px!important}
+  .tb-bell.on{color:#16a34a}.tb-bell.off{color:#dc2626}
+  .pc-task{font-size:12px;color:#7c3aed;cursor:pointer;background:rgba(124,58,237,.08);border-radius:6px;padding:2px 7px}
+  [data-theme="dark"] .pc-task{color:#c4b5fd;background:rgba(196,181,253,.12)}
   .pc-budget{background:var(--card2);border-radius:9px;padding:8px 10px;margin:6px 0;font-size:12.5px}
   .pc-bd-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px}
   .pc-bd-row span{color:var(--muted)}
@@ -645,6 +672,7 @@
     <div class="hdr-right">
       <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()" title="สลับธีมสว่าง/มืด">🌙</button>
       <button class="theme-toggle" onclick="openAppts()" title="นัดหมายทั้งหมด">📅</button>
+      <button class="theme-toggle" onclick="openTaskList()" title="นัด / งานย่อย (ประชุม นัดคุย โทรตามของ)">📌</button>
       <button class="theme-toggle" id="mineBtn" onclick="toggleMine()" title="ดูเฉพาะงานที่ฉันรับผิดชอบ (สลับกดอีกครั้งเพื่อดูทั้งหมด)">👤</button>
       <div class="bell" id="bellBtn" onclick="showDueOnly()" title="งานที่ต้องตาม">
         🔔<span class="bell-badge" id="bellBadge" style="display:none">0</span>
@@ -661,6 +689,7 @@
  <div class="layout">
   <aside class="side">
     <div id="miniCal"></div>
+    <div id="taskBox"></div>
     <div id="agenda"></div>
     <div id="totalBox"></div>
   </aside>
@@ -784,6 +813,42 @@
     <button onclick="document.getElementById('apptDoneModal').classList.remove('open')">ยกเลิก</button>
     <button onclick="apptDoneNoNext()">ไม่ตั้งนัดต่อ</button>
     <button class="btn-primary" onclick="apptDoneSave()">บันทึกนัดถัดไป</button>
+  </div>
+</div></div>
+
+<div id="remindHost" aria-live="polite"></div>
+<!-- ===== นัด/งานย่อย: รายการทั้งหมด ===== -->
+<div class="modal" id="taskListModal"><div class="sheet" style="max-width:760px">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+    <h2 style="margin:0">📌 นัด / งานย่อย</h2>
+    <div style="display:flex;gap:6px"><button class="btn-primary" onclick="openTask(null)">+ เพิ่มนัด/งานย่อย</button>
+    <button onclick="document.getElementById('taskListModal').classList.remove('open')">✕ ปิด</button></div>
+  </div>
+  <div id="taskListBody"></div>
+</div></div>
+
+<!-- ===== นัด/งานย่อย: ฟอร์ม ===== -->
+<div class="modal" id="taskModal"><div class="sheet" style="max-width:520px">
+  <h2 id="tk_hd">📌 เพิ่มนัด / งานย่อย</h2>
+  <div class="field"><label>เรื่อง *</label><input id="tk_title" autocomplete="off" placeholder="เช่น ประชุมต่อรองราคา ระบบไฟฟ้า"></div>
+  <div class="grid2">
+    <div class="field"><label>ประเภท</label><select id="tk_type">
+      <option value="meet">👥 ประชุม</option><option value="talk">🤝 นัดคุย</option><option value="call">📞 โทร/ตามของ</option>
+      <option value="site">🏗️ ลงไซต์</option><option value="other">📌 อื่นๆ</option></select></div>
+    <div class="field"><label>🕑 เวลา (ไม่บังคับ)</label><input type="time" id="tk_time"></div>
+  </div>
+  <div class="field"><label>📅 วันที่ *</label><div class="thdate"><input id="tk_date_th" class="thdate-txt" inputmode="numeric" autocomplete="off" placeholder="วว/ดด/ปปปป" oninput="onThInput('tk_date')" onchange="onThInput('tk_date',true)"><button type="button" class="thdate-btn" onclick="pickDate('tk_date')" aria-label="เลือกวันที่">📅</button><input type="date" id="tk_date" class="thdate-native" tabindex="-1" aria-hidden="true" onchange="onNativeDate('tk_date')"></div></div>
+  <div class="field"><label>📍 สถานที่</label><input id="tk_place" autocomplete="off" placeholder="เช่น ไซต์งาน / ออฟฟิศ / Online"></div>
+  <div class="field"><label>👤 ผู้เกี่ยวข้อง (หลายคนคั่นด้วย , )</label><input id="tk_owner" list="ownerList" autocomplete="off" placeholder="เช่น ชา, พี่เอ"></div>
+  <div class="grid2">
+    <div class="field"><label>📁 โครงการ (ไม่บังคับ)</label><input id="tk_project" list="projList" autocomplete="off" oninput="fillTaskLink()" onchange="fillTaskLink()"></div>
+    <div class="field"><label>🔗 ผูกกับหัวข้องาน (ไม่บังคับ)</label><select id="tk_link"><option value="">— ไม่ผูก —</option></select></div>
+  </div>
+  <div class="field"><label>📝 สรุป / บันทึก</label><textarea id="tk_note" rows="3" placeholder="สรุปผลประชุม หรือสิ่งที่ต้องทำต่อ"></textarea></div>
+  <label style="display:flex;gap:8px;align-items:center;margin:4px 0 12px;font-size:13px;cursor:pointer"><input type="checkbox" id="tk_done" style="width:18px;height:18px"> ✅ เสร็จแล้ว</label>
+  <div class="modal-actions" style="display:flex;justify-content:space-between;gap:8px">
+    <button id="tk_del" onclick="deleteTask()" style="color:#dc2626">🗑️ ลบ</button>
+    <span style="display:flex;gap:8px"><button onclick="closeTask()">ยกเลิก</button><button class="btn-primary" onclick="saveTask()">บันทึก</button></span>
   </div>
 </div></div>
 
@@ -1007,9 +1072,19 @@ function normRec(r){if(r&&typeof r==='object'){DATE_FIELDS.forEach(f=>{if(f in r
 function normAll(a){return Array.isArray(a)?a.map(normRec):[]}
 
 function load(){try{return normAll(JSON.parse(localStorage.getItem(KEY))||[])}catch(e){return[]}}
-function save(){localStorage.setItem(KEY,JSON.stringify(data));autoWriteFile();syncDiff()}
+function save(){localStorage.setItem(KEY,JSON.stringify(allRecs()));autoWriteFile();syncDiff()}
 
+/* ===== นัด/งานย่อย (6 พ.ย. 2026) =====
+ * เก็บในชีทเดียวกับหัวข้องาน (kind:'task') แต่แยก array `tasks` ออกจาก `data`
+ * → KPI / % คืบหน้า / dashboard / สรุปเงิน ไม่นับงานย่อย
+ * ใช้ field เดิม: pkg=เรื่อง, followup=วันที่, owner=ผู้เกี่ยวข้อง, status 0/10=ยังไม่เสร็จ/เสร็จ
+ */
+function isTask(r){return !!(r&&r.kind==='task')}
 let data = load();
+let tasks = data.filter(isTask);
+data = data.filter(r=>!isTask(r));
+function allRecs(){return data.concat(tasks)}
+function setAll(arr){arr=normAll(arr);tasks=arr.filter(isTask);data=arr.filter(r=>!isTask(r))}
 
 /* ===== ซิงก์กับชีทกลาง (Google Sheet) =====
  * ปรัชญา: เซฟลงเครื่องก่อนเสมอ แล้วค่อยส่งขึ้นชีท (local-first)
@@ -1062,9 +1137,10 @@ async function apiList(){
 // คำนวณส่วนที่เปลี่ยนเทียบกับที่อยู่บนชีท แล้วเข้าคิวส่ง (ทีละรายการ)
 function syncDiff(){
   if(!API_URL)return;
-  const cur=snapshotMap(data);
+  const all=allRecs();
+  const cur=snapshotMap(all);
   const ups=[];
-  data.forEach(r=>{if(r&&r.id&&lastSynced[r.id]!==cur[r.id])ups.push(r)});
+  all.forEach(r=>{if(r&&r.id&&lastSynced[r.id]!==cur[r.id])ups.push(r)});
   const dels=[];
   for(const id in lastSynced){if(!(id in cur))dels.push(id)}
   if(ups.length){
@@ -1102,14 +1178,14 @@ async function pullFromSheet(silent){
   try{
     const remote=normAll(await apiList());
     if(loadQ().length)return;                       // เผื่อมีการแก้ระหว่างรอ
-    if((!remote||remote.length===0)&&data.length>0){// ชีทว่างแต่เครื่องมีข้อมูล = ยังไม่ได้ย้าย
+    if((!remote||remote.length===0)&&allRecs().length>0){// ชีทว่างแต่เครื่องมีข้อมูล = ยังไม่ได้ย้าย
       migrateNeeded=true;setSync(navigator.onLine?'ok':'off');renderSyncBar();return;
     }
     migrateNeeded=false;
-    if(JSON.stringify(remote)!==JSON.stringify(data)){   // ต่างจริงค่อย render กันจอกระพริบ
-      data=remote;localStorage.setItem(KEY,JSON.stringify(data));render();
+    if(JSON.stringify(remote)!==JSON.stringify(allRecs())){   // ต่างจริงค่อย render กันจอกระพริบ
+      setAll(remote);localStorage.setItem(KEY,JSON.stringify(allRecs()));render();
     }
-    lastSynced=snapshotMap(data);
+    lastSynced=snapshotMap(allRecs());
     setSync('ok');
     if(!silent)alert('ดึงข้อมูลล่าสุดจากชีทแล้ว ✓ ('+data.length+' รายการ)');
   }catch(e){setSync('off');if(!silent)alert('ดึงข้อมูลไม่สำเร็จ: '+e.message)}
@@ -1122,8 +1198,8 @@ async function migrateUp(){
   if(!confirm('ย้ายข้อมูล '+data.length+' รายการในเครื่องนี้ ขึ้นชีทกลาง?\n(ทำครั้งเดียวตอนเริ่มใช้ระบบ — หลังจากนี้ทุกเครื่องจะเห็นชุดเดียวกัน)'))return;
   setSync('syncing');renderSyncBar();
   try{
-    await apiWrite({action:'replaceAll',records:data});
-    lastSynced=snapshotMap(data);
+    await apiWrite({action:'replaceAll',records:allRecs()});
+    lastSynced=snapshotMap(allRecs());
     saveQ([]);
     migrateNeeded=false;setSync('ok');
     alert('ย้ายขึ้นชีทกลางสำเร็จ ✓ ('+data.length+' รายการ)');
@@ -1199,7 +1275,7 @@ async function initGate(){
 
 function initSync(){
   if(!API_URL){return}
-  lastSynced=snapshotMap(data);   // กันไม่ให้ save แรกส่งซ้ำทั้งชุด
+  lastSynced=snapshotMap(allRecs());   // กันไม่ให้ save แรกส่งซ้ำทั้งชุด
   renderSyncBar();
   pullFromSheet(true);
 }
@@ -1228,7 +1304,7 @@ function undoLast(){
   if(!confirm('ย้อนข้อมูลกลับไปเป็นก่อน "'+(last.label||'การแก้ไขล่าสุด')+'"\nจุดที่บันทึกไว้: '+timeStr+' ('+last.data.length+' รายการ)\n\n⚠️ การแก้ไขทั้งหมดหลังจากจุดนี้จะหายไป ยืนยัน?'))return;
   stack.pop();
   localStorage.setItem(UNDO_KEY,JSON.stringify(stack));
-  data=last.data;
+  setAll(last.data);
   save();render();
   alert('ย้อนกลับสำเร็จ ✓ ('+data.length+' รายการ)');
 }
@@ -1252,7 +1328,7 @@ async function autoWriteFile(now){
   const go=async()=>{try{
     const p=await fileHandle.queryPermission({mode:'readwrite'});
     if(p!=='granted'){const r=await fileHandle.requestPermission({mode:'readwrite'});if(r!=='granted')return}
-    const w=await fileHandle.createWritable();await w.write(JSON.stringify(data,null,2));await w.close();
+    const w=await fileHandle.createWritable();await w.write(JSON.stringify(allRecs(),null,2));await w.close();
     setFileStatus(true);
     dailyDatedSnapshot();
   }catch(e){setFileStatus(false)}};
@@ -1263,7 +1339,7 @@ function dailyDatedSnapshot(){
   try{
     const t=todayStr();
     if(localStorage.getItem('lastAutoSnapshot')===t)return;
-    dl(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),'Construction_Tracking_data_'+t+'.json');
+    dl(new Blob([JSON.stringify(allRecs(),null,2)],{type:'application/json'}),'Construction_Tracking_data_'+t+'.json');
     localStorage.setItem('lastAutoSnapshot',t);
   }catch(e){}
 }
@@ -1339,14 +1415,15 @@ function fillOwnerList(){
 }
 // ตัวกรองผู้รับผิดชอบรายคน — ค่า '__none__' = งานที่ยังไม่ระบุผู้รับผิดชอบ
 function ownerKey(v){return String(v||'').trim().toLowerCase()}
-function ownerMatch(d,o){if(!o)return true;if(o==='__none__')return !ownerKey(d.owner);return ownerKey(d.owner)===o}
+function ownerKeys(v){return String(v||'').split(/[,،]/).map(ownerKey).filter(Boolean)}
+function ownerMatch(d,o){if(!o)return true;const ks=ownerKeys(d.owner);if(o==='__none__')return !ks.length;return ks.includes(o)}
 function refreshOwnerFilter(){
   const fo=document.getElementById('fOwner');if(!fo)return;
   const keep=fo.value, p=fProject.value;
   const scope=data.filter(d=>!p||d.project===p);
   const names=new Map();let none=0;
-  scope.forEach(d=>{const k=ownerKey(d.owner);if(!k){none++;return}
-    const e=names.get(k)||{label:String(d.owner).trim(),n:0};e.n++;names.set(k,e)});
+  scope.forEach(d=>{const parts=String(d.owner||'').split(/[,،]/).map(x=>x.trim()).filter(Boolean);if(!parts.length){none++;return}
+    parts.forEach(lbl=>{const k=ownerKey(lbl);const e=names.get(k)||{label:lbl,n:0};e.n++;names.set(k,e)})});
   const list=[...names.entries()].sort((a,b)=>a[1].label.localeCompare(b[1].label,'th'));
   fo.innerHTML=`<option value="">👤 ทุกผู้รับผิดชอบ (${list.length} คน)</option>`+
     list.map(([k,e])=>`<option value="${esc(k)}">👤 ${esc(e.label)} (${e.n})</option>`).join('')+
@@ -1376,7 +1453,7 @@ function refreshProjectFilters(){
 let dueOnly=false;
 // ตัวกรอง "เฉพาะงานของฉัน" — ยึดช่องผู้รับผิดชอบ (owner) เทียบชื่อผู้ใช้ (m( ยังไม่ตั้งชื่อ = เห็นทั้งหมด)
 let mineOnly=(function(){try{return localStorage.getItem('mineOnly')==='1'}catch(e){return false}})();
-function isMine(d){const u=(getUserName()||'').trim().toLowerCase();if(!u)return true;return String(d.owner||'').trim().toLowerCase()===u;}
+function isMine(d){const u=(getUserName()||'').trim().toLowerCase();if(!u)return true;return String(d.owner||'').split(/[,،]/).map(x=>x.trim().toLowerCase()).includes(u);}
 function toggleMine(){
   if(!mineOnly){
     if(!(getUserName()||'').trim()){alert('ตั้งชื่อผู้ใช้ก่อน (กดที่ชื่อมุมขวาบน) จึงจะกรอง “งานของฉัน” ได้');if(typeof changeUserName==='function')changeUserName();if(!(getUserName()||'').trim())return;}
@@ -1533,6 +1610,8 @@ function renderFolders(){
 }
 function render(){
   refreshProjectFilters();
+  renderTaskBox();
+  if(document.getElementById('taskListModal')&&document.getElementById('taskListModal').classList.contains('open'))renderTaskList();
   if(folderView()){
     renderFolders();
     document.getElementById('empty').style.display=data.length?'none':'block';
@@ -1571,6 +1650,7 @@ function render(){
          STATUSES.map((s,i)=>`<option value="${i}" ${i==d.status?'selected':''}>${i+1}. ${s}</option>`).join('')}</select>
        ${d.status<10?`<button class="stepbtn" onclick="stepStatus('${d.id}')">▸ ถัดไป</button>`:''}
      </div>
+     ${pkgTaskLine(d)}
      ${(fc||d.owner)?`<div class="pc-line">${fc?`<span class="fu ${fc.c}" style="display:inline-block;margin:0">${fc.t}</span>`:''}${d.owner?`<span class="pc-owner">👤 ${esc(d.owner)}</span>`:''}</div>`:''}
      ${(bq!=null||pr!=null)?`<div class="pc-budget">
        <div class="pc-bd-row"><span>BOQ รวม</span><b>${bq!=null?bq.toLocaleString():'—'}</b></div>
@@ -1663,6 +1743,226 @@ const MONTHS_TH=['มกราคม','กุมภาพันธ์','มี�
 function calShift(n){calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+n,1);render()}
 function calToday(){const t=new Date();calMonth=new Date(t.getFullYear(),t.getMonth(),1);render()}
 function openBigCal(){document.getElementById('calModal').classList.add('open');renderBigCal()}
+// ===== นัด/งานย่อย (6 พ.ย. 2026) =====
+const TASK_TYPES={meet:'ประชุม',talk:'นัดคุย',call:'โทร/ตามของ',site:'ลงไซต์',other:'อื่นๆ'};
+const TASK_ICONS={meet:'👥',talk:'🤝',call:'📞',site:'🏗️',other:'📌'};
+let taskEditId=null, taskListShowDone=false;
+function taskIcon(t){return TASK_ICONS[t.ttype]||'📌'}
+function taskLabel(t){return (t.time?t.time+' ':'')+t.pkg+(t.place?' @ '+t.place:'')+(t.owner?' — '+t.owner:'')}
+// งานย่อยที่ผ่านตัวกรองบนหน้าเว็บ (โครงการ / ผู้รับผิดชอบ / เฉพาะงานของฉัน)
+function visibleTasks(){
+  const p=fProject.value, own=(document.getElementById('fOwner')||{}).value||'';
+  return tasks.filter(t=>t.followup&&(!p||!t.project||t.project===p)&&ownerMatch(t,own)&&(!mineOnly||isMine(t)));
+}
+function taskSort(a,b){return (a.followup+(a.time||'99:99'))<(b.followup+(b.time||'99:99'))?-1:1}
+function taskWhen(t){const n=daysTo(t.followup);const tm=t.time?' '+t.time:'';
+  if(n==null)return '';if(n===0)return 'วันนี้'+tm;if(n===1)return 'พรุ่งนี้'+tm;if(n===-1)return 'เมื่อวาน'+tm;
+  return fmtDate(t.followup)+tm+(n<0?' (เลย '+(-n)+' วัน)':'')}
+function linkedPkg(t){return t.linkId?data.find(d=>d.id===t.linkId):null}
+function taskRow(t){
+  const n=daysTo(t.followup), done=t.status>=10;
+  const cls=done?'done':(n<0?'over':(n===0?'today':''));
+  const lp=linkedPkg(t);
+  const sub=[taskWhen(t),t.place?'📍 '+esc(t.place):'',t.owner?'👤 '+esc(t.owner):'',t.project?'📁 '+esc(t.project):'',lp?'🔗 '+esc(lp.pkg):''].filter(Boolean).join(' · ');
+  return `<div class="tk-row ${cls}" onclick="openTask('${t.id}')">
+    <input type="checkbox" ${done?'checked':''} title="ติ๊กเมื่อเสร็จ" onclick="event.stopPropagation();toggleTaskDone('${t.id}',this.checked)">
+    <div class="tk-main"><div class="tk-title">${taskIcon(t)} ${esc(t.pkg)}</div><div class="tk-sub">${sub}</div>${(t.note&&done)?`<div class="tk-sub">📝 ${esc(t.note)}</div>`:''}</div></div>`;
+}
+// กล่องข้างซ้าย: เลยกำหนด + วันนี้ + พรุ่งนี้
+function renderTaskBox(){
+  const el=document.getElementById('taskBox');if(!el)return;
+  const open=visibleTasks().filter(t=>t.status<10).sort(taskSort);
+  const over=open.filter(t=>daysTo(t.followup)<0), tdy=open.filter(t=>daysTo(t.followup)===0), tmr=open.filter(t=>daysTo(t.followup)===1);
+  let h=`<div class="tb-head"><span>📌 นัด / งานย่อย</span><span style="display:flex;gap:4px">${remindBellBtn()}<button onclick="openTask(null)" title="เพิ่ม">+ เพิ่ม</button><button onclick="openTaskList()" title="ดูทั้งหมด">ทั้งหมด</button></span></div>`;
+  const grp=(lbl,col,arr)=>arr.length?`<div class="tb-gh" style="color:${col}">${lbl} (${arr.length})</div>`+arr.map(taskRow).join(''):'';
+  h+=grp('🔴 เลยกำหนด','#dc2626',over)+grp('🟠 วันนี้','#ea580c',tdy)+grp('🟡 พรุ่งนี้','#d97706',tmr);
+  if(!over.length&&!tdy.length&&!tmr.length){
+    const next=open.find(t=>daysTo(t.followup)>1);
+    h+=`<div class="tk-empty">— ไม่มีนัดวันนี้/พรุ่งนี้ —${next?`<br><span style="font-size:11px">ถัดไป: ${esc(next.pkg)} (${taskWhen(next)})</span>`:''}</div>`;
+  }
+  el.innerHTML=h;
+}
+// หน้ารวมนัด/งานย่อยทั้งหมด
+function openTaskList(){document.getElementById('taskListModal').classList.add('open');renderTaskList();}
+function setTaskListDone(v){taskListShowDone=v;renderTaskList();}
+function renderTaskList(){
+  const host=document.getElementById('taskListBody');if(!host)return;
+  const vis=visibleTasks();
+  const open=vis.filter(t=>t.status<10).sort(taskSort), done=vis.filter(t=>t.status>=10).sort((a,b)=>-taskSort(a,b));
+  let h=`<div class="appt-chips"><span class="appt-chip ${!taskListShowDone?'on':''}" onclick="setTaskListDone(false)">ยังไม่เสร็จ (${open.length})</span><span class="appt-chip ${taskListShowDone?'on':''}" onclick="setTaskListDone(true)">เสร็จแล้ว (${done.length})</span></div>`;
+  const grp=(lbl,col,arr)=>arr.length?`<div style="margin:10px 0 6px;font-weight:700;color:${col}">${lbl} <span style="color:var(--muted);font-weight:400">(${arr.length})</span></div>`+arr.map(taskRow).join(''):'';
+  if(!taskListShowDone){
+    h+='<div class="tk-list">'+grp('🔴 เลยกำหนด','#dc2626',open.filter(t=>daysTo(t.followup)<0))+grp('🟠 วันนี้','#ea580c',open.filter(t=>daysTo(t.followup)===0))+
+      grp('🟡 พรุ่งนี้','#d97706',open.filter(t=>daysTo(t.followup)===1))+grp('🟢 ใน 7 วัน','#16a34a',open.filter(t=>{const n=daysTo(t.followup);return n>=2&&n<=7}))+
+      grp('📅 ต่อไป','var(--muted)',open.filter(t=>daysTo(t.followup)>7))+'</div>';
+    if(!open.length)h+=`<div class="tk-empty" style="padding:22px">— ไม่มีนัด/งานย่อยค้าง — กด “+ เพิ่มนัด/งานย่อย” ด้านบน</div>`;
+  }else{
+    h+='<div class="tk-list">'+done.map(taskRow).join('')+'</div>';
+    if(!done.length)h+=`<div class="tk-empty" style="padding:22px">— ยังไม่มีรายการที่เสร็จ —</div>`;
+  }
+  const f=[fProject.value?'โครงการ '+esc(fProject.value):'',((document.getElementById('fOwner')||{}).value)?'ผู้รับผิดชอบที่เลือก':'',mineOnly?'เฉพาะงานของฉัน':''].filter(Boolean);
+  if(f.length)h+=`<div style="font-size:11.5px;color:var(--muted);margin-top:8px">* กำลังกรอง: ${f.join(', ')} (ปรับที่ตัวกรองหน้าหลัก)</div>`;
+  host.innerHTML=h;
+}
+function fillTaskLink(keep){
+  const sel=document.getElementById('tk_link');if(!sel)return;
+  const p=document.getElementById('tk_project').value.trim();
+  const cur=keep!==undefined?keep:sel.value;
+  const pk=data.filter(d=>!p||d.project===p).sort((a,b)=>String(a.pkg).localeCompare(String(b.pkg),'th'));
+  sel.innerHTML='<option value="">— ไม่ผูก —</option>'+pk.map(d=>`<option value="${d.id}">${esc(d.pkg)}${p?'':' · '+esc(d.project)}</option>`).join('');
+  sel.value=pk.some(d=>d.id===cur)?cur:'';
+}
+// เปิดฟอร์ม: id=null คือเพิ่มใหม่; preset {date, project, linkId}
+function openTask(id,preset){
+  const t=id?tasks.find(x=>x.id===id):null; preset=preset||{};
+  if(id&&!t)return;
+  taskEditId=t?t.id:null;
+  const g=k=>t?(t[k]==null?'':t[k]):'';
+  document.getElementById('tk_hd').textContent=t?'📌 แก้ไขนัด / งานย่อย':'📌 เพิ่มนัด / งานย่อย';
+  document.getElementById('tk_title').value=g('pkg');
+  document.getElementById('tk_type').value=t?(t.ttype||'other'):'meet';
+  document.getElementById('tk_time').value=g('time');
+  document.getElementById('tk_date').value=t?toYMD(t.followup):(preset.date||todayStr());
+  document.getElementById('tk_place').value=g('place');
+  document.getElementById('tk_owner').value=t?g('owner'):(getUserName()||'').trim();
+  const lp=preset.linkId?data.find(d=>d.id===preset.linkId):null;
+  document.getElementById('tk_project').value=t?g('project'):(preset.project||(lp&&lp.project)||fProject.value||'');
+  fillTaskLink(t?g('linkId'):(preset.linkId||''));
+  document.getElementById('tk_note').value=g('note');
+  document.getElementById('tk_done').checked=!!(t&&t.status>=10);
+  document.getElementById('tk_del').style.visibility=t?'visible':'hidden';
+  syncThaiDates(['tk_date']);
+  if(typeof fillOwnerList==='function')fillOwnerList();
+  document.getElementById('taskModal').classList.add('open');
+  setTimeout(()=>{try{document.getElementById('tk_title').focus()}catch(e){}},50);
+}
+function closeTask(){document.getElementById('taskModal').classList.remove('open');taskEditId=null;}
+function saveTask(){
+  const title=document.getElementById('tk_title').value.trim();
+  const date=toYMD(document.getElementById('tk_date').value);
+  if(!title){alert('กรุณาใส่ “เรื่อง”');document.getElementById('tk_title').focus();return}
+  if(!date){alert('กรุณาใส่ “วันที่”');return}
+  const old=taskEditId?tasks.find(x=>x.id===taskEditId):null;
+  const owner=document.getElementById('tk_owner').value.split(/[,،]/).map(s=>s.trim()).filter(Boolean).join(', ');
+  const rec=Object.assign({},old||{},{
+    id:old?old.id:uid(), kind:'task', cat:'', pkg:title,
+    ttype:document.getElementById('tk_type').value, followup:date, time:document.getElementById('tk_time').value,
+    place:document.getElementById('tk_place').value.trim(), owner:owner,
+    project:document.getElementById('tk_project').value.trim(), linkId:document.getElementById('tk_link').value,
+    note:document.getElementById('tk_note').value.trim(), status:document.getElementById('tk_done').checked?10:0,
+    by:old?(old.by||''):(getUserName()||''), upd:Date.now()
+  });
+  if(old)tasks=tasks.map(x=>x.id===old.id?rec:x);else tasks.push(rec);
+  save();closeTask();render();
+  if(rec.time&&rec.status<10)askNotifyPermission(false);
+  checkReminders();
+}
+function deleteTask(){
+  const t=taskEditId?tasks.find(x=>x.id===taskEditId):null;if(!t)return;
+  if(!confirm('ลบ “'+t.pkg+'” ?'))return;
+  pushUndo('ก่อนลบนัด/งานย่อย');
+  tasks=tasks.filter(x=>x.id!==t.id);save();closeTask();render();
+}
+function toggleTaskDone(id,v){const t=tasks.find(x=>x.id===id);if(!t)return;t.status=v?10:0;touch(t);save();render();}
+/* ===== แจ้งเตือนก่อนนัด 30 นาที (6 พ.ย. 2026) =====
+ * ทำงานเมื่อเปิดเว็บค้างไว้ (ย่อแท็บ/ย่อหน้าต่างได้) — ปิดเว็บแล้วจะไม่เด้ง
+ * เตือนเฉพาะนัดที่มี "เวลา" + ยังไม่เสร็จ + ชื่อเราอยู่ในผู้เกี่ยวข้อง (ถ้ายังไม่ตั้งชื่อ = เตือนทุกนัด)
+ * เด้ง 2 ทาง: แจ้งเตือนของระบบ (ถ้าอนุญาต) + กล่องเด้งมุมขวาบนในหน้าเว็บ (เสมอ)
+ * จำว่าเตือนแล้วใน localStorage ตาม id+วัน+เวลา → เลื่อนนัดแล้วจะเตือนใหม่
+ */
+const REMIND_MIN=30, REMIND_KEY=KEY+'__reminded';
+function taskStartMs(t){
+  if(!t||!t.time||!/^\d{1,2}:\d{2}/.test(t.time))return null;
+  const m=toYMD(t.followup).match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return null;
+  const hm=t.time.split(':').map(Number);
+  return new Date(+m[1],+m[2]-1,+m[3],hm[0],hm[1]).getTime();
+}
+function notifySupported(){try{return !!(window.Notification&&typeof window.Notification.permission==='string')}catch(e){return false}}
+function notifyState(){return notifySupported()?Notification.permission:'unsupported'}
+function remindBellBtn(){
+  const st=notifyState();
+  if(st==='granted')return `<button class="tb-bell on" onclick="testReminder()" title="แจ้งเตือนก่อนนัด ${REMIND_MIN} นาที: เปิดอยู่ (กดเพื่อทดสอบ)">🔔 เตือน</button>`;
+  if(st==='denied')return `<button class="tb-bell off" onclick="explainNotifyBlocked()" title="เบราว์เซอร์บล็อกการแจ้งเตือนไว้">🔕 บล็อก</button>`;
+  if(st==='unsupported')return `<button class="tb-bell" onclick="testReminder()" title="เครื่องนี้ไม่รองรับแจ้งเตือนของระบบ — จะเด้งเป็นกล่องในหน้าเว็บแทน">🔔 เตือน</button>`;
+  return `<button class="tb-bell off" onclick="askNotifyPermission(true)" title="กดเพื่ออนุญาตให้เด้งแจ้งเตือนก่อนนัด ${REMIND_MIN} นาที">🔕 เตือน</button>`;
+}
+function askNotifyPermission(fromBtn){
+  if(!notifySupported()){if(fromBtn)alert('เครื่อง/เบราว์เซอร์นี้ไม่รองรับแจ้งเตือนของระบบ\nระบบจะเด้งเป็นกล่องในหน้าเว็บแทน (ต้องเปิดเว็บค้างไว้)');return}
+  if(Notification.permission==='granted'){if(fromBtn)testReminder();return}
+  if(Notification.permission==='denied'){if(fromBtn)explainNotifyBlocked();return}
+  try{Notification.requestPermission().then(()=>{renderTaskBox();if(Notification.permission==='granted'&&fromBtn)testReminder()})}catch(e){}
+}
+function explainNotifyBlocked(){
+  alert('เบราว์เซอร์บล็อกการแจ้งเตือนของเว็บนี้ไว้\n\nวิธีเปิด (Chrome/Edge):\n1. กดไอคอน 🔒 หรือ ⚙️ ข้างช่อง URL ด้านบน\n2. หา “การแจ้งเตือน / Notifications” → เลือก “อนุญาต / Allow”\n3. รีเฟรชหน้าเว็บ\n\nระหว่างนี้ยังมีกล่องเด้งในหน้าเว็บให้อยู่');
+}
+function remindTargets(){
+  const me=(getUserName()||'').trim();
+  return tasks.filter(t=>t.status<10&&t.time&&(!me||isMine(t)));
+}
+function checkReminders(){
+  const now=Date.now();let sent={};
+  try{sent=JSON.parse(localStorage.getItem(REMIND_KEY)||'{}')||{}}catch(e){sent={}}
+  const due=[];
+  remindTargets().forEach(t=>{
+    const st=taskStartMs(t);if(st==null)return;
+    const k=t.id+'@'+toYMD(t.followup)+' '+t.time;
+    if(sent[k])return;
+    if(now>=st-REMIND_MIN*60000&&now<st+10*60000){due.push(t);sent[k]=now;}
+  });
+  Object.keys(sent).forEach(k=>{if(now-sent[k]>3*86400000)delete sent[k]});
+  try{localStorage.setItem(REMIND_KEY,JSON.stringify(sent))}catch(e){}
+  due.sort((a,b)=>taskStartMs(a)-taskStartMs(b)).forEach(fireReminder);
+}
+function remindText(t){
+  const mins=Math.round((taskStartMs(t)-Date.now())/60000);
+  const when=mins>0?('อีก '+mins+' นาที ('+t.time+' น.)'):(mins===0?'เริ่มตอนนี้ ('+t.time+' น.)':'เริ่มไปแล้ว '+(-mins)+' นาที ('+t.time+' น.)');
+  const sub=[t.place?'📍 '+t.place:'',t.owner?'👤 '+t.owner:'',t.project?'📁 '+t.project:''].filter(Boolean).join(' · ');
+  return {when,sub};
+}
+function fireReminder(t){
+  const {when,sub}=remindText(t);
+  // 1) แจ้งเตือนของระบบ (มุมจอ Windows / มือถือ) — ถ้าอนุญาตแล้ว
+  if(notifyState()==='granted'){
+    try{const n=new Notification(taskIcon(t)+' '+when,{body:t.pkg+(sub?'\n'+sub:''),tag:'task-'+t.id,requireInteraction:true});
+      n.onclick=()=>{try{window.focus()}catch(e){}openTask(t.id);n.close()};}catch(e){}
+  }
+  // 2) กล่องเด้งในหน้าเว็บ — เสมอ (กันกรณีบล็อก/มือถือไม่รองรับ)
+  const host=document.getElementById('remindHost');
+  if(host){
+    const box=document.createElement('div');box.className='rmd';box.setAttribute('role','alert');
+    box.innerHTML=`<div class="rmd-t">⏰ ${esc(when)}</div><b>${taskIcon(t)} ${esc(t.pkg)}</b>${sub?`<div class="rmd-s">${esc(sub)}</div>`:''}
+      <div class="rmd-a"><button onclick="this.closest('.rmd').remove()">ปิด</button><button onclick="this.closest('.rmd').remove();snoozeReminder('${t.id}')">เตือนอีก 10 นาที</button><button class="btn-primary" onclick="this.closest('.rmd').remove();openTask('${t.id}')">เปิดดู</button></div>`;
+    host.appendChild(box);
+  }
+  remindBeep();flashTitle('⏰ '+t.pkg);
+}
+function snoozeReminder(id){
+  const t=tasks.find(x=>x.id===id);if(!t)return;
+  setTimeout(()=>{const x=tasks.find(y=>y.id===id);if(x&&x.status<10)fireReminder(x)},10*60000);
+}
+function testReminder(){
+  const now=new Date(Date.now()+REMIND_MIN*60000);
+  fireReminder({id:'__test',pkg:'ทดสอบแจ้งเตือน — ถ้าเห็นกล่องนี้แปลว่าใช้งานได้',ttype:'other',followup:todayStr(),time:String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),place:'',owner:'',project:''});
+}
+let _beepCtx=null;
+function remindBeep(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;_beepCtx=_beepCtx||new C();
+  [0,0.25].forEach(dt=>{const o=_beepCtx.createOscillator(),g=_beepCtx.createGain();o.frequency.value=880;g.gain.value=0.08;o.connect(g);g.connect(_beepCtx.destination);o.start(_beepCtx.currentTime+dt);o.stop(_beepCtx.currentTime+dt+0.15)})}catch(e){}}
+let _titleTimer=null,_titleOrig=null;
+function flashTitle(msg){
+  if(_titleOrig==null)_titleOrig=document.title;
+  clearInterval(_titleTimer);let on=false,n=0;
+  _titleTimer=setInterval(()=>{on=!on;document.title=on?msg:_titleOrig;if(++n>40||(!document.hidden&&n>6)){clearInterval(_titleTimer);document.title=_titleOrig}},1000);
+}
+setInterval(checkReminders,30000);
+
+// บรรทัดบนการ์ดหัวข้องาน: นัดถัดไปที่ผูกไว้ + ปุ่มเพิ่มนัด
+function pkgTaskLine(d){
+  const mine=tasks.filter(t=>t.linkId===d.id);
+  const open=mine.filter(t=>t.status<10).sort(taskSort);
+  const nx=open[0];
+  return `<div class="pc-line">${nx?`<span class="pc-task" onclick="openTask('${nx.id}')" title="นัดที่ผูกกับหัวข้องานนี้">${taskIcon(nx)} ${esc(taskWhen(nx))} · ${esc(nx.pkg)}${open.length>1?' (+'+(open.length-1)+')':''}</span>`:''}<span class="pc-task" style="opacity:.75" onclick="openTask(null,{linkId:'${d.id}'})" title="เพิ่มนัด/งานย่อยที่ผูกกับหัวข้องานนี้">+ 📌 นัด</span></div>`;
+}
+
 // ===== หน้ารวมนัดหมายทั้งหมด =====
 let apptProject='',apptProjs=[],apptDoneId=null;
 function apptItems(){return data.filter(d=>d.followup&&d.status<10&&daysTo(d.followup)!=null&&(!mineOnly||isMine(d)));}
@@ -1720,7 +2020,7 @@ function apptDoneSave(){const d=data.find(x=>x.id===apptDoneId);if(!d)return;app
   touch(d);save();document.getElementById('apptDoneModal').classList.remove('open');renderAppts();render();}
 function apptDoneNoNext(){const d=data.find(x=>x.id===apptDoneId);if(!d)return;apptLogDone(d);
   d.followup='';d.followupNote='';touch(d);save();document.getElementById('apptDoneModal').classList.remove('open');renderAppts();render();}
-function calByDay(){const by={};filtered().filter(d=>d.followup).forEach(d=>{const k=toYMD(d.followup);if(!k)return;(by[k]=by[k]||[]).push(d)});return by}
+function calByDay(){const by={};filtered().filter(d=>d.followup).concat(visibleTasks()).forEach(d=>{const k=toYMD(d.followup);if(!k)return;(by[k]=by[k]||[]).push(d)});return by}
 function dayCls(ds,today){return ds<today?'d-over':(ds===today?'d-today':'d-future')}
 // ลากการ์ดงาน/รายการปฏิทิน ไปวางบนวันที่ เพื่อกำหนด "วันตามงาน" โดยไม่ต้องเปิดฟอร์มแก้ไข
 let dragId=null;
@@ -1742,9 +2042,9 @@ function dropOnDate(e,ds){
   e.currentTarget.classList.remove('dragover');
   const id=dragId||e.dataTransfer.getData('text/plain');
   if(!id)return;
-  const d=data.find(x=>x.id===id);
+  const d=data.find(x=>x.id===id)||tasks.find(x=>x.id===id);
   if(!d)return;
-  d.followup=ds;save();render();
+  d.followup=ds;touch(d);save();render();
 }
 function renderMiniCal(){
   const el=document.getElementById('miniCal');if(!el)return;
@@ -1803,6 +2103,7 @@ const CAL_KIND={
 };
 function calItemKind(d,ds,today){if(d.status>=10)return 'done';if(ds<today)return 'over';const n=daysTo(ds);if(n!=null&&n<=3)return 'near';return 'normal';}
 function calChip(d,ds,today){const c=CAL_KIND[calItemKind(d,ds,today)];
+  if(isTask(d))return `<div class="cev" draggable="true" ondragstart="dragStartCard(event,'${d.id}')" ondragend="dragEndCard(event)" onclick="event.stopPropagation();openTask('${d.id}')" title="${esc(taskLabel(d))}" style="background:${c.bg};color:${c.fg};border-left:3px dashed ${c.bar}">${taskIcon(d)} ${d.time?esc(d.time)+' ':''}${esc(d.pkg)}</div>`;
   return `<div class="cev" draggable="true" ondragstart="dragStartCard(event,'${d.id}')" ondragend="dragEndCard(event)" title="${esc(d.project)} – ${esc(d.pkg)}${d.followupNote?' ('+esc(d.followupNote)+')':''}" style="background:${c.bg};color:${c.fg};border-left:3px solid ${c.bar}">${esc(d.pkg)}</div>`;}
 function calDayCell(dt,m,today,by,week){
   const ds=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
@@ -1853,6 +2154,12 @@ function renderCalSide(){
   let h=`<div><div class="cs-hd-l">วันที่เลือก</div><div class="cs-hd-d">${dtitle}<span class="cs-hd-n"> · ${items.length} งาน</span></div></div>`;
   if(!items.length){h+=`<div class="cs-empty">— ไม่มีงานในวันนี้ —</div>`;}
   else{h+=`<div class="cs-list">`+items.map(d=>{const c=CAL_KIND[calItemKind(d,selCalDay,today)];
+    if(isTask(d))return `<div class="cs-card" tabindex="0" role="button" onclick="openTask('${d.id}')" onkeydown="if(event.key==='Enter'){openTask('${d.id}')}">
+      <div class="cs-card-top"><span class="cs-dot" style="background:${c.bar}"></span><span>${taskIcon(d)} ${TASK_TYPES[d.ttype||'other']||'นัด/งานย่อย'}${d.project?' · 📁 '+esc(d.project):''}</span></div>
+      <div class="cs-pkg">${d.time?esc(d.time)+' · ':''}${esc(d.pkg)}</div>
+      ${d.place?`<div class="cs-note">📍 ${esc(d.place)}</div>`:''}
+      <div class="cs-meta">${d.owner?'👤 '+esc(d.owner)+' · ':''}${d.status>=10?'✅ เสร็จแล้ว':'ยังไม่เสร็จ'}</div>
+    </div>`;
     return `<div class="cs-card" tabindex="0" role="button" aria-label="แก้ไข ${esc(d.pkg)}" onclick="openForm('${d.id}')" onkeydown="if(event.key==='Enter'){openForm('${d.id}')}">
       <div class="cs-card-top"><span class="cs-dot" style="background:${c.bar}"></span><span>📁 ${esc(d.project)}</span></div>
       <div class="cs-pkg">${esc(d.pkg)}</div>
@@ -1860,6 +2167,7 @@ function renderCalSide(){
       <div class="cs-meta">${d.owner?'👤 '+esc(d.owner)+' · ':''}${esc(STATUSES[d.status]||'')}</div>
     </div>`;}).join('')+`</div>`;}
   h+=`<button class="cs-add btn-primary" onclick="openForm(null,'${selCalDay}')">+ เพิ่มนัดหมาย</button>`;
+  h+=`<button class="cs-add" style="margin-top:6px" onclick="openTask(null,{date:'${selCalDay}'})">+ 📌 นัด/งานย่อย</button>`;
   el.innerHTML=h;
 }
 function renderTotals(){
@@ -2727,7 +3035,7 @@ function exportSheet(){
 }
 function exportJSON(){
   const d=new Date(),ymd=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  dl(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),'procurement_backup_'+ymd+'.json');
+  dl(new Blob([JSON.stringify(allRecs(),null,2)],{type:'application/json'}),'procurement_backup_'+ymd+'.json');
   localStorage.setItem('lastBackup',ymd);
 }
 const GCAL_KEY="gcalWebAppUrl";
@@ -2789,9 +3097,9 @@ function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileRe
     pushUndo('ก่อนนำเข้าไฟล์');
     if(data.length){
       const add=confirm('มีข้อมูลอยู่แล้ว '+data.length+' รายการ\n\nกด OK = เพิ่มต่อจากของเดิม (รวมกัน)\nกด Cancel = แทนที่ทั้งหมดด้วยไฟล์ใหม่');
-      if(add){const ids=new Set(data.map(d=>d.id));let n=0;arr.forEach(x=>{if(!x.id||ids.has(x.id))x.id=uid();data.push(x);n++});save();render();alert('เพิ่มแล้ว '+n+' รายการ (รวมเป็น '+data.length+')')}
-      else{data=arr;save();render();alert('แทนที่ด้วย '+arr.length+' รายการ')}
-    } else {data=arr;save();render();alert('นำเข้าสำเร็จ '+arr.length+' รายการ')}
+      if(add){const ids=new Set(data.map(d=>d.id));let n=0;arr.forEach(x=>{if(!x.id||ids.has(x.id))x.id=uid();data.push(x);n++});setAll(allRecs());save();render();alert('เพิ่มแล้ว '+n+' รายการ (รวมเป็น '+data.length+')')}
+      else{setAll(arr);save();render();alert('แทนที่ด้วย '+arr.length+' รายการ')}
+    } else {setAll(arr);save();render();alert('นำเข้าสำเร็จ '+arr.length+' รายการ')}
   }catch(x){alert('ไฟล์ไม่ถูกต้อง')}};r.readAsText(f);e.target.value=''}
 function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click()}
 
@@ -2820,7 +3128,7 @@ function updateBackupBar(){
   // (ปุ่ม "⬇️ สำรอง (JSON)" ยังอยู่ในเมนู ☰ ถ้าอยากเซฟเอง)
   const b=document.getElementById('backupBar');if(b)b.style.display='none';
 }
-initSelects();render();notifyDue();updateBackupBar();initSaveFile();syncThemeBtn();initSync();initGate();renderUserName();
+initSelects();render();notifyDue();setTimeout(checkReminders,1500);updateBackupBar();initSaveFile();syncThemeBtn();initSync();initGate();renderUserName();
 try{const mb=document.getElementById('mineBtn');if(mb)mb.classList.toggle('on',mineOnly)}catch(e){}
 try{document.querySelectorAll('input,textarea').forEach(el=>{if(el.type!=='checkbox'&&el.type!=='date'&&el.type!=='file')el.setAttribute('autocomplete','off')})}catch(e){}
 </script>
