@@ -265,6 +265,22 @@
   @keyframes rmdIn{from{transform:translateY(-8px);opacity:0}to{transform:none;opacity:1}}
   .tb-bell{font-size:11px;padding:2px 6px!important}
   .tb-bell.on{color:#16a34a}.tb-bell.off{color:#dc2626}
+  /* นัดในการ์ด/ฟอร์ม (6 พ.ย. 2026) */
+  #taskModal{z-index:60}
+  #apptDoneModal{z-index:65}
+  /* มือถือ: ข้อมูล → นัด → ไฟล์แนบ → บันทึก */
+  @media(max-width:1100px){
+    #modal .fm-panel[data-panel="1"] .fm-2col{display:flex;flex-direction:column;align-items:stretch}
+    #modal .fm-panel[data-panel="1"] .fm-colR{display:contents}
+    .fm-o1{order:1}.fm-o2{order:2}.fm-o3{order:3}.fm-o4{order:4}
+  }
+  .pc-acc-h .pc-acc-sum{margin-left:auto;font-weight:500;font-size:11.5px;color:#7c3aed;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+  .pc-acc-h .pc-acc-sum.over{color:#dc2626}
+  [data-theme="dark"] .pc-acc-h .pc-acc-sum{color:#c4b5fd}
+  .ct-list .tk-row{padding:6px 6px;font-size:12.5px}
+  .ct-add{margin-top:4px;font-size:12px;padding:4px 10px}
+  .ct-more{font-size:11.5px;color:var(--muted);cursor:pointer;padding:3px 6px}
+  .fm-tasks .tk-row{border:1px solid var(--line);border-left-width:3px;margin-bottom:6px;padding:8px 10px;font-size:13px}
   .pc-task{font-size:12px;color:#7c3aed;cursor:pointer;background:rgba(124,58,237,.08);border-radius:6px;padding:2px 7px}
   [data-theme="dark"] .pc-task{color:#c4b5fd;background:rgba(196,181,253,.12)}
   .pc-budget{background:var(--card2);border-radius:9px;padding:8px 10px;margin:6px 0;font-size:12.5px}
@@ -671,10 +687,9 @@
     </div>
     <div class="hdr-right">
       <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()" title="สลับธีมสว่าง/มืด">🌙</button>
-      <button class="theme-toggle" onclick="openAppts()" title="นัดหมายทั้งหมด">📅</button>
-      <button class="theme-toggle" onclick="openTaskList()" title="นัด / งานย่อย (ประชุม นัดคุย โทรตามของ)">📌</button>
+      <button class="theme-toggle" onclick="openTaskList()" title="นัดหมายทั้งหมด (ตามงาน ประชุม นัดคุย โทร ลงไซต์)">📅</button>
       <button class="theme-toggle" id="mineBtn" onclick="toggleMine()" title="ดูเฉพาะงานที่ฉันรับผิดชอบ (สลับกดอีกครั้งเพื่อดูทั้งหมด)">👤</button>
-      <div class="bell" id="bellBtn" onclick="showDueOnly()" title="งานที่ต้องตาม">
+      <div class="bell" id="bellBtn" onclick="openTaskList()" title="นัด/ตามงาน ที่เลยกำหนด หรือถึงใน 3 วัน">
         🔔<span class="bell-badge" id="bellBadge" style="display:none">0</span>
       </div>
       <div class="usr" onclick="changeUserName()" title="กดเพื่อตั้ง/เปลี่ยนชื่อผู้ใช้">
@@ -690,7 +705,6 @@
   <aside class="side">
     <div id="miniCal"></div>
     <div id="taskBox"></div>
-    <div id="agenda"></div>
     <div id="totalBox"></div>
   </aside>
   <main class="main">
@@ -784,7 +798,7 @@
   <div class="cal-hd">
     <div class="cal-hd-l"><span class="cal-hd-ic">📅</span><h2>ปฏิทินงานตามแผน</h2></div>
     <div class="cal-hd-r">
-      <button class="btn-primary" onclick="document.getElementById('calModal').classList.remove('open');openAppts()" title="ดูเป็นรายการ + เลื่อน/ตามแล้ว">📋 รายการนัด</button>
+      <button class="btn-primary" onclick="document.getElementById('calModal').classList.remove('open');openTaskList()" title="ดูเป็นรายการ + เลื่อน/ตามแล้ว">📋 รายการนัด</button>
       <button class="cal-hd-close" aria-label="ปิดปฏิทิน" onclick="document.getElementById('calModal').classList.remove('open')">✕ ปิด</button>
     </div>
   </div>
@@ -820,8 +834,8 @@
 <!-- ===== นัด/งานย่อย: รายการทั้งหมด ===== -->
 <div class="modal" id="taskListModal"><div class="sheet" style="max-width:760px">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-    <h2 style="margin:0">📌 นัด / งานย่อย</h2>
-    <div style="display:flex;gap:6px"><button class="btn-primary" onclick="openTask(null)">+ เพิ่มนัด/งานย่อย</button>
+    <h2 style="margin:0">📅 นัดหมายทั้งหมด</h2>
+    <div style="display:flex;gap:6px"><button class="btn-primary" onclick="openTask(null)">+ เพิ่มนัด</button>
     <button onclick="document.getElementById('taskListModal').classList.remove('open')">✕ ปิด</button></div>
   </div>
   <div id="taskListBody"></div>
@@ -829,11 +843,11 @@
 
 <!-- ===== นัด/งานย่อย: ฟอร์ม ===== -->
 <div class="modal" id="taskModal"><div class="sheet" style="max-width:520px">
-  <h2 id="tk_hd">📌 เพิ่มนัด / งานย่อย</h2>
-  <div class="field"><label>เรื่อง *</label><input id="tk_title" autocomplete="off" placeholder="เช่น ประชุมต่อรองราคา ระบบไฟฟ้า"></div>
+  <h2 id="tk_hd">📅 เพิ่มนัด</h2>
+  <div class="field"><label>เรื่อง *</label><input id="tk_title" list="fuNoteList" autocomplete="off" placeholder="เช่น ตามใบเสนอราคา / ประชุมต่อรองราคา"></div>
   <div class="grid2">
     <div class="field"><label>ประเภท</label><select id="tk_type">
-      <option value="meet">👥 ประชุม</option><option value="talk">🤝 นัดคุย</option><option value="call">📞 โทร/ตามของ</option>
+      <option value="follow">🔔 ตามงาน</option><option value="meet">👥 ประชุม</option><option value="talk">🤝 นัดคุย</option><option value="call">📞 โทร/ตามของ</option>
       <option value="site">🏗️ ลงไซต์</option><option value="other">📌 อื่นๆ</option></select></div>
     <div class="field"><label>🕑 เวลา (24 ชม. · ไม่บังคับ)</label><div style="display:flex;gap:4px;align-items:center">
       <select id="tk_hh" style="flex:1" onchange="onTaskTimePick()" aria-label="ชั่วโมง"><option value="">ชม.</option><option value="00">00</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option></select><b>:</b>
@@ -872,13 +886,14 @@
       <button type="button" class="fm-tab on" id="fmTab1" role="tab" aria-selected="true" aria-label="ข้อมูลทั่วไป" onclick="showFormTab(1)"><i>📋</i>ข้อมูลทั่วไป<span class="fm-dot" id="fmErr1" style="display:none"></span></button>
       <button type="button" class="fm-tab" id="fmTab2" role="tab" aria-selected="false" aria-label="ผู้เสนอราคา" onclick="showFormTab(2)"><i>🧑‍💼</i>ผู้เสนอราคา</button>
       <button type="button" class="fm-tab" id="fmTab3" role="tab" aria-selected="false" aria-label="งบประมาณ" onclick="showFormTab(3)"><i>💰</i>งบประมาณ</button>
-      <button type="button" class="fm-tab" id="fmTab4" role="tab" aria-selected="false" aria-label="กำหนดการ" onclick="showFormTab(4)"><i>📅</i>กำหนดการ</button>
+      <button type="button" class="fm-tab" id="fmTab4" role="tab" aria-selected="false" aria-label="สัญญา / ระยะเวลา" onclick="showFormTab(4)"><i>📄</i>สัญญา / ระยะเวลา</button>
     </div>
     <div class="fm-body">
 
       <div class="fm-panel" data-panel="1">
        <div class="fm-2col">
-        <div class="fm-card">
+        <div class="fm-colR">
+        <div class="fm-card fm-o1">
           <div class="fm-ct">ข้อมูลทั่วไป</div>
           <div class="grid2">
             <div class="field"><label>โครงการ *</label><input id="m_project" list="projList" placeholder="เช่น อาคาร A"></div>
@@ -895,8 +910,7 @@
           <datalist id="bldgList"></datalist>
           <div class="field"><label>หมายเหตุ</label><input id="m_note"></div>
         </div>
-        <div class="fm-colR">
-          <div class="fm-card">
+          <div class="fm-card fm-o3">
             <div class="fm-ct">ไฟล์แนบ <span class="fm-help">(สัญญา / ใบเสนอราคา / เอกสาร)</span></div>
             <div class="att-list" id="m_attachList"></div>
             <div class="att-btns">
@@ -909,7 +923,13 @@
             <input type="file" id="m_camInput" accept="image/*" capture="environment" style="display:none" onchange="onAttachPick(this)">
             <datalist id="attKindList"><option value="ใบเสนอราคา"><option value="BOQ"><option value="แบบ/Drawing"><option value="สัญญา/PO"><option value="เอกสารบริษัท"><option value="รูปหน้างาน"><option value="อื่นๆ"></datalist>
           </div>
-          <div class="fm-card">
+        </div>
+        <div class="fm-colR">
+          <div class="fm-card fm-tasks fm-o2">
+            <div class="fm-ct" style="display:flex;justify-content:space-between;align-items:center">📅 นัด / ตามงาน <button type="button" class="btn-primary" style="font-size:12.5px;padding:5px 12px" onclick="addTaskFromForm()">+ เพิ่มนัด</button></div>
+            <div class="field" style="margin-bottom:10px"><label>👤 ผู้รับผิดชอบหลัก</label><input id="m_owner" list="ownerList" autocomplete="off" placeholder="พิมพ์หรือเลือกจากรายชื่อที่เคยใช้"><datalist id="ownerList"></datalist></div><div id="m_taskList"></div>
+          </div>
+          <div class="fm-card fm-o4">
             <div class="fm-ct">บันทึกติดตาม / ต่อรอง <span class="fm-help">เก็บวันเวลาอัตโนมัติ</span></div>
             <div class="hist-list" id="m_histList"></div>
             <div class="hist-add">
@@ -998,10 +1018,10 @@
           <div class="fm-sub" id="m_duration"></div>
         </div>
        </div>
-       <div class="fm-card"><div class="fm-ct">การติดตามงาน</div>
+       <div class="fm-card" style="display:none" aria-hidden="true"><div class="fm-ct">การติดตามงาน</div>
          <div class="grid2">
            <div class="field"><label>🔔 วันตามงาน</label><div class="thdate"><input id="m_followup_th" class="thdate-txt" inputmode="numeric" autocomplete="off" placeholder="วว/ดด/ปปปป" oninput="onThInput('m_followup')" onchange="onThInput('m_followup',true)"><button type="button" class="thdate-btn" onclick="pickDate('m_followup')" aria-label="เลือกวันที่">📅</button><input id="m_followup" type="date" class="thdate-native" tabindex="-1" aria-hidden="true" onchange="onNativeDate('m_followup')"></div></div>
-           <div class="field"><label>ผู้รับผิดชอบ</label><input id="m_owner" list="ownerList" autocomplete="off" placeholder="พิมพ์หรือเลือกจากรายชื่อที่เคยใช้"><datalist id="ownerList"></datalist></div>
+           
          </div>
          <div class="field"><label>🎯 นัดเพื่ออะไร?</label><input id="m_followupNote" list="fuNoteList" placeholder="เช่น ตามใบเสนอราคา"></div>
          <datalist id="fuNoteList"><option value="ตามใบเสนอราคา"><option value="ต่อรองราคา"><option value="ส่งแบบ/อนุมัติแบบ"><option value="นัดดูหน้างาน"><option value="เซ็นสัญญา/ออก PO"><option value="ทวงเอกสาร"><option value="ตามความคืบหน้า"></datalist>
@@ -1088,6 +1108,24 @@ let tasks = data.filter(isTask);
 data = data.filter(r=>!isTask(r));
 function allRecs(){return data.concat(tasks)}
 function setAll(arr){arr=normAll(arr);tasks=arr.filter(isTask);data=arr.filter(r=>!isTask(r))}
+/* ===== รวม "วันตามงาน" เข้ากับนัด (ทางเลือก A, 6 พ.ย. 2026) =====
+ * หัวข้องานที่ยังมี followup (ข้อมูลเดิม/เครื่องที่ยังเปิดเว็บเวอร์ชันเก่า) → แปลงเป็นนัดประเภท 🔔 ตามงาน ที่ผูกกับงานนั้น
+ * id คงที่ fu_<id งาน>_<วันที่> → หลายเครื่องแปลงพร้อมกันก็ไม่เกิดนัดซ้ำ; รันซ้ำได้ปลอดภัย
+ */
+function migrateFollowups(){
+  let n=0;
+  data.forEach(d=>{
+    const f=toYMD(d.followup);
+    if(!f)return;
+    const id='fu_'+d.id+'_'+f.replace(/-/g,'');
+    if(!tasks.some(t=>t.id===id)){
+      tasks.push({id,kind:'task',ttype:'follow',pkg:(String(d.followupNote||'').trim()||'ตามงาน '+d.pkg),followup:f,time:'',place:'',
+        owner:d.owner||'',project:d.project||'',linkId:d.id,note:'',status:d.status>=10?10:0,by:'',upd:Date.now()});
+    }
+    d.followup='';d.followupNote='';d.upd=Date.now();n++;
+  });
+  return n;
+}
 
 /* ===== ซิงก์กับชีทกลาง (Google Sheet) =====
  * ปรัชญา: เซฟลงเครื่องก่อนเสมอ แล้วค่อยส่งขึ้นชีท (local-first)
@@ -1186,9 +1224,15 @@ async function pullFromSheet(silent){
     }
     migrateNeeded=false;
     if(JSON.stringify(remote)!==JSON.stringify(allRecs())){   // ต่างจริงค่อย render กันจอกระพริบ
-      setAll(remote);localStorage.setItem(KEY,JSON.stringify(allRecs()));render();
+      setAll(remote);
+      lastSynced=snapshotMap(allRecs());               // = สิ่งที่อยู่บนชีทตอนนี้
+      const mig=migrateFollowups();                    // มีวันตามงานแบบเดิม → แปลงเป็นนัด แล้วส่งขึ้นชีท
+      localStorage.setItem(KEY,JSON.stringify(allRecs()));
+      if(mig)syncDiff();
+      render();
+    }else{
+      lastSynced=snapshotMap(allRecs());
     }
-    lastSynced=snapshotMap(allRecs());
     setSync('ok');
     if(!silent)alert('ดึงข้อมูลล่าสุดจากชีทแล้ว ✓ ('+data.length+' รายการ)');
   }catch(e){setSync('off');if(!silent)alert('ดึงข้อมูลไม่สำเร็จ: '+e.message)}
@@ -1307,7 +1351,7 @@ function undoLast(){
   if(!confirm('ย้อนข้อมูลกลับไปเป็นก่อน "'+(last.label||'การแก้ไขล่าสุด')+'"\nจุดที่บันทึกไว้: '+timeStr+' ('+last.data.length+' รายการ)\n\n⚠️ การแก้ไขทั้งหมดหลังจากจุดนี้จะหายไป ยืนยัน?'))return;
   stack.pop();
   localStorage.setItem(UNDO_KEY,JSON.stringify(stack));
-  setAll(last.data);
+  setAll(last.data);migrateFollowups();
   save();render();
   alert('ย้อนกลับสำเร็จ ✓ ('+data.length+' รายการ)');
 }
@@ -1482,14 +1526,18 @@ function fmtDate(v){
   if(!m)return s||'';
   return m[3]+'/'+m[2]+'/'+(+m[1]+543);
 }
-function fuClass(d){const n=daysTo(d.followup);if(n==null||d.status>=10)return null;
+function fuClass(d){if(!isTask(d))return null;   // การ์ดงานแสดงนัดในหัวข้อ "📅 นัด / ตามงาน" แทน
+  const n=daysTo(d.followup);if(n==null||d.status>=10)return null;
   const note=(d.followupNote||'').trim();const suf=note?' — '+esc(note):'';
   if(n<0)return{c:'fu-over',t:'⚠️ เลยกำหนด '+(-n)+' วัน ('+fmtDate(d.followup)+')'+suf};
   if(n===0)return{c:'fu-today',t:'🔔 ครบกำหนดวันนี้ ('+fmtDate(d.followup)+')'+suf};
   if(n<=3)return{c:'fu-soon',t:'🔔 อีก '+n+' วัน ('+fmtDate(d.followup)+')'+suf};
   return{c:'fu-later',t:'📅 ตามงาน '+fmtDate(d.followup)+' (อีก '+n+' วัน)'+suf}}
-function isDue(d){const n=daysTo(d.followup);return n!=null&&n<=0&&d.status<10}
-function isSoon(d){const n=daysTo(d.followup);return n!=null&&n>0&&n<=3&&d.status<10}
+// วันตามงานของหัวข้องาน = นัดที่ยังไม่เสร็จที่เร็วที่สุด ที่ผูกกับงานนั้น
+function pkgNextTask(d){let best=null;tasks.forEach(t=>{if(t.linkId===d.id&&t.status<10&&t.followup){const k=toYMD(t.followup)+(t.time||'99:99');if(!best||k<best.k)best={k,t}}});return best?best.t:null}
+function pkgFu(d){const t=pkgNextTask(d);return t?toYMD(t.followup):''}
+function isDue(d){const n=daysTo(pkgFu(d));return n!=null&&n<=0&&d.status<10}
+function isSoon(d){const n=daysTo(pkgFu(d));return n!=null&&n>0&&n<=3&&d.status<10}
 function filtered(){
   const p=fProject.value,c=fCat.value,s=fStatus.value,q=fSearch.value.trim().toLowerCase();
   const bldg=(document.getElementById('fBuilding')||{}).value||'';
@@ -1520,6 +1568,7 @@ function showDueOnly(){if(!dueOnly)toggleDue()}
 let showDone=false;
 function toggleDone(){showDone=!showDone;render()}
 // พับ/กาง หมวดงานในหน้ารายการ — จำสถานะใน localStorage, ครั้งแรกยุบทุกหมวดให้สั้น
+try{if(migrateFollowups())localStorage.setItem(KEY,JSON.stringify(allRecs()))}catch(e){}
 let collapsedCats=(function(){try{const s=JSON.parse(localStorage.getItem('collapsedCats'));if(Array.isArray(s))return new Set(s);}catch(e){}return new Set(['Structural','Architectural','MEP','External','other']);})();
 function saveCollapsedCats(){try{localStorage.setItem('collapsedCats',JSON.stringify([...collapsedCats]))}catch(e){}}
 function toggleCatSec(c){
@@ -1535,7 +1584,7 @@ function folderView(){return !fProject.value && !fSearch.value.trim() && !dueOnl
 function openProject(p){fProject.value=p;render();window.scrollTo(0,0)}
 function backToFolders(){fProject.value='';const fb=document.getElementById('fBuilding');if(fb){fb.value='';fb.style.display='none'}fCat.value='';fStatus.value='';fSearch.value='';{const fo=document.getElementById('fOwner');if(fo)fo.value=''}if(dueOnly)toggleDue();render()}
 function projUrgency(p){
-  const ds=data.filter(d=>d.project===p&&d.followup&&d.status<10).map(d=>daysTo(d.followup));
+  const ds=tasks.filter(t=>t.project===p&&t.followup&&t.status<10).map(t=>daysTo(t.followup)).filter(n=>n!=null);
   return ds.length?Math.min(...ds):Infinity; // เลยกำหนด(ติดลบ) มาก่อน, ไม่มีวัน = ท้ายสุด
 }
 const FOLD_PALETTE=[
@@ -1653,7 +1702,6 @@ function render(){
          STATUSES.map((s,i)=>`<option value="${i}" ${i==d.status?'selected':''}>${i+1}. ${s}</option>`).join('')}</select>
        ${d.status<10?`<button class="stepbtn" onclick="stepStatus('${d.id}')">▸ ถัดไป</button>`:''}
      </div>
-     ${pkgTaskLine(d)}
      ${(fc||d.owner)?`<div class="pc-line">${fc?`<span class="fu ${fc.c}" style="display:inline-block;margin:0">${fc.t}</span>`:''}${d.owner?`<span class="pc-owner">👤 ${esc(d.owner)}</span>`:''}</div>`:''}
      ${(bq!=null||pr!=null)?`<div class="pc-budget">
        <div class="pc-bd-row"><span>BOQ รวม</span><b>${bq!=null?bq.toLocaleString():'—'}</b></div>
@@ -1699,6 +1747,7 @@ function render(){
          <div class="pc-meta">📎 ไฟล์แนบ ${(d.attachments||[]).length} รายการ • 📝 บันทึกติดตาม ${(d.history||[]).length} รายการ</div>
        </div>
      </div>
+     ${pkgTaskAcc(d,openAcc.has(d.id+':3'))}
      <div class="pc-foot">
        <button class="btn-primary" onclick="openForm('${d.id}')">✏️ แก้ไขรายละเอียด</button>
        <div class="pc-menu"><button class="pc-menu-btn" onclick="togglePcMenu(event,'${d.id}')" aria-label="ตัวเลือก">⋮</button><div class="pc-menu-pop" id="pcm_${d.id}"><button class="danger-text" onclick="delById('${d.id}')">🗑 ลบหัวข้องาน</button></div></div>
@@ -1747,8 +1796,8 @@ function calShift(n){calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth(
 function calToday(){const t=new Date();calMonth=new Date(t.getFullYear(),t.getMonth(),1);render()}
 function openBigCal(){document.getElementById('calModal').classList.add('open');renderBigCal()}
 // ===== นัด/งานย่อย (6 พ.ย. 2026) =====
-const TASK_TYPES={meet:'ประชุม',talk:'นัดคุย',call:'โทร/ตามของ',site:'ลงไซต์',other:'อื่นๆ'};
-const TASK_ICONS={meet:'👥',talk:'🤝',call:'📞',site:'🏗️',other:'📌'};
+const TASK_TYPES={follow:'ตามงาน',meet:'ประชุม',talk:'นัดคุย',call:'โทร/ตามของ',site:'ลงไซต์',other:'อื่นๆ'};
+const TASK_ICONS={follow:'🔔',meet:'👥',talk:'🤝',call:'📞',site:'🏗️',other:'📌'};
 let taskEditId=null, taskListShowDone=false;
 function taskIcon(t){return TASK_ICONS[t.ttype]||'📌'}
 // เวลาแบบไทย 24 ชม. "14:00 น." (ไม่ขึ้นกับภาษาของเบราว์เซอร์)
@@ -1777,11 +1826,11 @@ function taskWhen(t){const n=daysTo(t.followup);const tm=t.time?' '+thTime(t.tim
   if(n==null)return '';if(n===0)return 'วันนี้'+tm;if(n===1)return 'พรุ่งนี้'+tm;if(n===-1)return 'เมื่อวาน'+tm;
   return fmtDate(t.followup)+tm+(n<0?' (เลย '+(-n)+' วัน)':'')}
 function linkedPkg(t){return t.linkId?data.find(d=>d.id===t.linkId):null}
-function taskRow(t){
+function taskRow(t,compact){
   const n=daysTo(t.followup), done=t.status>=10;
   const cls=done?'done':(n<0?'over':(n===0?'today':''));
   const lp=linkedPkg(t);
-  const sub=[taskWhen(t),t.place?'📍 '+esc(t.place):'',t.owner?'👤 '+esc(t.owner):'',t.project?'📁 '+esc(t.project):'',lp?'🔗 '+esc(lp.pkg):''].filter(Boolean).join(' · ');
+  const sub=[taskWhen(t),t.place?'📍 '+esc(t.place):'',t.owner?'👤 '+esc(t.owner):'',(!compact&&t.project)?'📁 '+esc(t.project):'',(!compact&&lp)?'🔗 '+esc(lp.pkg):''].filter(Boolean).join(' · ');
   return `<div class="tk-row ${cls}" onclick="openTask('${t.id}')">
     <input type="checkbox" ${done?'checked':''} title="ติ๊กเมื่อเสร็จ" onclick="event.stopPropagation();toggleTaskDone('${t.id}',this.checked)">
     <div class="tk-main"><div class="tk-title">${taskIcon(t)} ${esc(t.pkg)}</div><div class="tk-sub">${sub}</div>${(t.note&&done)?`<div class="tk-sub">📝 ${esc(t.note)}</div>`:''}</div></div>`;
@@ -1791,8 +1840,8 @@ function renderTaskBox(){
   const el=document.getElementById('taskBox');if(!el)return;
   const open=visibleTasks().filter(t=>t.status<10).sort(taskSort);
   const over=open.filter(t=>daysTo(t.followup)<0), tdy=open.filter(t=>daysTo(t.followup)===0), tmr=open.filter(t=>daysTo(t.followup)===1);
-  let h=`<div class="tb-head"><span>📌 นัด / งานย่อย</span><span style="display:flex;gap:4px">${remindBellBtn()}<button onclick="openTask(null)" title="เพิ่ม">+ เพิ่ม</button><button onclick="openTaskList()" title="ดูทั้งหมด">ทั้งหมด</button></span></div>`;
-  const grp=(lbl,col,arr)=>arr.length?`<div class="tb-gh" style="color:${col}">${lbl} (${arr.length})</div>`+arr.map(taskRow).join(''):'';
+  let h=`<div class="tb-head"><span>📅 นัดหมาย / ตามงาน</span><span style="display:flex;gap:4px">${remindBellBtn()}<button onclick="openTask(null)" title="เพิ่ม">+ เพิ่ม</button><button onclick="openTaskList()" title="ดูทั้งหมด">ทั้งหมด</button></span></div>`;
+  const grp=(lbl,col,arr)=>arr.length?`<div class="tb-gh" style="color:${col}">${lbl} (${arr.length})</div>`+arr.slice(0,5).map(taskRow).join('')+(arr.length>5?`<div class="ct-more" onclick="openTaskList()">+ อีก ${arr.length-5} รายการ — ดูทั้งหมด</div>`:''):'';
   h+=grp('🔴 เลยกำหนด','#dc2626',over)+grp('🟠 วันนี้','#ea580c',tdy)+grp('🟡 พรุ่งนี้','#d97706',tmr);
   if(!over.length&&!tdy.length&&!tmr.length){
     const next=open.find(t=>daysTo(t.followup)>1);
@@ -1803,17 +1852,22 @@ function renderTaskBox(){
 // หน้ารวมนัด/งานย่อยทั้งหมด
 function openTaskList(){document.getElementById('taskListModal').classList.add('open');renderTaskList();}
 function setTaskListDone(v){taskListShowDone=v;renderTaskList();}
+function taskActs(t){return t.status>=10?'':`<div class="appt-acts" style="margin-top:6px" onclick="event.stopPropagation()">
+  <button onclick="taskSnooze('${t.id}',1)">เลื่อน +1</button><button onclick="taskSnooze('${t.id}',3)">+3</button><button onclick="taskSnooze('${t.id}',7)">+7 วัน</button>
+  <button class="appt-done" onclick="taskDone('${t.id}')">✓ เสร็จ / ตามแล้ว</button></div>`}
+function taskSnooze(id,n){const t=tasks.find(x=>x.id===id);if(!t)return;const d=daysTo(t.followup);t.followup=addDaysYMD(d!=null&&d<0?todayStr():t.followup,n);touch(t);save();render();}
 function renderTaskList(){
   const host=document.getElementById('taskListBody');if(!host)return;
   const vis=visibleTasks();
   const open=vis.filter(t=>t.status<10).sort(taskSort), done=vis.filter(t=>t.status>=10).sort((a,b)=>-taskSort(a,b));
   let h=`<div class="appt-chips"><span class="appt-chip ${!taskListShowDone?'on':''}" onclick="setTaskListDone(false)">ยังไม่เสร็จ (${open.length})</span><span class="appt-chip ${taskListShowDone?'on':''}" onclick="setTaskListDone(true)">เสร็จแล้ว (${done.length})</span></div>`;
-  const grp=(lbl,col,arr)=>arr.length?`<div style="margin:10px 0 6px;font-weight:700;color:${col}">${lbl} <span style="color:var(--muted);font-weight:400">(${arr.length})</span></div>`+arr.map(taskRow).join(''):'';
+  const rowA=t=>taskRow(t).replace(/<\/div><\/div>\s*$/,taskActs(t)+'</div></div>');
+  const grp=(lbl,col,arr)=>arr.length?`<div style="margin:10px 0 6px;font-weight:700;color:${col}">${lbl} <span style="color:var(--muted);font-weight:400">(${arr.length})</span></div>`+arr.map(rowA).join(''):'';
   if(!taskListShowDone){
     h+='<div class="tk-list">'+grp('🔴 เลยกำหนด','#dc2626',open.filter(t=>daysTo(t.followup)<0))+grp('🟠 วันนี้','#ea580c',open.filter(t=>daysTo(t.followup)===0))+
       grp('🟡 พรุ่งนี้','#d97706',open.filter(t=>daysTo(t.followup)===1))+grp('🟢 ใน 7 วัน','#16a34a',open.filter(t=>{const n=daysTo(t.followup);return n>=2&&n<=7}))+
       grp('📅 ต่อไป','var(--muted)',open.filter(t=>daysTo(t.followup)>7))+'</div>';
-    if(!open.length)h+=`<div class="tk-empty" style="padding:22px">— ไม่มีนัด/งานย่อยค้าง — กด “+ เพิ่มนัด/งานย่อย” ด้านบน</div>`;
+    if(!open.length)h+=`<div class="tk-empty" style="padding:22px">— ไม่มีนัดค้าง — กด “+ เพิ่มนัด” ด้านบน</div>`;
   }else{
     h+='<div class="tk-list">'+done.map(taskRow).join('')+'</div>';
     if(!done.length)h+=`<div class="tk-empty" style="padding:22px">— ยังไม่มีรายการที่เสร็จ —</div>`;
@@ -1836,9 +1890,9 @@ function openTask(id,preset){
   if(id&&!t)return;
   taskEditId=t?t.id:null;
   const g=k=>t?(t[k]==null?'':t[k]):'';
-  document.getElementById('tk_hd').textContent=t?'📌 แก้ไขนัด / งานย่อย':'📌 เพิ่มนัด / งานย่อย';
+  document.getElementById('tk_hd').textContent=t?'📅 แก้ไขนัด':'📅 เพิ่มนัด';
   document.getElementById('tk_title').value=g('pkg');
-  document.getElementById('tk_type').value=t?(t.ttype||'other'):'meet';
+  document.getElementById('tk_type').value=t?(t.ttype||'other'):(preset.type||(preset.linkId?'follow':'meet'));
   setTaskTime(g('time'));
   document.getElementById('tk_date').value=t?toYMD(t.followup):(preset.date||todayStr());
   document.getElementById('tk_place').value=g('place');
@@ -1870,8 +1924,9 @@ function saveTask(){
     note:document.getElementById('tk_note').value.trim(), status:document.getElementById('tk_done').checked?10:0,
     by:old?(old.by||''):(getUserName()||''), upd:Date.now()
   });
+  if(rec.status>=10&&!(old&&old.status>=10))logTaskToPkg(rec);
   if(old)tasks=tasks.map(x=>x.id===old.id?rec:x);else tasks.push(rec);
-  save();closeTask();render();
+  save();closeTask();render();renderFormTasks();
   if(rec.time&&rec.status<10)askNotifyPermission(false);
   checkReminders();
 }
@@ -1879,9 +1934,30 @@ function deleteTask(){
   const t=taskEditId?tasks.find(x=>x.id===taskEditId):null;if(!t)return;
   if(!confirm('ลบ “'+t.pkg+'” ?'))return;
   pushUndo('ก่อนลบนัด/งานย่อย');
-  tasks=tasks.filter(x=>x.id!==t.id);save();closeTask();render();
+  tasks=tasks.filter(x=>x.id!==t.id);save();closeTask();render();renderFormTasks();
 }
-function toggleTaskDone(id,v){const t=tasks.find(x=>x.id===id);if(!t)return;t.status=v?10:0;touch(t);save();render();}
+function logTaskToPkg(t){
+  if(!t||!t.linkId)return;const d=data.find(x=>x.id===t.linkId);if(!d)return;
+  const entry={t:Date.now(),by:getUserName()||'',text:'✅ '+taskIcon(t)+' '+t.pkg+(t.note?' — '+t.note:''),imgs:[]};
+  if(!Array.isArray(d.history))d.history=[];d.history.push(entry);touch(d);
+  // ฟอร์มของงานนี้เปิดอยู่ → ใส่ในรายการที่ฟอร์มถืออยู่ด้วย กันบันทึกฟอร์มแล้วทับหาย
+  if(typeof editId!=='undefined'&&editId===d.id&&document.getElementById('modal').classList.contains('open')&&Array.isArray(formHistory)){formHistory.push(entry);renderHistList();}
+}
+function toggleTaskDone(id,v){const t=tasks.find(x=>x.id===id);if(!t)return;const was=t.status>=10;t.status=v?10:0;touch(t);if(v&&!was)logTaskToPkg(t);save();render();renderFormTasks();}
+// "✓ ตามแล้ว → นัดต่อ": ปิดนัดนี้ + ตั้งนัดตามงานครั้งถัดไป (ใช้หน้าต่างเดิม apptDoneModal)
+let taskDoneId=null;
+function taskDone(id){const t=tasks.find(x=>x.id===id);if(!t)return;taskDoneId=id;
+  document.getElementById('ad_title').textContent=taskIcon(t)+' '+t.pkg+(linkedPkg(t)?' · '+linkedPkg(t).pkg:'');
+  document.getElementById('ad_date').value=addDaysYMD(todayStr(),7);
+  document.getElementById('ad_note').value=t.ttype==='follow'?t.pkg:'';
+  syncThaiDates(['ad_date']);document.getElementById('apptDoneModal').classList.add('open');}
+function taskDoneFinish(next){
+  const t=tasks.find(x=>x.id===taskDoneId);taskDoneId=null;if(!t)return;
+  if(t.status<10){t.status=10;touch(t);logTaskToPkg(t);}
+  if(next){const date=toYMD(document.getElementById('ad_date').value);const note=document.getElementById('ad_note').value.trim();
+    if(date)tasks.push({id:uid(),kind:'task',ttype:'follow',pkg:note||('ตามงาน '+((linkedPkg(t)||{}).pkg||t.pkg)),followup:date,time:'',place:'',owner:t.owner||'',project:t.project||'',linkId:t.linkId||'',note:'',status:0,by:getUserName()||'',upd:Date.now()});}
+  document.getElementById('apptDoneModal').classList.remove('open');save();render();renderFormTasks();
+}
 /* ===== แจ้งเตือนก่อนนัด 30 นาที (6 พ.ย. 2026) =====
  * ทำงานเมื่อเปิดเว็บค้างไว้ (ย่อแท็บ/ย่อหน้าต่างได้) — ปิดเว็บแล้วจะไม่เด้ง
  * เตือนเฉพาะนัดที่มี "เวลา" + ยังไม่เสร็จ + ชื่อเราอยู่ในผู้เกี่ยวข้อง (ถ้ายังไม่ตั้งชื่อ = เตือนทุกนัด)
@@ -1974,6 +2050,40 @@ function flashTitle(msg){
 }
 setInterval(checkReminders,30000);
 
+// ===== นัดในการ์ดหัวข้องาน: หัวข้อพับได้ที่ 3 "📌 นัด / ประชุม" =====
+function pkgTasks(id){return tasks.filter(t=>t.linkId===id)}
+function pkgTaskAcc(d,open){
+  const all=pkgTasks(d.id), pend=all.filter(t=>t.status<10).sort(taskSort), done=all.filter(t=>t.status>=10).sort((a,b)=>-taskSort(a,b));
+  const nx=pend.find(t=>daysTo(t.followup)>=0), nOver=pend.filter(t=>daysTo(t.followup)<0).length;
+  const sum=(nx||nOver)?`<span class="pc-acc-sum ${nOver?'over':''}">${nOver?'⚠️ เลยกำหนด '+nOver+(nx?' · ':''):''}${nx?'ถัดไป '+esc(taskWhen(nx)):''}</span>`:(all.length?`<span class="pc-acc-sum" style="color:var(--muted)">✅ ครบแล้ว</span>`:'');
+  const showDone=ctShowDone.has(d.id);
+  const row=t=>taskRow(t,true);
+  let body=pend.map(row).join('');
+  if(!pend.length)body+=`<div class="tk-empty" style="padding:4px 0">— ยังไม่มีนัดค้าง —</div>`;
+  if(done.length)body+=showDone?done.map(row).join('')+`<div class="ct-more" onclick="ctToggleDone('${d.id}')">▲ ซ่อนที่เสร็จแล้ว</div>`
+                               :`<div class="ct-more" onclick="ctToggleDone('${d.id}')">▼ ดูที่เสร็จแล้ว (${done.length})</div>`;
+  body+=`<button class="ct-add" onclick="openTask(null,{linkId:'${d.id}'})">+ เพิ่มนัด</button>`;
+  return `<div class="pc-acc">
+    <button class="pc-acc-h" onclick="toggleAcc(event,'${d.id}','3')"><span class="pc-acc-cr" id="cr_${d.id}_3">${open?'▾':'▸'}</span>📅 นัด / ตามงาน${pend.length?` <span style="color:var(--muted);font-weight:500">(${pend.length})</span>`:''}${sum}</button>
+    <div class="pc-acc-b ct-list" id="acc_${d.id}_3" style="display:${open?'block':'none'}">${body}</div></div>`;
+}
+const ctShowDone=new Set();
+function ctToggleDone(id){if(ctShowDone.has(id))ctShowDone.delete(id);else ctShowDone.add(id);openAcc.add(id+':3');render();}
+// ในฟอร์มแก้ไขหัวข้องาน
+function renderFormTasks(){
+  const el=document.getElementById('m_taskList');if(!el)return;
+  if(!document.getElementById('modal').classList.contains('open')&&!editId){el.innerHTML='';return}
+  if(!editId){el.innerHTML=`<div class="tk-empty">บันทึกหัวข้องานก่อน แล้วจึงเพิ่มนัดได้</div>`;return}
+  const all=pkgTasks(editId), pend=all.filter(t=>t.status<10).sort(taskSort), done=all.filter(t=>t.status>=10).sort((a,b)=>-taskSort(a,b));
+  const row=t=>taskRow(t,true);
+  el.innerHTML=(pend.length?pend.map(row).join(''):`<div class="tk-empty">— ยังไม่มีนัด — กด “+ เพิ่มนัด” เช่น ตามใบเสนอราคา, ประชุมต่อรอง, ดูหน้างาน</div>`)+
+    (done.length?`<div style="font-size:12px;color:var(--muted);margin:8px 0 4px">✅ เสร็จแล้ว (${done.length})</div>`+done.map(row).join(''):'');
+}
+function addTaskFromForm(){
+  if(!editId){alert('กรุณากด “บันทึก” หัวข้องานนี้ก่อน แล้วจึงเพิ่มนัดได้');return}
+  openTask(null,{linkId:editId});
+}
+
 // บรรทัดบนการ์ดหัวข้องาน: นัดถัดไปที่ผูกไว้ + ปุ่มเพิ่มนัด
 function pkgTaskLine(d){
   const mine=tasks.filter(t=>t.linkId===d.id);
@@ -2034,10 +2144,10 @@ function apptDone(id){const d=data.find(x=>x.id===id);if(!d)return;apptDoneId=id
   document.getElementById('ad_note').value=(d.followupNote||'').trim();
   syncThaiDates(['ad_date']);
   document.getElementById('apptDoneModal').classList.add('open');}
-function apptDoneSave(){const d=data.find(x=>x.id===apptDoneId);if(!d)return;apptLogDone(d);
+function apptDoneSave(){if(taskDoneId)return taskDoneFinish(true);const d=data.find(x=>x.id===apptDoneId);if(!d)return;apptLogDone(d);
   d.followup=document.getElementById('ad_date').value;d.followupNote=document.getElementById('ad_note').value.trim();
   touch(d);save();document.getElementById('apptDoneModal').classList.remove('open');renderAppts();render();}
-function apptDoneNoNext(){const d=data.find(x=>x.id===apptDoneId);if(!d)return;apptLogDone(d);
+function apptDoneNoNext(){if(taskDoneId)return taskDoneFinish(false);const d=data.find(x=>x.id===apptDoneId);if(!d)return;apptLogDone(d);
   d.followup='';d.followupNote='';touch(d);save();document.getElementById('apptDoneModal').classList.remove('open');renderAppts();render();}
 function calByDay(){const by={};filtered().filter(d=>d.followup).concat(visibleTasks()).forEach(d=>{const k=toYMD(d.followup);if(!k)return;(by[k]=by[k]||[]).push(d)});return by}
 function dayCls(ds,today){return ds<today?'d-over':(ds===today?'d-today':'d-future')}
@@ -2061,9 +2171,10 @@ function dropOnDate(e,ds){
   e.currentTarget.classList.remove('dragover');
   const id=dragId||e.dataTransfer.getData('text/plain');
   if(!id)return;
-  const d=data.find(x=>x.id===id)||tasks.find(x=>x.id===id);
-  if(!d)return;
-  d.followup=ds;touch(d);save();render();
+  const tk=tasks.find(x=>x.id===id);
+  if(tk){tk.followup=ds;touch(tk);save();render();return}
+  const d=data.find(x=>x.id===id);
+  if(d)openTask(null,{linkId:d.id,date:ds});
 }
 function renderMiniCal(){
   const el=document.getElementById('miniCal');if(!el)return;
@@ -2185,8 +2296,7 @@ function renderCalSide(){
       ${d.followupNote?`<div class="cs-note">🎯 ${esc(d.followupNote)}</div>`:''}
       <div class="cs-meta">${d.owner?'👤 '+esc(d.owner)+' · ':''}${esc(STATUSES[d.status]||'')}</div>
     </div>`;}).join('')+`</div>`;}
-  h+=`<button class="cs-add btn-primary" onclick="openForm(null,'${selCalDay}')">+ เพิ่มนัดหมาย</button>`;
-  h+=`<button class="cs-add" style="margin-top:6px" onclick="openTask(null,{date:'${selCalDay}'})">+ 📌 นัด/งานย่อย</button>`;
+  h+=`<button class="cs-add btn-primary" onclick="openTask(null,{date:'${selCalDay}'})">+ เพิ่มนัด</button>`;
   el.innerHTML=h;
 }
 function renderTotals(){
@@ -2298,7 +2408,7 @@ function renderKPIs(){
 }
 function renderBell(){
   const badge=document.getElementById('bellBadge');if(!badge)return;
-  const n=data.filter(isDue).length+data.filter(isSoon).length;
+  const n=bellTasks().length;
   badge.style.display=n?'flex':'none';
   badge.textContent=n>99?'99+':n;
 }
@@ -2386,7 +2496,7 @@ function calcDuration(){
 function renderFormTimeline(){
   const el=document.getElementById('m_timeline');if(!el)return;
   const g=id=>((document.getElementById(id)||{}).value)||'',today=todayStr();
-  const steps=[['อนุมัติ',g('m_appdate')],['เริ่มงาน',g('m_start')],['ตามงาน',g('m_followup')],['แล้วเสร็จ',g('m_end')]];
+  const steps=[['อนุมัติ',g('m_appdate')],['เริ่มงาน',g('m_start')],['นัดถัดไป',(editId&&data.find(x=>x.id===editId))?pkgFu(data.find(x=>x.id===editId)):''],['แล้วเสร็จ',g('m_end')]];
   el.innerHTML='<div class="fm-tl">'+steps.map(([lab,d])=>{
     const has=/^\d{4}-\d{2}-\d{2}$/.test(d),done=has&&d<=today,col=done?'#22a75a':(has?'#2563eb':'#cbd5e1');
     return '<div class="fm-tl-step"><span class="fm-tl-dot" style="background:'+col+'"></span><div class="fm-tl-l">'+lab+'</div><div class="fm-tl-d">'+(has?fmtDate(d):'—')+'</div></div>';
@@ -2627,10 +2737,11 @@ function renameProject(oldName){
   if(fProject.value===oldName)fProject.value=newName;
   render();
 }
+function bellTasks(){const me=(getUserName()||'').trim();return tasks.filter(t=>{const n=daysTo(t.followup);return t.status<10&&n!=null&&n<=3&&(!me||isMine(t))})}
 function notifyDue(){
-  const items=data.filter(isDue);
+  const items=bellTasks().filter(t=>daysTo(t.followup)<=0).map(t=>({project:t.project||'',pkg:t.pkg}));
   if(!items.length)return;
-  if(!('Notification'in window))return;
+  if(!notifySupported())return;
   const fire=()=>new Notification('🔔 ตามงานจัดซื้อจัดจ้าง',{body:items.length+' รายการเลยกำหนด/ครบวันนี้\n'+items.slice(0,4).map(d=>'• '+d.project+' – '+d.pkg).join('\n')});
   if(Notification.permission==='granted')fire();
   else if(Notification.permission!=='denied')Notification.requestPermission().then(p=>{if(p==='granted')fire()});
@@ -2661,7 +2772,7 @@ function openForm(id,preset){
   if(!id&&preset)m_followup.value=preset;   // "+ เพิ่มนัดหมาย" จากปฏิทิน = เติมวันตามงานให้ล่วงหน้า
   formAttachments=(d.attachments&&Array.isArray(d.attachments))?d.attachments.slice():[];
   formFolders=(d.folders&&Array.isArray(d.folders))?d.folders.slice():[];openFolders=null;uploadKind='';renderAttachList();
-  formHistory=(d.history&&Array.isArray(d.history))?d.history.slice():[];pendingHistImgs=[];renderHistList();renderPendingImgs();
+  formHistory=(d.history&&Array.isArray(d.history))?d.history.slice():[];pendingHistImgs=[];renderHistList();renderPendingImgs();renderFormTasks();
   refreshWinnerHighlight();
   const e1=document.getElementById('fmErr1');if(e1)e1.style.display='none';
   syncThaiDates(['m_appdate','m_start','m_end','m_followup']);
@@ -3037,7 +3148,7 @@ function exportSheet(){
     let pBoq=0,pReal=0;
     g.forEach(d=>{
       pBoq+=Number(d.boq)||0; pReal+=Number(d.price)||0;
-      body+=`<tr>`+td(d.pkg)+td((+d.status+1)+'. '+STATUSES[d.status])+tdN(d.boq)+tdN(d.price)+td(diffTxt(d.boq,d.price))+td(d.winner)+td(fmtDate(d.followup))+`</tr>`;
+      body+=`<tr>`+td(d.pkg)+td((+d.status+1)+'. '+STATUSES[d.status])+tdN(d.boq)+tdN(d.price)+td(diffTxt(d.boq,d.price))+td(d.winner)+td(fmtDate(pkgFu(d)))+`</tr>`;
     });
     gBoq+=pBoq; gReal+=pReal;
     const tb='font-weight:bold;background:#eef2ff;'+bd;
@@ -3084,7 +3195,8 @@ async function syncGCal(){
 function resetGCal(){localStorage.removeItem(GCAL_KEY);alert('ล้างลิงก์ Google Calendar แล้ว ครั้งหน้ากดซิงก์จะถามลิงก์ใหม่')}
 
 function exportICS(){
-  const items=data.filter(d=>d.followup&&d.status<10);
+  const items=tasks.filter(t=>t.followup&&t.status<10).map(t=>{const lp=linkedPkg(t);return Object.assign({},t,{
+    project:t.project||'',pkg:t.pkg+(t.time?' '+thTime(t.time):'')+(lp?' ('+lp.pkg+')':''),detail:t.place?'สถานที่: '+t.place:'',winner:'',status:lp?lp.status:0})});
   if(!items.length){alert('ยังไม่มี หัวข้องาน ที่ตั้ง "วันตามงาน" — เปิด ✏️ แล้วใส่วันตามงานก่อนครับ');return}
   const pad=n=>String(n).padStart(2,'0');
   const stamp=new Date();const dtstamp=stamp.getUTCFullYear()+pad(stamp.getUTCMonth()+1)+pad(stamp.getUTCDate())+'T'+pad(stamp.getUTCHours())+pad(stamp.getUTCMinutes())+pad(stamp.getUTCSeconds())+'Z';
@@ -3116,9 +3228,9 @@ function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileRe
     pushUndo('ก่อนนำเข้าไฟล์');
     if(data.length){
       const add=confirm('มีข้อมูลอยู่แล้ว '+data.length+' รายการ\n\nกด OK = เพิ่มต่อจากของเดิม (รวมกัน)\nกด Cancel = แทนที่ทั้งหมดด้วยไฟล์ใหม่');
-      if(add){const ids=new Set(data.map(d=>d.id));let n=0;arr.forEach(x=>{if(!x.id||ids.has(x.id))x.id=uid();data.push(x);n++});setAll(allRecs());save();render();alert('เพิ่มแล้ว '+n+' รายการ (รวมเป็น '+data.length+')')}
-      else{setAll(arr);save();render();alert('แทนที่ด้วย '+arr.length+' รายการ')}
-    } else {setAll(arr);save();render();alert('นำเข้าสำเร็จ '+arr.length+' รายการ')}
+      if(add){const ids=new Set(data.map(d=>d.id));let n=0;arr.forEach(x=>{if(!x.id||ids.has(x.id))x.id=uid();data.push(x);n++});setAll(allRecs());migrateFollowups();save();render();alert('เพิ่มแล้ว '+n+' รายการ (รวมเป็น '+data.length+')')}
+      else{setAll(arr);migrateFollowups();save();render();alert('แทนที่ด้วย '+arr.length+' รายการ')}
+    } else {setAll(arr);migrateFollowups();save();render();alert('นำเข้าสำเร็จ '+arr.length+' รายการ')}
   }catch(x){alert('ไฟล์ไม่ถูกต้อง')}};r.readAsText(f);e.target.value=''}
 function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click()}
 
