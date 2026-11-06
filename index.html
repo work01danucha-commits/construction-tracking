@@ -683,6 +683,7 @@
       <option>MEP</option><option>External</option>
     </select>
     <select id="fStatus" class="grow"><option value="">ทุกสถานะ</option></select>
+    <select id="fOwner" class="grow" title="กรองตามผู้รับผิดชอบ"><option value="">👤 ทุกผู้รับผิดชอบ</option></select>
     <select id="fSort" class="grow">
       <option value="">เรียง: ค่าเริ่มต้น</option>
       <option value="updDesc">แก้ไขล่าสุดก่อน</option>
@@ -1336,6 +1337,22 @@ function fillOwnerList(){
   if(me&&!names.includes(me))names.unshift(me);
   dl.innerHTML=names.map(n=>`<option value="${esc(n)}">`).join('');
 }
+// ตัวกรองผู้รับผิดชอบรายคน — ค่า '__none__' = งานที่ยังไม่ระบุผู้รับผิดชอบ
+function ownerKey(v){return String(v||'').trim().toLowerCase()}
+function ownerMatch(d,o){if(!o)return true;if(o==='__none__')return !ownerKey(d.owner);return ownerKey(d.owner)===o}
+function refreshOwnerFilter(){
+  const fo=document.getElementById('fOwner');if(!fo)return;
+  const keep=fo.value, p=fProject.value;
+  const scope=data.filter(d=>!p||d.project===p);
+  const names=new Map();let none=0;
+  scope.forEach(d=>{const k=ownerKey(d.owner);if(!k){none++;return}
+    const e=names.get(k)||{label:String(d.owner).trim(),n:0};e.n++;names.set(k,e)});
+  const list=[...names.entries()].sort((a,b)=>a[1].label.localeCompare(b[1].label,'th'));
+  fo.innerHTML=`<option value="">👤 ทุกผู้รับผิดชอบ (${list.length} คน)</option>`+
+    list.map(([k,e])=>`<option value="${esc(k)}">👤 ${esc(e.label)} (${e.n})</option>`).join('')+
+    (none?`<option value="__none__">— ยังไม่ระบุผู้รับผิดชอบ (${none})</option>`:'');
+  fo.value=(keep&&[...fo.options].some(o=>o.value===keep))?keep:'';
+}
 function refreshProjectFilters(){
   const projs=[...new Set(data.map(d=>d.project).filter(Boolean))].sort();
   const fp=document.getElementById('fProject'), keep=fp.value;
@@ -1353,6 +1370,7 @@ function refreshProjectFilters(){
       fb.style.display='';
     }else{fb.innerHTML='<option value="">ทุกอาคาร</option>';fb.value='';fb.style.display='none'}
   }
+  refreshOwnerFilter();
 }
 
 let dueOnly=false;
@@ -1395,7 +1413,9 @@ function isSoon(d){const n=daysTo(d.followup);return n!=null&&n>0&&n<=3&&d.statu
 function filtered(){
   const p=fProject.value,c=fCat.value,s=fStatus.value,q=fSearch.value.trim().toLowerCase();
   const bldg=(document.getElementById('fBuilding')||{}).value||'';
+  const own=(document.getElementById('fOwner')||{}).value||'';
   let rows=data.filter(d=>
+    ownerMatch(d,own)&&
     (!p||d.project===p)&&(!c||d.cat===c)&&(s===''||String(d.status)===s)&&
     (!bldg||!Array.isArray(d.buildings)||d.buildings.length===0||d.buildings.includes(bldg))&&
     (!q||[d.pkg,d.winner,d.invited,d.detail].join(' ').toLowerCase().includes(q))&&
@@ -1431,9 +1451,9 @@ function toggleCatSec(c){
   if(willCollapse)collapsedCats.add(c);else collapsedCats.delete(c);
   saveCollapsedCats();
 }
-function folderView(){return !fProject.value && !fSearch.value.trim() && !dueOnly && !fCat.value && fStatus.value===''}
+function folderView(){return !fProject.value && !fSearch.value.trim() && !dueOnly && !fCat.value && fStatus.value==='' && !((document.getElementById('fOwner')||{}).value)}
 function openProject(p){fProject.value=p;render();window.scrollTo(0,0)}
-function backToFolders(){fProject.value='';const fb=document.getElementById('fBuilding');if(fb){fb.value='';fb.style.display='none'}fCat.value='';fStatus.value='';fSearch.value='';if(dueOnly)toggleDue();render()}
+function backToFolders(){fProject.value='';const fb=document.getElementById('fBuilding');if(fb){fb.value='';fb.style.display='none'}fCat.value='';fStatus.value='';fSearch.value='';{const fo=document.getElementById('fOwner');if(fo)fo.value=''}if(dueOnly)toggleDue();render()}
 function projUrgency(p){
   const ds=data.filter(d=>d.project===p&&d.followup&&d.status<10).map(d=>daysTo(d.followup));
   return ds.length?Math.min(...ds):Infinity; // เลยกำหนด(ติดลบ) มาก่อน, ไม่มีวัน = ท้ายสุด
@@ -2790,7 +2810,7 @@ function seedDemo(){
   data=data.concat(demo);save();render();
 }
 
-['fProject','fBuilding','fCat','fStatus','fSearch','fSort'].forEach(id=>document.getElementById(id).addEventListener('input',render));
+['fProject','fBuilding','fCat','fStatus','fOwner','fSearch','fSort'].forEach(id=>document.getElementById(id).addEventListener('input',render));
 document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeForm()});
 document.getElementById('calModal').addEventListener('click',e=>{if(e.target.id==='calModal')e.currentTarget.classList.remove('open')});
 document.getElementById('apptModal').addEventListener('click',e=>{if(e.target.id==='apptModal')e.currentTarget.classList.remove('open')});
