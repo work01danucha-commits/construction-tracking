@@ -835,7 +835,10 @@
     <div class="field"><label>ประเภท</label><select id="tk_type">
       <option value="meet">👥 ประชุม</option><option value="talk">🤝 นัดคุย</option><option value="call">📞 โทร/ตามของ</option>
       <option value="site">🏗️ ลงไซต์</option><option value="other">📌 อื่นๆ</option></select></div>
-    <div class="field"><label>🕑 เวลา (ไม่บังคับ)</label><input type="time" id="tk_time"></div>
+    <div class="field"><label>🕑 เวลา (24 ชม. · ไม่บังคับ)</label><div style="display:flex;gap:4px;align-items:center">
+      <select id="tk_hh" style="flex:1" onchange="onTaskTimePick()" aria-label="ชั่วโมง"><option value="">ชม.</option><option value="00">00</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option></select><b>:</b>
+      <select id="tk_mm" style="flex:1" onchange="onTaskTimePick()" aria-label="นาที"><option value="">นาที</option><option value="00">00</option><option value="05">05</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option></select><span style="font-size:13px">น.</span>
+      <input type="hidden" id="tk_time"></div></div>
   </div>
   <div class="field"><label>📅 วันที่ *</label><div class="thdate"><input id="tk_date_th" class="thdate-txt" inputmode="numeric" autocomplete="off" placeholder="วว/ดด/ปปปป" oninput="onThInput('tk_date')" onchange="onThInput('tk_date',true)"><button type="button" class="thdate-btn" onclick="pickDate('tk_date')" aria-label="เลือกวันที่">📅</button><input type="date" id="tk_date" class="thdate-native" tabindex="-1" aria-hidden="true" onchange="onNativeDate('tk_date')"></div></div>
   <div class="field"><label>📍 สถานที่</label><input id="tk_place" autocomplete="off" placeholder="เช่น ไซต์งาน / ออฟฟิศ / Online"></div>
@@ -1748,14 +1751,29 @@ const TASK_TYPES={meet:'ประชุม',talk:'นัดคุย',call:'โ�
 const TASK_ICONS={meet:'👥',talk:'🤝',call:'📞',site:'🏗️',other:'📌'};
 let taskEditId=null, taskListShowDone=false;
 function taskIcon(t){return TASK_ICONS[t.ttype]||'📌'}
-function taskLabel(t){return (t.time?t.time+' ':'')+t.pkg+(t.place?' @ '+t.place:'')+(t.owner?' — '+t.owner:'')}
+// เวลาแบบไทย 24 ชม. "14:00 น." (ไม่ขึ้นกับภาษาของเบราว์เซอร์)
+function thTime(v){const m=String(v||'').match(/^(\d{1,2}):(\d{2})/);return m?(m[1].padStart(2,'0')+':'+m[2]+' น.'):''}
+function setTaskTime(v){
+  const m=String(v||'').match(/^(\d{1,2}):(\d{2})/);const hs=document.getElementById('tk_hh'),ms=document.getElementById('tk_mm');
+  const h=m?m[1].padStart(2,'0'):'',mi=m?m[2]:'';
+  hs.value=h;
+  if(mi&&![...ms.options].some(o=>o.value===mi)){const o=document.createElement('option');o.value=mi;o.textContent=mi;ms.appendChild(o)}
+  ms.value=mi;document.getElementById('tk_time').value=m?h+':'+mi:'';
+}
+function onTaskTimePick(){
+  const hs=document.getElementById('tk_hh'),ms=document.getElementById('tk_mm');
+  if(hs.value&&!ms.value)ms.value='00';           // เลือกชั่วโมงแล้ว นาทีตั้งเป็น 00 ให้
+  if(!hs.value)ms.value='';                       // ล้างชั่วโมง = ไม่ระบุเวลา
+  document.getElementById('tk_time').value=hs.value?hs.value+':'+ms.value:'';
+}
+function taskLabel(t){return (t.time?thTime(t.time)+' ':'')+t.pkg+(t.place?' @ '+t.place:'')+(t.owner?' — '+t.owner:'')}
 // งานย่อยที่ผ่านตัวกรองบนหน้าเว็บ (โครงการ / ผู้รับผิดชอบ / เฉพาะงานของฉัน)
 function visibleTasks(){
   const p=fProject.value, own=(document.getElementById('fOwner')||{}).value||'';
   return tasks.filter(t=>t.followup&&(!p||!t.project||t.project===p)&&ownerMatch(t,own)&&(!mineOnly||isMine(t)));
 }
 function taskSort(a,b){return (a.followup+(a.time||'99:99'))<(b.followup+(b.time||'99:99'))?-1:1}
-function taskWhen(t){const n=daysTo(t.followup);const tm=t.time?' '+t.time:'';
+function taskWhen(t){const n=daysTo(t.followup);const tm=t.time?' '+thTime(t.time):'';
   if(n==null)return '';if(n===0)return 'วันนี้'+tm;if(n===1)return 'พรุ่งนี้'+tm;if(n===-1)return 'เมื่อวาน'+tm;
   return fmtDate(t.followup)+tm+(n<0?' (เลย '+(-n)+' วัน)':'')}
 function linkedPkg(t){return t.linkId?data.find(d=>d.id===t.linkId):null}
@@ -1821,7 +1839,7 @@ function openTask(id,preset){
   document.getElementById('tk_hd').textContent=t?'📌 แก้ไขนัด / งานย่อย':'📌 เพิ่มนัด / งานย่อย';
   document.getElementById('tk_title').value=g('pkg');
   document.getElementById('tk_type').value=t?(t.ttype||'other'):'meet';
-  document.getElementById('tk_time').value=g('time');
+  setTaskTime(g('time'));
   document.getElementById('tk_date').value=t?toYMD(t.followup):(preset.date||todayStr());
   document.getElementById('tk_place').value=g('place');
   document.getElementById('tk_owner').value=t?g('owner'):(getUserName()||'').trim();
@@ -1875,7 +1893,7 @@ function taskStartMs(t){
   if(!t||!t.time||!/^\d{1,2}:\d{2}/.test(t.time))return null;
   const m=toYMD(t.followup).match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return null;
   const hm=t.time.split(':').map(Number);
-  return new Date(+m[1],+m[2]-1,+m[3],hm[0],hm[1]).getTime();
+  return Date.UTC(+m[1],+m[2]-1,+m[3],hm[0]-7,hm[1]);   // เวลาประเทศไทย (UTC+7) ไม่ขึ้นกับโซนเวลาของเครื่อง
 }
 function notifySupported(){try{return !!(window.Notification&&typeof window.Notification.permission==='string')}catch(e){return false}}
 function notifyState(){return notifySupported()?Notification.permission:'unsupported'}
@@ -1915,7 +1933,8 @@ function checkReminders(){
 }
 function remindText(t){
   const mins=Math.round((taskStartMs(t)-Date.now())/60000);
-  const when=mins>0?('อีก '+mins+' นาที ('+t.time+' น.)'):(mins===0?'เริ่มตอนนี้ ('+t.time+' น.)':'เริ่มไปแล้ว '+(-mins)+' นาที ('+t.time+' น.)');
+  const tt=thTime(t.time);
+  const when=mins>0?('อีก '+mins+' นาที ('+tt+')'):(mins===0?'เริ่มตอนนี้ ('+tt+')':'เริ่มไปแล้ว '+(-mins)+' นาที ('+tt+')');
   const sub=[t.place?'📍 '+t.place:'',t.owner?'👤 '+t.owner:'',t.project?'📁 '+t.project:''].filter(Boolean).join(' · ');
   return {when,sub};
 }
@@ -1942,7 +1961,7 @@ function snoozeReminder(id){
 }
 function testReminder(){
   const now=new Date(Date.now()+REMIND_MIN*60000);
-  fireReminder({id:'__test',pkg:'ทดสอบแจ้งเตือน — ถ้าเห็นกล่องนี้แปลว่าใช้งานได้',ttype:'other',followup:todayStr(),time:String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),place:'',owner:'',project:''});
+  fireReminder({id:'__test',pkg:'ทดสอบแจ้งเตือน — ถ้าเห็นกล่องนี้แปลว่าใช้งานได้',ttype:'other',followup:todayStr(),time:(function(){const th=new Date(now.getTime()+7*3600000);return String(th.getUTCHours()).padStart(2,'0')+':'+String(th.getUTCMinutes()).padStart(2,'0')})(),place:'',owner:'',project:''});
 }
 let _beepCtx=null;
 function remindBeep(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;_beepCtx=_beepCtx||new C();
@@ -2103,7 +2122,7 @@ const CAL_KIND={
 };
 function calItemKind(d,ds,today){if(d.status>=10)return 'done';if(ds<today)return 'over';const n=daysTo(ds);if(n!=null&&n<=3)return 'near';return 'normal';}
 function calChip(d,ds,today){const c=CAL_KIND[calItemKind(d,ds,today)];
-  if(isTask(d))return `<div class="cev" draggable="true" ondragstart="dragStartCard(event,'${d.id}')" ondragend="dragEndCard(event)" onclick="event.stopPropagation();openTask('${d.id}')" title="${esc(taskLabel(d))}" style="background:${c.bg};color:${c.fg};border-left:3px dashed ${c.bar}">${taskIcon(d)} ${d.time?esc(d.time)+' ':''}${esc(d.pkg)}</div>`;
+  if(isTask(d))return `<div class="cev" draggable="true" ondragstart="dragStartCard(event,'${d.id}')" ondragend="dragEndCard(event)" onclick="event.stopPropagation();openTask('${d.id}')" title="${esc(taskLabel(d))}" style="background:${c.bg};color:${c.fg};border-left:3px dashed ${c.bar}">${taskIcon(d)} ${d.time?esc(thTime(d.time))+' ':''}${esc(d.pkg)}</div>`;
   return `<div class="cev" draggable="true" ondragstart="dragStartCard(event,'${d.id}')" ondragend="dragEndCard(event)" title="${esc(d.project)} – ${esc(d.pkg)}${d.followupNote?' ('+esc(d.followupNote)+')':''}" style="background:${c.bg};color:${c.fg};border-left:3px solid ${c.bar}">${esc(d.pkg)}</div>`;}
 function calDayCell(dt,m,today,by,week){
   const ds=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
@@ -2156,7 +2175,7 @@ function renderCalSide(){
   else{h+=`<div class="cs-list">`+items.map(d=>{const c=CAL_KIND[calItemKind(d,selCalDay,today)];
     if(isTask(d))return `<div class="cs-card" tabindex="0" role="button" onclick="openTask('${d.id}')" onkeydown="if(event.key==='Enter'){openTask('${d.id}')}">
       <div class="cs-card-top"><span class="cs-dot" style="background:${c.bar}"></span><span>${taskIcon(d)} ${TASK_TYPES[d.ttype||'other']||'นัด/งานย่อย'}${d.project?' · 📁 '+esc(d.project):''}</span></div>
-      <div class="cs-pkg">${d.time?esc(d.time)+' · ':''}${esc(d.pkg)}</div>
+      <div class="cs-pkg">${d.time?esc(thTime(d.time))+' · ':''}${esc(d.pkg)}</div>
       ${d.place?`<div class="cs-note">📍 ${esc(d.place)}</div>`:''}
       <div class="cs-meta">${d.owner?'👤 '+esc(d.owner)+' · ':''}${d.status>=10?'✅ เสร็จแล้ว':'ยังไม่เสร็จ'}</div>
     </div>`;
