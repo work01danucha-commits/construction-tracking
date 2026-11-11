@@ -1095,7 +1095,12 @@ function normRec(r){if(r&&typeof r==='object'){DATE_FIELDS.forEach(f=>{if(f in r
 function normAll(a){return Array.isArray(a)?a.map(normRec):[]}
 
 function load(){try{return normAll(JSON.parse(localStorage.getItem(KEY))||[])}catch(e){return[]}}
-function save(){localStorage.setItem(KEY,JSON.stringify(allRecs()));autoWriteFile();syncDiff()}
+/* แก้บัค "บันทึกแล้วเด้งกลับ" (11 พ.ย. 2026):
+ * เดิม ถ้ากำลังดึงข้อมูลจากชีท (เกิดทุก 45 วิ + ทุกครั้งที่สลับกลับมาที่หน้าต่าง) แล้วผู้ใช้กดบันทึกระหว่างรอ
+ * พอข้อมูล "ชุดเก่า" ที่ขอไว้ก่อนกดบันทึกมาถึง มันเขียนทับของที่เพิ่งแก้ → เหมือน undo เอง และการแก้ครั้งถัดไปส่งข้อมูลเก่าทับชีท
+ * แก้: นับเลขรุ่นทุกครั้งที่บันทึก ถ้าระหว่างรอมีการบันทึก/กำลังส่ง → ทิ้งข้อมูลที่ดึงมา แล้วค่อยดึงใหม่หลังส่งเสร็จ */
+let localRev=0, pullBusy=false, pullAgain=false;
+function save(){localRev++;localStorage.setItem(KEY,JSON.stringify(allRecs()));autoWriteFile();syncDiff()}
 
 /* ===== นัด/งานย่อย (6 พ.ย. 2026) =====
  * เก็บในชีทเดียวกับหัวข้องาน (kind:'task') แต่แยก array `tasks` ออกจาก `data`
@@ -1203,11 +1208,13 @@ async function flushSync(){
   if(!navigator.onLine){setSync('off');return}
   syncBusy=true;setSync('syncing');
   try{
-    while(q.length){
+    // อ่านคิวใหม่ทุกรอบ: การแก้ที่เข้าคิวระหว่างกำลังส่ง ต้องไม่ถูกเขียนทับหาย (บัคเดิม: saveQ(q) ใช้คิวเก่า ทำให้การแก้ครั้งที่ 2 หายเงียบๆ)
+    while((q=loadQ()).length){
       await apiWrite(q[0]);
-      q.shift();saveQ(q);
+      const rest=loadQ();rest.shift();saveQ(rest);
     }
     lastSyncError='';setSync('ok');
+    if(pullAgain){pullAgain=false;setTimeout(()=>pullFromSheet(true),800)}
   }catch(e){lastSyncError=(e&&e.message)||String(e);console.error('sync fail:',e);setSync('err')}
   finally{syncBusy=false;renderSyncBar()}
 }
@@ -1215,10 +1222,12 @@ async function flushSync(){
 // ดึงข้อมูลล่าสุดจากชีท (เห็นสิ่งที่คนอื่นแก้)
 async function pullFromSheet(silent){
   if(!API_URL)return;
-  if(loadQ().length){flushSync();return}          // มีของค้างในเครื่อง ส่งก่อน อย่าดึงมาทับ
+  if(loadQ().length||syncBusy){pullAgain=true;flushSync();return}   // มีของค้าง/กำลังส่ง → ส่งก่อน แล้วค่อยดึง
+  if(pullBusy){pullAgain=true;return}                                // กำลังดึงอยู่แล้ว ไม่ยิงซ้อน
+  pullBusy=true;const rev0=localRev;
   try{
     const remote=normAll(await apiList());
-    if(loadQ().length)return;                       // เผื่อมีการแก้ระหว่างรอ
+    if(localRev!==rev0||loadQ().length||syncBusy){pullAgain=true;return}   // ระหว่างรอมีการแก้ในเครื่อง → ข้อมูลที่ได้มาเก่าแล้ว ทิ้งไป
     if((!remote||remote.length===0)&&allRecs().length>0){// ชีทว่างแต่เครื่องมีข้อมูล = ยังไม่ได้ย้าย
       migrateNeeded=true;setSync(navigator.onLine?'ok':'off');renderSyncBar();return;
     }
@@ -1236,6 +1245,7 @@ async function pullFromSheet(silent){
     setSync('ok');
     if(!silent)alert('ดึงข้อมูลล่าสุดจากชีทแล้ว ✓ ('+data.length+' รายการ)');
   }catch(e){setSync('off');if(!silent)alert('ดึงข้อมูลไม่สำเร็จ: '+e.message)}
+  finally{pullBusy=false;if(pullAgain){pullAgain=false;setTimeout(()=>pullFromSheet(true),1500)}}
   renderSyncBar();
 }
 
