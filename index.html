@@ -48,6 +48,20 @@
   [data-theme="dark"] .lbl-boq{color:#93c5fd}[data-theme="dark"] .lbl-real{color:#86efac}
   .diffpos{color:#16a34a}.diffneg{color:#dc2626}
   [data-theme="dark"] .diffpos{color:#86efac}[data-theme="dark"] .diffneg{color:#fca5a5}
+  /* ไอคอนสถานะซิงก์เล็กๆ มุมขวาล่าง (แทนแถบแดงใหญ่, 11 พ.ย. 2026) */
+  #syncDot{position:fixed;right:16px;bottom:16px;z-index:9000;display:none;align-items:center;gap:6px;
+    background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 11px;font-size:13px;
+    box-shadow:0 6px 18px rgba(15,23,42,.18);cursor:pointer;user-select:none}
+  #syncDot .sd-n{font-size:11px;font-weight:700;color:var(--muted)}
+  #syncDot.err{border-color:#fca5a5;color:#dc2626}
+  #syncDot.syncing .sd-ic{display:inline-block;animation:sdSpin 1.2s linear infinite}
+  #syncDot.ok{color:#16a34a}
+  @keyframes sdSpin{to{transform:rotate(360deg)}}
+  #syncPop{position:fixed;right:16px;bottom:62px;z-index:9001;display:none;width:280px;max-width:calc(100% - 32px);
+    background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:12.5px;box-shadow:0 12px 32px rgba(15,23,42,.25)}
+  #syncPop.open{display:block}
+  #syncPop .sp-a{display:flex;gap:6px;justify-content:flex-end;margin-top:10px}
+  #syncPop .sp-a button{padding:4px 10px;font-size:12px}
   .info-bar{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;border-radius:12px;padding:9px 12px;margin-bottom:12px;font-size:13px}
   [data-theme="dark"] .info-bar{background:#152a42;border-color:#1e3a5f;color:#93c5fd}
   .danger-btn{color:#dc2626;border-color:var(--tint-red2);background:var(--tint-red)}
@@ -715,6 +729,8 @@
     <button onclick="document.getElementById('backupBar').style.display='none'" style="padding:4px 8px">ปิด</button>
   </div>
   <div id="syncBar" class="info-bar" style="display:none"></div>
+  <div id="syncDot" onclick="toggleSyncPop(event)" role="status" aria-live="polite"></div>
+  <div id="syncPop" onclick="event.stopPropagation()"></div>
 
   <div class="toolbar">
     <input id="fSearch" class="grow" placeholder="🔍 ค้นหา หัวข้องาน / Supplier">
@@ -1213,9 +1229,9 @@ async function flushSync(){
       await apiWrite(q[0]);
       const rest=loadQ();rest.shift();saveQ(rest);
     }
-    lastSyncError='';setSync('ok');
+    lastSyncError='';setSyncFailSince(0);setSync('ok');
     if(pullAgain){pullAgain=false;setTimeout(()=>pullFromSheet(true),800)}
-  }catch(e){lastSyncError=(e&&e.message)||String(e);console.error('sync fail:',e);setSync('err')}
+  }catch(e){lastSyncError=(e&&e.message)||String(e);console.error('sync fail:',e);if(!getSyncFailSince())setSyncFailSince(Date.now());setSync('err')}
   finally{syncBusy=false;renderSyncBar()}
 }
 
@@ -1274,20 +1290,41 @@ function renderSyncBar(){
       +'<button class="btn-ok" style="margin-left:8px;padding:4px 12px" onclick="migrateUp()">📤 ย้ายขึ้นชีทกลาง</button>';
     return;
   }
-  if(syncState==='err'||q>0){
-    el.className='info-bar';el.style.background='var(--tint-red)';el.style.color='#dc2626';el.style.display='block';
-    el.innerHTML='⚠️ <b>ยังส่งขึ้นชีทไม่สำเร็จ</b> — มี '+q+' รายการค้างในเครื่อง (ข้อมูลไม่หาย) '
-      +(lastSyncError?'<span style="font-size:12px;opacity:.85">['+esc(lastSyncError)+']</span> ':'')
-      +'<button style="margin-left:8px;padding:4px 12px" onclick="flushSync()">🔄 ลองส่งใหม่</button>';
-    return;
-  }
-  if(syncState==='off'){
-    el.className='info-bar';el.style.background='';el.style.color='';el.style.display='block';
-    el.innerHTML='📡 ออฟไลน์อยู่ — แก้ได้ตามปกติ เดี๋ยวต่อเน็ตแล้วซิงก์ให้อัตโนมัติ';
-    return;
-  }
   el.style.display='none';
+  renderSyncDot(q);
 }
+/* แจ้งเตือนซิงก์ แบบ C (11 พ.ย. 2026): ปกติไม่แสดงอะไรเลย
+ * ขึ้นไอคอน ⚠️ เล็กมุมขวาล่าง "เฉพาะ" เมื่อส่งขึ้นชีทไม่ผ่านติดต่อกันเกิน 3 นาที (ระบบลองส่งเองทุก 30 วิ แล้วยังไม่ผ่าน)
+ * ส่งผ่านเมื่อไร ไอคอนหายเอง */
+const SYNC_WARN_MS=3*60*1000, FAIL_KEY=KEY+'__syncFailSince';
+function getSyncFailSince(){try{return +localStorage.getItem(FAIL_KEY)||0}catch(e){return 0}}
+function setSyncFailSince(v){try{if(v)localStorage.setItem(FAIL_KEY,String(v));else localStorage.removeItem(FAIL_KEY)}catch(e){}}
+function renderSyncDot(q){
+  const d=document.getElementById('syncDot');if(!d)return;
+  if(q==null)q=loadQ().length;
+  if(!q)setSyncFailSince(0);
+  const since=getSyncFailSince();
+  if(q>0&&since&&Date.now()-since>=SYNC_WARN_MS){
+    const mins=Math.round((Date.now()-since)/60000);
+    d.className='err';d.innerHTML='<span class="sd-ic">⚠️</span><span class="sd-n">'+q+'</span>';
+    d.title='ส่งขึ้นชีทไม่ผ่านมา '+mins+' นาที ('+q+' รายการค้างในเครื่อง) — กดเพื่อดูสาเหตุ';d.style.display='flex';
+  }else{d.style.display='none';closeSyncPop();}
+  const pop=document.getElementById('syncPop');if(pop&&pop.classList.contains('open'))fillSyncPop();
+}
+function fillSyncPop(){
+  const pop=document.getElementById('syncPop');if(!pop)return;const q=loadQ().length;
+  const mins=Math.round((Date.now()-(getSyncFailSince()||Date.now()))/60000);
+  pop.innerHTML='<b style="color:#dc2626">⚠️ ส่งขึ้นชีทไม่ผ่านมา '+mins+' นาที</b>'+
+    '<div style="margin-top:4px">ค้างในเครื่องนี้ '+q+' รายการ — เพื่อนในทีมยังไม่เห็นการแก้ส่วนนี้ <b>อย่าล้างประวัติเบราว์เซอร์</b> ระบบจะลองส่งเองต่อไป</div>'+
+    '<div style="margin-top:6px;font-size:11.5px">ถ้าค้างนาน ส่งภาพหน้าจอนี้ให้ผู้ดูแลระบบ</div>'+
+    (lastSyncError?'<div style="margin-top:6px;color:var(--muted);font-size:11.5px;word-break:break-word">สาเหตุ: '+esc(lastSyncError)+'</div>':'')+
+    '<div class="sp-a"><button onclick="closeSyncPop()">ปิด</button><button class="btn-primary" onclick="flushSync()">🔄 ลองส่งใหม่</button></div>';
+}
+function toggleSyncPop(e){if(e)e.stopPropagation();const pop=document.getElementById('syncPop');if(!pop)return;if(pop.classList.contains('open'))closeSyncPop();else{fillSyncPop();pop.classList.add('open')}}
+function closeSyncPop(){const pop=document.getElementById('syncPop');if(pop)pop.classList.remove('open')}
+document.addEventListener('click',closeSyncPop);
+// ส่งไม่สำเร็จ → ลองใหม่เองทุก 30 วินาที (ไม่ต้องกดปุ่ม)
+setInterval(()=>{try{if(loadQ().length&&!syncBusy&&navigator.onLine)flushSync()}catch(e){}},30000);
 
 
 /* ===== หน้าใส่รหัสผ่าน ===== */
