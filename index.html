@@ -117,10 +117,12 @@
   html[data-glass="night"]{--g1:#020617;--g2:#312e81;--g3:#581c87;--b1:#6366f1;--b2:#ec4899}
   html[data-glass="rose"]{--g1:#4c0519;--g2:#9d174d;--g3:#c026d3;--b1:#fda4af;--b2:#818cf8}
   html[data-glass="steel"]{--g1:#0f172a;--g2:#334155;--g3:#475569;--b1:#94a3b8;--b2:#38bdf8}
-  html[data-glass] body{background:linear-gradient(135deg,var(--g1) 0%,var(--g2) 45%,var(--g3) 100%) fixed;min-height:100vh}
-  html[data-glass] body:before,html[data-glass] body:after{content:"";position:fixed;z-index:-1;border-radius:50%;filter:blur(90px);opacity:.45;pointer-events:none}
-  html[data-glass] body:before{width:520px;height:520px;background:var(--b1);right:-120px;top:80px}
-  html[data-glass] body:after{width:480px;height:480px;background:var(--b2);left:-140px;bottom:-120px;opacity:.35}
+  html[data-glass] body{background:var(--g1);min-height:100vh}
+  /* แสงฟุ้งพื้นหลัง = ชั้นเดียวแบบภาพนิ่ง (ไม่ใช้ filter:blur → ไม่วาดใหม่ตอนเลื่อน) */
+  html[data-glass] body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:radial-gradient(circle at 92% 22%,color-mix(in srgb,var(--b1) 55%,transparent) 0,transparent 32%),
+               radial-gradient(circle at 6% 92%,color-mix(in srgb,var(--b2) 45%,transparent) 0,transparent 34%),
+               linear-gradient(135deg,var(--g1) 0%,var(--g2) 45%,var(--g3) 100%)}
   #themeBtn{display:none!important}
   #palPop{position:fixed;top:64px;right:16px;z-index:9500;display:none;background:rgba(15,23,42,.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
     border:1px solid rgba(255,255,255,.25);border-radius:14px;padding:10px;gap:8px;flex-wrap:wrap;width:236px}
@@ -128,9 +130,9 @@
   #palPop button{width:66px;border-radius:10px;padding:6px 4px 5px!important;font-size:11px;color:#fff!important;background:rgba(255,255,255,.08)!important;border:2px solid transparent!important;cursor:pointer}
   #palPop button.on{border-color:#fff!important}
   #palPop i{display:block;height:26px;border-radius:7px;margin-bottom:4px}
-  html[data-glass] header,html[data-glass] .pkgcard,html[data-glass] .folder,html[data-glass] #miniCal,html[data-glass] #taskBox,
-  html[data-glass] #totalBox,html[data-glass] #dashPanel>*,html[data-glass] .info-bar,html[data-glass] .appt-card,html[data-glass] .tk-list .tk-row{
-    backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%)}
+  /* เบลอจริงเฉพาะชิ้นที่มีชิ้นเดียว (หัวเว็บ) — การ์ด/กล่องอื่นใช้สีโปร่งแสงแทน เบากว่ามาก (เพื่อความลื่น 19 พ.ย. 2026) */
+  html[data-glass] header{backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+  html[data-glass]:not([data-glass^="l-"]){--card:rgba(255,255,255,.13)}
   html[data-glass] .pkgcard,html[data-glass] .folder{border-color:rgba(255,255,255,.28);border-radius:18px;box-shadow:var(--sh)}
   html[data-glass] .pkgcard.notstarted{background:rgba(255,255,255,.07);opacity:.8}
   html[data-glass] header{background:rgba(15,23,42,.35)}
@@ -140,16 +142,11 @@
   html[data-glass] select option{background:#1e293b;color:#f8fafc}
   html[data-glass] button:not(.btn-primary):not(.btn-ok){background:rgba(255,255,255,.12);color:var(--txt);border-color:rgba(255,255,255,.25)}
   html[data-glass] .btn-primary{background:#fff;color:#1e3a8a;border-color:#fff;box-shadow:0 8px 20px rgba(2,6,23,.25)}
-  /* เอียง 3D: เฉพาะคอมที่ใช้เมาส์ */
-  @media (hover:hover) and (pointer:fine){
-    html[data-glass] .pkgcard,html[data-glass] .folder{transition:transform .2s ease,box-shadow .2s ease;transform-style:preserve-3d;will-change:transform}
-    html[data-glass] .pkgcard:hover,html[data-glass] .folder:hover{box-shadow:var(--shhover)}
-  }
+  @media (hover:hover) and (pointer:fine){html[data-glass] .pkgcard:hover,html[data-glass] .folder:hover{box-shadow:var(--shhover)}}
   html[data-glass] .tb-gh,html[data-glass] .red{filter:brightness(1.7) saturate(1.2)}
   /* มือถือ: ลดเบลอให้ลื่น */
   @media (max-width:760px){
-    html[data-glass] .pkgcard,html[data-glass] .folder,html[data-glass] #taskBox,html[data-glass] #miniCal,html[data-glass] #totalBox,html[data-glass] #dashPanel>*{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(30,41,82,.55)}
-    html[data-glass] body:before,html[data-glass] body:after{display:none}
+    html[data-glass]:not([data-glass^="l-"]) .pkgcard,html[data-glass]:not([data-glass^="l-"]) .folder,html[data-glass]:not([data-glass^="l-"]) #taskBox,html[data-glass]:not([data-glass^="l-"]) #miniCal,html[data-glass]:not([data-glass^="l-"]) #totalBox{background:rgba(30,41,82,.55)}
   }
 
   /* ===== ธีมกระจกใสโทนสว่าง (l-*) — ต้องอยู่หลังกฎ Glass โทนเข้ม ===== */
@@ -159,7 +156,7 @@
     --sh:0 8px 30px rgba(30,41,59,.10);--shhover:0 18px 40px rgba(30,41,59,.18);--overlay:rgba(15,23,42,.25)}
   html[data-glass="l-ice"]{--g1:#f0f9ff;--g2:#e0e7ff;--g3:#cffafe;--b1:#93c5fd;--b2:#a5f3fc}
   html[data-glass="l-peach"]{--g1:#fff7ed;--g2:#fce7f3;--g3:#ecfccb;--b1:#fdba74;--b2:#f9a8d4}
-  html[data-glass^="l-"] body:before,html[data-glass^="l-"] body:after{opacity:.55}
+  html[data-glass^="l-"]{--card:rgba(255,255,255,.62)}
   html[data-glass^="l-"] .pkgcard,html[data-glass^="l-"] .folder,html[data-glass^="l-"] #miniCal,html[data-glass^="l-"] #taskBox,html[data-glass^="l-"] #totalBox{border:1px solid rgba(255,255,255,.9);box-shadow:var(--sh),inset 0 1px 0 rgba(255,255,255,.9)}
   html[data-glass^="l-"] .pkgcard.notstarted{background:rgba(255,255,255,.4)}
   html[data-glass^="l-"] header{background:rgba(255,255,255,.45)}
@@ -1534,7 +1531,6 @@ function toggleTheme(){
   if(next==='glass')r.setAttribute('data-glass',getPal());
   closePal();
   try{localStorage.setItem('constructTheme',next)}catch(e){}
-  document.querySelectorAll('.pkgcard,.folder').forEach(c=>c.style.transform='');
   syncThemeBtn();try{render()}catch(e){}
 }
 // โทนสี Glass
@@ -1546,7 +1542,6 @@ function setPal(p){
   try{localStorage.setItem('constructGlass',p)}catch(e){}
   const r=document.documentElement;r.setAttribute('data-glass',p);
   if(p.indexOf('l-')===0)r.removeAttribute('data-theme');else r.setAttribute('data-theme','dark');
-  document.querySelectorAll('.pkgcard,.folder').forEach(c=>c.style.transform='');
   renderPal();try{render()}catch(e){}
 }
 function renderPal(){const el=document.getElementById('palPop');if(!el)return;const cur=getPal();
@@ -1554,22 +1549,6 @@ function renderPal(){const el=document.getElementById('palPop');if(!el)return;co
 function togglePal(e){if(e)e.stopPropagation();const el=document.getElementById('palPop');if(!el)return;if(el.classList.contains('open'))closePal();else{renderPal();el.classList.add('open')}}
 function closePal(){const el=document.getElementById('palPop');if(el)el.classList.remove('open')}
 document.addEventListener('click',e=>{if(!(e.target.closest&&e.target.closest('#palPop')))closePal()});
-// การ์ดเอียงตามเมาส์ (เฉพาะธีม Glass บนคอม) — ใช้ event เดียวทั้งหน้า ไม่หนักเครื่อง
-(function(){
-  if(!(window.matchMedia&&matchMedia('(hover:hover) and (pointer:fine)').matches))return;
-  let last=null,raf=0;
-  document.addEventListener('mousemove',e=>{
-    if(!document.documentElement.hasAttribute('data-glass'))return;
-    const c=e.target.closest&&e.target.closest('.pkgcard,.folder');
-    if(last&&last!==c){last.style.transform='';}
-    last=c;if(!c)return;
-    if(e.target.closest('select,input,textarea,.pc-menu-pop'))return;   // กำลังกรอก/เลือก ไม่ต้องเอียง
-    cancelAnimationFrame(raf);
-    raf=requestAnimationFrame(()=>{const r=c.getBoundingClientRect();const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
-      c.style.transform='perspective(900px) rotateY('+(x*7).toFixed(2)+'deg) rotateX('+(-y*7).toFixed(2)+'deg) translateY(-3px)';});
-  },{passive:true});
-  document.addEventListener('mouseleave',()=>{if(last)last.style.transform='';},true);
-})();
 function esc(s){return(s==null?"":String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function dispNum(v){return(v!==''&&v!=null)?Number(v).toLocaleString('en-US'):''}
 // ใส่ลูกน้ำให้ตัวเลขทันทีระหว่างพิมพ์ (คงตำแหน่ง cursor ให้ใกล้เคียงเดิม)
