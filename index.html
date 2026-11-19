@@ -263,6 +263,9 @@
   .pc-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
   .pc-proj{font-size:11px;color:var(--muted)}
   .pc-name{font-size:19px;font-weight:700;margin:3px 0;line-height:1.3;color:var(--txt)}
+  /* การ์ด: รายละเอียดงานตัวใหญ่ + ชื่อหัวข้องานตัวเล็กด้านบน (แบบ A, 20 พ.ย. 2026) */
+  .pc-pkgsm{font-size:12px;font-weight:600;color:var(--muted);margin-top:2px}
+  .pc-name-det{font-size:18px;margin:1px 0 3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
   .pc-detail{font-size:14px;color:var(--txt);font-weight:600;line-height:1.5;margin:6px 0 10px;
     padding:8px 10px;background:var(--card2);border-radius:8px;border-left:3px solid var(--accent);
     white-space:normal;word-break:break-word}
@@ -1824,7 +1827,7 @@ function render(){
      <div class="pc-top">
        <div style="min-width:0">
          <div class="pc-proj">${esc(d.project)}</div>
-         <div class="pc-name">${esc(d.pkg)}</div>
+         ${String(d.detail||'').trim()?`<div class="pc-pkgsm">📂 ${esc(d.pkg)}</div><div class="pc-name pc-name-det" title="${esc(d.detail)}">${esc(String(d.detail).trim())}</div>`:`<div class="pc-name">${esc(d.pkg)}</div>`}
        </div>
        <div style="display:flex;align-items:center;gap:5px;white-space:nowrap">
          <span class="draghandle" draggable="true" ondragstart="dragStartCard(event,'${d.id}')" ondragend="dragEndCard(event)" title="ลากไปวางบนปฏิทินเพื่อกำหนดวันตามงาน">⠿</span>
