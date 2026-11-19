@@ -105,6 +105,72 @@
   ::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;border:2px solid transparent;background-clip:padding-box}
   ::-webkit-scrollbar-thumb:hover{background:var(--muted);border:2px solid transparent;background-clip:padding-box}
   ::-webkit-scrollbar-corner{background:transparent}
+
+  /* ===== ธีม Glass (19 พ.ย. 2026): ใช้สีชุดมืดเป็นฐาน + พื้นหลังไล่สี + กระจกฝ้า + การ์ดเอียงตามเมาส์ ===== */
+  html[data-glass]{--bg:transparent;--card:rgba(255,255,255,.11);--card2:rgba(255,255,255,.16);--line:rgba(255,255,255,.22);
+    --txt:#f8fafc;--muted:#c7d2fe;--tint-gray:rgba(255,255,255,.07);--tint-green:rgba(34,197,94,.16);--tint-red:rgba(239,68,68,.20);--tint-red2:rgba(239,68,68,.30);
+    --sh:0 10px 30px rgba(2,6,23,.28);--shhover:0 22px 44px rgba(2,6,23,.40);--overlay:rgba(2,6,23,.55)}
+  /* โทนสีของธีม Glass (เลือกได้จากปุ่ม 🎨) */
+  html[data-glass]{--g1:#172554;--g2:#3730a3;--g3:#0e7490;--b1:#22d3ee;--b2:#f472b6}
+  html[data-glass="sunset"]{--g1:#7c2d12;--g2:#be185d;--g3:#f59e0b;--b1:#fb923c;--b2:#a855f7}
+  html[data-glass="forest"]{--g1:#052e16;--g2:#065f46;--g3:#0d9488;--b1:#a3e635;--b2:#22d3ee}
+  html[data-glass="night"]{--g1:#020617;--g2:#312e81;--g3:#581c87;--b1:#6366f1;--b2:#ec4899}
+  html[data-glass="rose"]{--g1:#4c0519;--g2:#9d174d;--g3:#c026d3;--b1:#fda4af;--b2:#818cf8}
+  html[data-glass="steel"]{--g1:#0f172a;--g2:#334155;--g3:#475569;--b1:#94a3b8;--b2:#38bdf8}
+  html[data-glass] body{background:linear-gradient(135deg,var(--g1) 0%,var(--g2) 45%,var(--g3) 100%) fixed;min-height:100vh}
+  html[data-glass] body:before,html[data-glass] body:after{content:"";position:fixed;z-index:-1;border-radius:50%;filter:blur(90px);opacity:.45;pointer-events:none}
+  html[data-glass] body:before{width:520px;height:520px;background:var(--b1);right:-120px;top:80px}
+  html[data-glass] body:after{width:480px;height:480px;background:var(--b2);left:-140px;bottom:-120px;opacity:.35}
+  #themeBtn{display:none!important}
+  #palPop{position:fixed;top:64px;right:16px;z-index:9500;display:none;background:rgba(15,23,42,.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border:1px solid rgba(255,255,255,.25);border-radius:14px;padding:10px;gap:8px;flex-wrap:wrap;width:236px}
+  #palPop.open{display:flex}
+  #palPop button{width:66px;border-radius:10px;padding:6px 4px 5px!important;font-size:11px;color:#fff!important;background:rgba(255,255,255,.08)!important;border:2px solid transparent!important;cursor:pointer}
+  #palPop button.on{border-color:#fff!important}
+  #palPop i{display:block;height:26px;border-radius:7px;margin-bottom:4px}
+  html[data-glass] header,html[data-glass] .pkgcard,html[data-glass] .folder,html[data-glass] #miniCal,html[data-glass] #taskBox,
+  html[data-glass] #totalBox,html[data-glass] #dashPanel>*,html[data-glass] .info-bar,html[data-glass] .appt-card,html[data-glass] .tk-list .tk-row{
+    backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%)}
+  html[data-glass] .pkgcard,html[data-glass] .folder{border-color:rgba(255,255,255,.28);border-radius:18px;box-shadow:var(--sh)}
+  html[data-glass] .pkgcard.notstarted{background:rgba(255,255,255,.07);opacity:.8}
+  html[data-glass] header{background:rgba(15,23,42,.35)}
+  html[data-glass] .sheet{background:rgba(23,32,70,.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-color:rgba(255,255,255,.2)}
+  html[data-glass] .fm-card{background:rgba(255,255,255,.06)}
+  html[data-glass] input,html[data-glass] select,html[data-glass] textarea{background:rgba(2,6,23,.32);color:var(--txt);border-color:rgba(255,255,255,.25)}
+  html[data-glass] select option{background:#1e293b;color:#f8fafc}
+  html[data-glass] button:not(.btn-primary):not(.btn-ok){background:rgba(255,255,255,.12);color:var(--txt);border-color:rgba(255,255,255,.25)}
+  html[data-glass] .btn-primary{background:#fff;color:#1e3a8a;border-color:#fff;box-shadow:0 8px 20px rgba(2,6,23,.25)}
+  /* เอียง 3D: เฉพาะคอมที่ใช้เมาส์ */
+  @media (hover:hover) and (pointer:fine){
+    html[data-glass] .pkgcard,html[data-glass] .folder{transition:transform .2s ease,box-shadow .2s ease;transform-style:preserve-3d;will-change:transform}
+    html[data-glass] .pkgcard:hover,html[data-glass] .folder:hover{box-shadow:var(--shhover)}
+  }
+  html[data-glass] .tb-gh,html[data-glass] .red{filter:brightness(1.7) saturate(1.2)}
+  /* มือถือ: ลดเบลอให้ลื่น */
+  @media (max-width:760px){
+    html[data-glass] .pkgcard,html[data-glass] .folder,html[data-glass] #taskBox,html[data-glass] #miniCal,html[data-glass] #totalBox,html[data-glass] #dashPanel>*{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(30,41,82,.55)}
+    html[data-glass] body:before,html[data-glass] body:after{display:none}
+  }
+
+  /* ===== ธีมกระจกใสโทนสว่าง (l-*) — ต้องอยู่หลังกฎ Glass โทนเข้ม ===== */
+  html[data-glass^="l-"]{--g1:#f8fafc;--g2:#e0f2fe;--g3:#ede9fe;--b1:#7dd3fc;--b2:#c4b5fd;
+    --card:rgba(255,255,255,.55);--card2:rgba(255,255,255,.7);--line:rgba(255,255,255,.85);--txt:#1e293b;--muted:#64748b;
+    --tint-gray:rgba(255,255,255,.4);--tint-green:#f0fdf4;--tint-red:#fee2e2;--tint-red2:#fecaca;
+    --sh:0 8px 30px rgba(30,41,59,.10);--shhover:0 18px 40px rgba(30,41,59,.18);--overlay:rgba(15,23,42,.25)}
+  html[data-glass="l-ice"]{--g1:#f0f9ff;--g2:#e0e7ff;--g3:#cffafe;--b1:#93c5fd;--b2:#a5f3fc}
+  html[data-glass="l-peach"]{--g1:#fff7ed;--g2:#fce7f3;--g3:#ecfccb;--b1:#fdba74;--b2:#f9a8d4}
+  html[data-glass^="l-"] body:before,html[data-glass^="l-"] body:after{opacity:.55}
+  html[data-glass^="l-"] .pkgcard,html[data-glass^="l-"] .folder,html[data-glass^="l-"] #miniCal,html[data-glass^="l-"] #taskBox,html[data-glass^="l-"] #totalBox{border:1px solid rgba(255,255,255,.9);box-shadow:var(--sh),inset 0 1px 0 rgba(255,255,255,.9)}
+  html[data-glass^="l-"] .pkgcard.notstarted{background:rgba(255,255,255,.4)}
+  html[data-glass^="l-"] header{background:rgba(255,255,255,.45)}
+  html[data-glass^="l-"] input,html[data-glass^="l-"] select,html[data-glass^="l-"] textarea{background:rgba(255,255,255,.7);color:#1e293b;border-color:rgba(148,163,184,.45)}
+  html[data-glass^="l-"] select option{background:#fff;color:#1e293b}
+  html[data-glass^="l-"] button:not(.btn-primary):not(.btn-ok){background:rgba(255,255,255,.65);color:#1e293b;border-color:rgba(148,163,184,.4)}
+  html[data-glass^="l-"] .btn-primary{background:#3b82f6;color:#fff;border-color:#3b82f6;box-shadow:0 6px 16px rgba(59,130,246,.3)}
+  html[data-glass^="l-"] .tb-gh,html[data-glass^="l-"] .red{filter:none}
+  html[data-glass^="l-"] .sheet{background:rgba(255,255,255,.88);border-color:#fff}
+  html[data-glass^="l-"] .fm-card{background:rgba(255,255,255,.6)}
+  @media (max-width:760px){html[data-glass^="l-"] .pkgcard,html[data-glass^="l-"] .folder,html[data-glass^="l-"] #taskBox,html[data-glass^="l-"] #miniCal,html[data-glass^="l-"] #totalBox,html[data-glass^="l-"] #dashPanel>*{background:rgba(255,255,255,.72)}}
   body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,"Sarabun",sans-serif;
     background:var(--bg);color:var(--txt);font-size:15px;line-height:1.4}
   header{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line);
@@ -685,7 +751,10 @@
   // ตั้งธีมก่อนหน้าเว็บวาดผล เพื่อไม่ให้กระพริบสีตอนโหลด
   (function(){try{
     var t=localStorage.getItem('constructTheme');
-    if(t==='dark')document.documentElement.setAttribute('data-theme','dark');
+    var g=localStorage.getItem('constructGlass');
+    if(!g)g=(t==='dark')?'night':(t==='glass'?'ocean':'l-clear');   // ครั้งแรก = ใสขาว; เคยใช้โหมดมืด = ราตรี
+    document.documentElement.setAttribute('data-glass',g);
+    if(g.indexOf('l-')!==0)document.documentElement.setAttribute('data-theme','dark');
   }catch(e){}})();
 </script>
 </head>
@@ -701,6 +770,7 @@
     </div>
     <div class="hdr-right">
       <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()" title="สลับธีมสว่าง/มืด">🌙</button>
+      <button class="theme-toggle" id="palBtn" onclick="togglePal(event)" title="เลือกธีม / สี">🎨</button>
       <button class="theme-toggle" onclick="openTaskList()" title="นัดหมายทั้งหมด (ตามงาน ประชุม นัดคุย โทร ลงไซต์)">📅</button>
       <button class="theme-toggle" id="mineBtn" onclick="toggleMine()" title="ดูเฉพาะงานที่ฉันรับผิดชอบ (สลับกดอีกครั้งเพื่อดูทั้งหมด)">👤</button>
       <div class="bell" id="bellBtn" onclick="openTaskList()" title="นัด/ตามงาน ที่เลยกำหนด หรือถึงใน 3 วัน">
@@ -847,6 +917,7 @@
 </div></div>
 
 <div id="remindHost" aria-live="polite"></div>
+<div id="palPop" onclick="event.stopPropagation()"></div>
 <!-- ===== นัด/งานย่อย: รายการทั้งหมด ===== -->
 <div class="modal" id="taskListModal"><div class="sheet" style="max-width:760px">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
@@ -1448,18 +1519,57 @@ async function initSaveFile(){
 }
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 // ธีมสว่าง/มืด
+// ธีม 3 แบบ วนกด: สว่าง → มืด → Glass → สว่าง
+function curTheme(){const r=document.documentElement;return r.hasAttribute('data-glass')?'glass':(r.getAttribute('data-theme')==='dark'?'dark':'light')}
 function syncThemeBtn(){
   const btn=document.getElementById('themeBtn');if(!btn)return;
-  const dark=document.documentElement.getAttribute('data-theme')==='dark';
-  btn.textContent=dark?'☀️':'🌙';
-  btn.title=dark?'สลับเป็นธีมสว่าง':'สลับเป็นธีมมืด';
+  const t=curTheme();
+  btn.textContent={light:'🌙',dark:'✨',glass:'☀️'}[t];
+  btn.title={light:'สลับเป็นธีมมืด',dark:'สลับเป็นธีม Glass',glass:'สลับเป็นธีมสว่าง'}[t];
 }
 function toggleTheme(){
-  const dark=document.documentElement.getAttribute('data-theme')==='dark';
-  if(dark){document.documentElement.removeAttribute('data-theme');localStorage.setItem('constructTheme','light');}
-  else{document.documentElement.setAttribute('data-theme','dark');localStorage.setItem('constructTheme','dark');}
-  syncThemeBtn();
+  const r=document.documentElement,next={light:'dark',dark:'glass',glass:'light'}[curTheme()];
+  r.removeAttribute('data-glass');r.removeAttribute('data-theme');
+  if(next!=='light')r.setAttribute('data-theme','dark');
+  if(next==='glass')r.setAttribute('data-glass',getPal());
+  closePal();
+  try{localStorage.setItem('constructTheme',next)}catch(e){}
+  document.querySelectorAll('.pkgcard,.folder').forEach(c=>c.style.transform='');
+  syncThemeBtn();try{render()}catch(e){}
 }
+// โทนสี Glass
+const GLASS_PALS=[['l-clear','ใสขาว','#f8fafc,#e0f2fe,#ede9fe'],['l-ice','ฟ้าน้ำแข็ง','#f0f9ff,#e0e7ff,#cffafe'],['l-peach','พีชครีม','#fff7ed,#fce7f3,#ecfccb'],
+  ['ocean','มหาสมุทร','#172554,#3730a3,#0e7490'],['sunset','พระอาทิตย์ตก','#7c2d12,#be185d,#f59e0b'],['forest','ป่าเขียว','#052e16,#065f46,#0d9488'],
+  ['night','ราตรี','#020617,#312e81,#581c87'],['rose','กุหลาบ','#4c0519,#9d174d,#c026d3'],['steel','เหล็กเทา','#0f172a,#334155,#475569']];
+function getPal(){try{const p=document.documentElement.getAttribute('data-glass')||localStorage.getItem('constructGlass');return GLASS_PALS.some(x=>x[0]===p)?p:'l-clear'}catch(e){return 'l-clear'}}
+function setPal(p){
+  try{localStorage.setItem('constructGlass',p)}catch(e){}
+  const r=document.documentElement;r.setAttribute('data-glass',p);
+  if(p.indexOf('l-')===0)r.removeAttribute('data-theme');else r.setAttribute('data-theme','dark');
+  document.querySelectorAll('.pkgcard,.folder').forEach(c=>c.style.transform='');
+  renderPal();try{render()}catch(e){}
+}
+function renderPal(){const el=document.getElementById('palPop');if(!el)return;const cur=getPal();
+  el.innerHTML='<div style="width:100%;color:#fff;font-size:12.5px;font-weight:700;padding:2px 4px">🎨 เลือกธีม</div>'+GLASS_PALS.map(([k,n,c])=>`<button class="${k===cur?'on':''}" onclick="setPal('${k}')"><i style="background:linear-gradient(135deg,${c})"></i>${n}</button>`).join('');}
+function togglePal(e){if(e)e.stopPropagation();const el=document.getElementById('palPop');if(!el)return;if(el.classList.contains('open'))closePal();else{renderPal();el.classList.add('open')}}
+function closePal(){const el=document.getElementById('palPop');if(el)el.classList.remove('open')}
+document.addEventListener('click',e=>{if(!(e.target.closest&&e.target.closest('#palPop')))closePal()});
+// การ์ดเอียงตามเมาส์ (เฉพาะธีม Glass บนคอม) — ใช้ event เดียวทั้งหน้า ไม่หนักเครื่อง
+(function(){
+  if(!(window.matchMedia&&matchMedia('(hover:hover) and (pointer:fine)').matches))return;
+  let last=null,raf=0;
+  document.addEventListener('mousemove',e=>{
+    if(!document.documentElement.hasAttribute('data-glass'))return;
+    const c=e.target.closest&&e.target.closest('.pkgcard,.folder');
+    if(last&&last!==c){last.style.transform='';}
+    last=c;if(!c)return;
+    if(e.target.closest('select,input,textarea,.pc-menu-pop'))return;   // กำลังกรอก/เลือก ไม่ต้องเอียง
+    cancelAnimationFrame(raf);
+    raf=requestAnimationFrame(()=>{const r=c.getBoundingClientRect();const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+      c.style.transform='perspective(900px) rotateY('+(x*7).toFixed(2)+'deg) rotateX('+(-y*7).toFixed(2)+'deg) translateY(-3px)';});
+  },{passive:true});
+  document.addEventListener('mouseleave',()=>{if(last)last.style.transform='';},true);
+})();
 function esc(s){return(s==null?"":String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function dispNum(v){return(v!==''&&v!=null)?Number(v).toLocaleString('en-US'):''}
 // ใส่ลูกน้ำให้ตัวเลขทันทีระหว่างพิมพ์ (คงตำแหน่ง cursor ให้ใกล้เคียงเดิม)
@@ -2360,7 +2470,12 @@ function renderTotals(){
     ${sumReal?`<div class="row"><span class="k">ส่วนต่าง</span><span class="diff ${diff>=0?'pos':'neg'}">${diff>=0?'ประหยัด ':'เกิน '}${fmt(Math.abs(diff))}</span></div>`:''}`;
 }
 // ===== Dashboard หน้าแรก (Modern) : summary cards + คืบหน้าแยกหมวด + แยกอาคาร =====
-const DASH_BLUE='#2563eb',DASH_BLUEDK='#1e3a8a',DASH_ORANGE='#f97316',DASH_TRACK='#eef1f5',DASH_TXT='#1f2937',DASH_MUTE='#8a94a6';
+let DASH_BLUE='#2563eb',DASH_BLUEDK='#1e3a8a',DASH_ORANGE='#f97316',DASH_TRACK='#eef1f5',DASH_TXT='#1f2937',DASH_MUTE='#8a94a6',DASH_BG='#fff',DASH_LINE='#eef1f5',DASH_PANEL='#f5f7fa';
+function dashTheme(){const r=document.documentElement,lg=(r.getAttribute('data-glass')||'').indexOf('l-')===0;
+  if(lg){DASH_BG='rgba(255,255,255,.6)';DASH_LINE='rgba(255,255,255,.9)';DASH_TRACK='rgba(148,163,184,.25)';DASH_TXT='#1f2937';DASH_MUTE='#64748b';DASH_BLUEDK='#1e3a8a';DASH_PANEL='rgba(255,255,255,.35)';DASH_BLUE='#2563eb';return}
+  const g=r.hasAttribute('data-glass');
+  DASH_BG=g?'rgba(255,255,255,.10)':'#fff';DASH_LINE=g?'rgba(255,255,255,.22)':'#eef1f5';DASH_TRACK=g?'rgba(255,255,255,.18)':'#eef1f5';
+  DASH_TXT=g?'#f8fafc':'#1f2937';DASH_MUTE=g?'#c7d2fe':'#8a94a6';DASH_BLUEDK=g?'#bfdbfe':'#1e3a8a';DASH_PANEL=g?'rgba(255,255,255,.08)':'#f5f7fa';DASH_BLUE=g?'#60a5fa':'#2563eb';}
 function pctOfRows(rows){return rows.length?Math.round(rows.reduce((a,d)=>a+(+d.status)/10,0)/rows.length*100):0;}
 function dashCircle(pct,size){
   const r=(size/2)-5,c=2*Math.PI*r,off=c*(1-pct/100);
@@ -2369,7 +2484,7 @@ function dashCircle(pct,size){
     <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${DASH_BLUE}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 ${size/2} ${size/2})"/>
     <text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="700" fill="${DASH_BLUEDK}">${pct}%</text></svg>`;
 }
-function dashSumCard(inner){return `<div style="background:#fff;border:1px solid #eef1f5;border-radius:14px;padding:14px 16px;box-shadow:0 1px 3px rgba(16,24,40,.06);display:flex;align-items:center;gap:13px;min-width:0">${inner}</div>`;}
+function dashSumCard(inner){return `<div style="background:${DASH_BG};border:1px solid ${DASH_LINE};border-radius:14px;padding:14px 16px;box-shadow:0 1px 3px rgba(16,24,40,.06);display:flex;align-items:center;gap:13px;min-width:0">${inner}</div>`;}
 function dashStat(icon,big,cap,accent){
   const bg=accent==='blue'?'#eaf1fe':'#fff3e9',fg=accent==='blue'?DASH_BLUE:DASH_ORANGE;
   return dashSumCard(`<div style="width:40px;height:40px;flex:0 0 auto;border-radius:11px;background:${bg};color:${fg};display:flex;align-items:center;justify-content:center;font-size:20px">${icon}</div>`
@@ -2384,12 +2499,13 @@ function dashRow(icon,name,count,pct,barCol,pctCol,iconBg,iconCol){
   </div>`;
 }
 function dashCard(title,sub,inner){
-  return `<div style="background:#fff;border:1px solid #eef1f5;border-radius:16px;padding:16px 18px;box-shadow:0 1px 3px rgba(16,24,40,.06);margin-top:14px">
+  return `<div style="background:${DASH_BG};border:1px solid ${DASH_LINE};border-radius:16px;padding:16px 18px;box-shadow:0 1px 3px rgba(16,24,40,.06);margin-top:14px">
     <div style="font-size:15px;font-weight:800;color:${DASH_TXT}">${title}</div>
     ${sub?`<div style="font-size:12px;color:${DASH_MUTE};margin-top:3px">${sub}</div>`:''}
     <div style="margin-top:8px">${inner}</div></div>`;
 }
 function renderDash(){
+  dashTheme();
   const host=document.getElementById('dashPanel'); if(!host)return;
   if(!data.length){host.innerHTML='';return;}
   const CATS=[['Structural','โครงสร้าง','🏗️'],['Architectural','สถาปัตยกรรม','🏛️'],['MEP','งานระบบ MEP','⚙️'],['External','งานภายนอก','🌳']];
@@ -2432,10 +2548,10 @@ function renderDash(){
   // แถบสถานะการคัดเลือก (ย้ายมาจาก KPI เดิม)
   const sel=data.filter(d=>d.status>=7).length, pend=data.filter(d=>d.status===6).length,
         cmp=data.filter(d=>d.status>=3&&d.status<=5).length, ns=data.filter(d=>d.status<=1).length;
-  const spill=(lab,val,col)=>`<div style="flex:1;min-width:130px;background:#fff;border:1px solid #eef1f5;border-radius:12px;padding:9px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 3px rgba(16,24,40,.05)"><span style="font-size:19px;font-weight:800;color:${col}">${val}</span><span style="font-size:12.5px;color:${DASH_MUTE}">${lab}</span></div>`;
+  const spill=(lab,val,col)=>`<div style="flex:1;min-width:130px;background:${DASH_BG};border:1px solid ${DASH_LINE};border-radius:12px;padding:9px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 3px rgba(16,24,40,.05)"><span style="font-size:19px;font-weight:800;color:${col}">${val}</span><span style="font-size:12.5px;color:${DASH_MUTE}">${lab}</span></div>`;
   const statusRow=`<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">${spill('เลือกแล้ว',sel,'#16a34a')}${spill('รออนุมัติ',pend,DASH_ORANGE)}${spill('เปรียบเทียบราคา',cmp,DASH_BLUE)}${spill('ยังไม่เริ่ม',ns,'#dc2626')}</div>`;
   const open=localStorage.getItem('dashOpen')!=='0';
-  host.innerHTML=`<div style="background:#f5f7fa;border:1px solid #e9edf3;border-radius:16px;padding:14px 16px;margin-bottom:14px">
+  host.innerHTML=`<div style="background:${DASH_PANEL};border:1px solid ${DASH_LINE};border-radius:16px;padding:14px 16px;margin-bottom:14px">
     <div onclick="toggleDashDetail()" style="cursor:pointer;display:flex;align-items:center;gap:11px;user-select:none">
       <span style="width:34px;height:34px;flex:0 0 auto;border-radius:10px;background:${DASH_BLUE};color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px">📊</span>
       <span style="font-size:16px;font-weight:800;color:${DASH_TXT}">Dashboard ความคืบหน้า</span>
